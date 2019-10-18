@@ -216,10 +216,8 @@
                     <version>1.6</version>
                     <executions>
                         <execution>
-                            <configuration>
-                                <skip>${skip.signing}</skip>
-                            </configuration>
                             <id>sign-artifacts</id>
+                            <phase>verify</phase>
                             <goals>
                                 <goal>sign</goal>
                             </goals>
@@ -273,9 +271,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-gpg-plugin</artifactId>
-                <configuration>
-                    <skip>${skip.signing}</skip>
-                </configuration>
             </plugin>
         </plugins>
     </build>
