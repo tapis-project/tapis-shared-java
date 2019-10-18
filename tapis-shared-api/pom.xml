@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>edu.utexas.tacc</groupId>
 		<artifactId>tapis-shared</artifactId>
-		<version>1.0.16-SNAPSHOT</version>
+		<version>1.0.16</version>
 
 	</parent>
 
@@ -101,7 +101,6 @@
     
     <build>
         <plugins>
-            <!-- Capture the git commit hash and branch identifiers. -->
             <!-- See parent pom for configuration details.           -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>

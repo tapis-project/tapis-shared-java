@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>edu.utexas.tacc</groupId>
 		<artifactId>tapis-shared</artifactId>
-		<version>1.0.16-SNAPSHOT</version>
+		<version>1.0.16</version>
 
 	</parent>
 
@@ -62,26 +62,13 @@
 	</dependencies>
 	
     <build>
-        <plugins>
-            <plugin>
-                <!-- The version is set in the parent pom -->
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <configuration>
-                    <suiteXmlFiles>
-                        <suiteXmlFile>src/test/resources/testng.xml</suiteXmlFile>
-                    </suiteXmlFiles>
-                </configuration>
-            </plugin>
-
-            <!-- Capture the git commit hash and branch identifiers. -->
-            <!-- See parent pom for configuration details.           -->
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>buildnumber-maven-plugin</artifactId>
-                <version>${buildnumber-maven-plugin.version}</version>
-            </plugin>
-        </plugins>
+		<plugins>
+			<!-- See parent pom for configuration details.           -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-gpg-plugin</artifactId>
+			</plugin>
+		</plugins>
     
         <finalName>lib</finalName>
     </build>
