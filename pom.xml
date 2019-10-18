@@ -4,7 +4,7 @@
     <packaging>pom</packaging>
     <groupId>edu.utexas.tacc</groupId>
     <artifactId>tapis-shared</artifactId>
-    <version>1.0.26-SNAPSHOT</version>
+    <version>1.0.26</version>
 
     <repositories>
         <repository>
@@ -24,7 +24,7 @@
     <scm>
         <connection>scm:git:git@github.com:tapis-project/tapis-shared-demo.git</connection>
         <url>https://github.com/tapis-project/tapis-bom</url>
-        <tag>tapis-shared-1.0.24</tag>
+        <tag>tapis-shared-1.0.26</tag>
     </scm>
 
     <licenses>
@@ -212,9 +212,6 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-gpg-plugin</artifactId>
                     <version>1.6</version>
-                    <configuration>
-                        <skip>${skip.signing}</skip>
-                    </configuration>
                     <executions>
                         <execution>
                             <id>sign-artifacts</id>
@@ -271,6 +268,9 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-gpg-plugin</artifactId>
+                <configuration>
+                    <skip>${skip.signing}</skip>
+                </configuration>
             </plugin>
         </plugins>
     </build>
