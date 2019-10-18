@@ -8,7 +8,7 @@ import edu.utexas.tacc.tapis.shared.providers.email.clients.LoggingEmailClient;
 import edu.utexas.tacc.tapis.shared.providers.email.clients.SMTPEmailClient;
 import edu.utexas.tacc.tapis.shared.providers.email.enumeration.EmailProviderType;
 
-@Test(groups={"integration"})
+@Test(groups={"integration"}, enabled=false)
 public class EmailClientTest 
 {
     /* **************************************************************************** */
@@ -23,7 +23,7 @@ public class EmailClientTest
     /* ---------------------------------------------------------------------------- */
     /* testSMTP:                                                                    */
     /* ---------------------------------------------------------------------------- */
-    @Test(enabled=true)
+    @Test(enabled=false)
     public void testSMTP() throws TapisException
     {
         // Get a client instance.
@@ -36,7 +36,7 @@ public class EmailClientTest
     /* ---------------------------------------------------------------------------- */
     /* testLog:                                                                     */
     /* ---------------------------------------------------------------------------- */
-    @Test(enabled=true)
+    @Test(enabled=false)
     public void testLog() throws TapisException
     {
         // Get a client instance.

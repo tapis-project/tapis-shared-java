@@ -15,7 +15,7 @@
             <url>https://jitpack.io</url>
         </repository>
     </repositories>
-    <name>TACC API BOM</name>
+    <name>Tapis shared</name>
     <description>TAPIS services BOM dependencies</description>
     <url>https://github.com/tapis-project/tapis-bom</url>
     <organization>
@@ -159,6 +159,8 @@
     </distributionManagement>
 
     <properties>
+        <!--  Default to no release to suppress signing etc      -->
+        <skip.signing>true</skip.signing>
         <!-- Source encoding -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
@@ -211,6 +213,9 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-gpg-plugin</artifactId>
                 <version>1.6</version>
+                <configuration>
+                    <skip>${skip.signing}</skip>
+                </configuration>
                 <executions>
                     <execution>
                         <id>sign-artifacts</id>

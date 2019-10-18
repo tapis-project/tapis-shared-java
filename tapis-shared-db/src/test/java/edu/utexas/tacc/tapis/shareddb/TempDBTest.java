@@ -13,7 +13,7 @@ import com.zaxxer.hikari.HikariDataSource;
 import edu.utexas.tacc.tapis.shareddb.datasource.HikariDSGenerator;
 import edu.utexas.tacc.tapis.shareddb.datasource.HikariDSGenerator.MetricReporterType;
 
-@Test(groups={"integration"})
+//@Test(groups={"integration"}, enabled=false)
 public final class TempDBTest 
 {
     /* **************************************************************************** */
@@ -44,7 +44,7 @@ public final class TempDBTest
     /* ---------------------------------------------------------------------------- */
     /* testDS:                                                                      */
     /* ---------------------------------------------------------------------------- */
-    @Test(enabled=true)
+    @Test(enabled=false)
     public void allTest() throws SQLException
     {
         // ----------------- DB Management -----------------
