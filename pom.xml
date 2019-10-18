@@ -158,7 +158,7 @@
 
     <properties>
         <!--  Default to no release to suppress signing etc      -->
-        <skip.signing>false</skip.signing>
+        <skip.signing>true</skip.signing>
 
         <gpg.skip>${skip.signing}</gpg.skip>
         <!-- Source encoding -->
@@ -273,7 +273,7 @@
                             <goal>sign</goal>
                         </goals>
                         <configuration>
-                            <skip>${skip.signing}</skip>
+                            <skip>${gpg.skip}</skip>
                         </configuration>
                     </execution>
                 </executions>
