@@ -4,7 +4,7 @@
     <packaging>pom</packaging>
     <groupId>edu.utexas.tacc</groupId>
     <artifactId>tapis-shared</artifactId>
-    <version>1.0.33-SNAPSHOT</version>
+    <version>1.0.33</version>
 
     <repositories>
         <repository>
@@ -24,7 +24,7 @@
     <scm>
         <connection>scm:git:git@github.com:tapis-project/tapis-shared-demo.git</connection>
         <url>https://github.com/tapis-project/tapis-bom</url>
-        <tag>tapis-shared-1.0.31</tag>
+        <tag>tapis-shared-1.0.33</tag>
     </scm>
 
     <licenses>
@@ -158,9 +158,9 @@
 
     <properties>
         <!--  Default to no release to suppress signing etc      -->
-<!--        <skip.signing>false</skip.signing>-->
+        <skip.signing>false</skip.signing>
 
-<!--        <gpg.skip>${skip.signing}</gpg.skip>-->
+        <gpg.skip>${skip.signing}</gpg.skip>
         <!-- Source encoding -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
@@ -210,14 +210,14 @@
                         <shortRevisionLength>8</shortRevisionLength>
                     </configuration>
                 </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-gpg-plugin</artifactId>
-                    <version>1.6</version>
-                    <configuration>
-                        <skip>false</skip>
-                    </configuration>
-                </plugin>
+<!--                <plugin>-->
+<!--                    <groupId>org.apache.maven.plugins</groupId>-->
+<!--                    <artifactId>maven-gpg-plugin</artifactId>-->
+<!--                    <version>1.6</version>-->
+<!--                    <configuration>-->
+<!--                        <skip>false</skip>-->
+<!--                    </configuration>-->
+<!--                </plugin>-->
 
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -272,6 +272,9 @@
                         <goals>
                             <goal>sign</goal>
                         </goals>
+                        <configuration>
+                            <skip>${skip.signing}</skip>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
