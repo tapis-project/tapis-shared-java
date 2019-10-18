@@ -4,7 +4,7 @@
     <packaging>pom</packaging>
     <groupId>edu.utexas.tacc</groupId>
     <artifactId>tapis-shared</artifactId>
-    <version>1.0.35-SNAPSHOT</version>
+    <version>1.0.35</version>
 
     <repositories>
         <repository>
