@@ -158,7 +158,7 @@
 
     <properties>
         <!--  Default to no release to suppress signing etc      -->
-        <skip.signing>true</skip.signing>
+        <gpg.skip>true</gpg.skip>
         <!-- Source encoding -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
@@ -212,6 +212,9 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-gpg-plugin</artifactId>
                     <version>1.6</version>
+                    <configuration>
+                        <skip>${gpg.skip}</skip>
+                    </configuration>
                     <executions>
                         <execution>
                             <id>sign-artifacts</id>
