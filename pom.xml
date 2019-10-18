@@ -4,7 +4,7 @@
     <packaging>pom</packaging>
     <groupId>edu.utexas.tacc</groupId>
     <artifactId>tapis-shared</artifactId>
-    <version>1.0.10-SNAPSHOT</version>
+    <version>1.0.10</version>
 
     <repositories>
         <repository>
@@ -24,7 +24,7 @@
     <scm>
         <connection>scm:git:git@github.com:tapis-project/tapis-shared-demo.git</connection>
         <url>https://github.com/tapis-project/tapis-bom</url>
-        <tag>tapis-shared-1.0.9</tag>
+        <tag>tapis-shared-1.0.10</tag>
     </scm>
 
     <licenses>
