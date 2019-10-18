@@ -160,7 +160,6 @@
         <!--  Default to no release to suppress signing etc      -->
         <skip.signing>true</skip.signing>
 
-        <gpg.skip>${skip.signing}</gpg.skip>
         <!-- Source encoding -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
@@ -273,7 +272,7 @@
                             <goal>sign</goal>
                         </goals>
                         <configuration>
-                            <skip>${gpg.skip}</skip>
+                            <skip>${skip.signing}</skip>
                         </configuration>
                     </execution>
                 </executions>
