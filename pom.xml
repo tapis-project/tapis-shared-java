@@ -158,9 +158,9 @@
 
     <properties>
         <!--  Default to no release to suppress signing etc      -->
-        <skip.signing>true</skip.signing>
+<!--        <skip.signing>false</skip.signing>-->
 
-        <gpg.skip>${skip.signing}</gpg.skip>
+<!--        <gpg.skip>${skip.signing}</gpg.skip>-->
         <!-- Source encoding -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
