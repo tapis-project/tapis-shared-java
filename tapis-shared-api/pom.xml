@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>edu.utexas.tacc</groupId>
 		<artifactId>tapis-shared</artifactId>
-		<version>1.0.43-SNAPSHOT</version>
+		<version>1.1-SNAPSHOT</version>
 
 	</parent>
 
@@ -22,7 +22,6 @@
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-lang3</artifactId>
-			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>jakarta.servlet</groupId>

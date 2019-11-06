@@ -4,7 +4,7 @@
   <parent>
     <groupId>edu.utexas.tacc</groupId>
     <artifactId>tapis-shared</artifactId>
-    <version>1.0.43-SNAPSHOT</version>
+    <version>1.1-SNAPSHOT</version>
   </parent>
   
   <artifactId>tapis-shared-queue</artifactId>
@@ -25,13 +25,6 @@
     </dependencies>
     
     <build>
-        <plugins>
-            <!-- See parent pom for configuration details.           -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-gpg-plugin</artifactId>
-            </plugin>
-        </plugins>
     
         <finalName>queue</finalName>
     </build>

@@ -4,7 +4,13 @@
     <packaging>pom</packaging>
     <groupId>edu.utexas.tacc</groupId>
     <artifactId>tapis-shared</artifactId>
-    <version>1.0.43-SNAPSHOT</version>
+    <version>1.1-SNAPSHOT</version>
+
+    <parent>
+        <groupId>edu.utexas.tacc</groupId>
+        <artifactId>tapis-bom</artifactId>
+        <version>1.1-SNAPSHOT</version>
+    </parent>
 
     <repositories>
         <repository>
@@ -14,274 +20,47 @@
         </repository>
     </repositories>
     <name>Tapis shared</name>
-    <description>TAPIS services BOM dependencies</description>
-    <url>https://github.com/tapis-project/tapis-bom</url>
+    <description>TAPIS shared Java code</description>
+    <url>https://github.com/tapis-project/tapis-shared-java</url>
     <organization>
         <name>TACC</name>
         <url>http://tacc.utexas.edu</url>
     </organization>
 
     <scm>
-        <connection>scm:git:git@github.com:tapis-project/tapis-shared-demo.git</connection>
-        <url>https://github.com/tapis-project/tapis-bom</url>
-        <tag>tapis-shared-1.0.31</tag>
+        <connection>scm:git:git@github.com:tapis-project/tapis-shared-java.git</connection>
+        <url>https://github.com/tapis-project/tapis-shared-java</url>
+        <tag>tapis-shared-1.1-SNAPSHOT</tag>
     </scm>
 
-    <licenses>
-        <license>
-            <name>BSD-3</name>
-            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
-            <distribution>repo</distribution>
-            <comments>
-                BSD 3-Clause License
 
-                Copyright (c) 2019, Texas Advanced Computing Center
-                All rights reserved.
-
-                Redistribution and use in source and binary forms, with or without
-                modification, are permitted provided that the following conditions are met:
-
-                * Redistributions of source code must retain the above copyright notice, this
-                list of conditions and the following disclaimer.
-
-                * Redistributions in binary form must reproduce the above copyright notice,
-                this list of conditions and the following disclaimer in the documentation
-                and/or other materials provided with the distribution.
-
-                * Neither the name of the copyright holder nor the names of its
-                contributors may be used to endorse or promote products derived from
-                this software without specific prior written permission.
-
-                THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
-                WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-                THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO
-                EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-                SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
-                GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-                THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-                ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-            </comments>
-        </license>
-    </licenses>
-
-    <developers>
-        <developer>
-            <id>jstubbs</id>
-            <name>Joe Stubbs</name>
-            <email>jstubbs@tacc.utexas.edu</email>
-            <url>https://tacc-cloud.readthedocs.io</url>
-            <organization>TACC</organization>
-            <organizationUrl>https://www.tacc.utexas.edu</organizationUrl>
-            <roles>
-                <role>manager</role>
-                <role>developer</role>
-            </roles>
-        </developer>
-        <developer>
-            <id>sterry1</id>
-            <name>Steve Terry</name>
-            <email>sterry1@tacc.utexas.edu</email>
-            <url>https://tacc-cloud.readthedocs.io</url>
-            <organization>TACC</organization>
-            <organizationUrl>https://www.tacc.utexas.edu</organizationUrl>
-            <roles>
-                <role>developer</role>
-            </roles>
-        </developer>
-        <developer>
-            <id>rcardone</id>
-            <name>Richard Cardone</name>
-            <email>rcardone@tacc.utexas.edu</email>
-            <url>https://tacc-cloud.readthedocs.io</url>
-            <organization>TACC</organization>
-            <organizationUrl>https://www.tacc.utexas.edu</organizationUrl>
-            <roles>
-                <role>developer</role>
-            </roles>
-        </developer>
-        <developer>
-            <id>ajamthe</id>
-            <name>Anagha Jamthe</name>
-            <email>ajamthe@tacc.utexas.edu</email>
-            <url>https://tacc-cloud.readthedocs.io</url>
-            <organization>TACC</organization>
-            <organizationUrl>https://www.tacc.utexas.edu</organizationUrl>
-            <roles>
-                <role>developer</role>
-            </roles>
-        </developer>
-        <developer>
-            <id>spadhy</id>
-            <name>Smruti Padhy</name>
-            <email>spadhy@tacc.utexas.edu</email>
-            <url>https://tacc-cloud.readthedocs.io</url>
-            <organization>TACC</organization>
-            <organizationUrl>https://www.tacc.utexas.edu</organizationUrl>
-            <roles>
-                <role>developer</role>
-            </roles>
-        </developer>
-        <developer>
-            <id>jmeiring</id>
-            <name>Joseph Meiring</name>
-            <email>jmeiring@tacc.utexas.edu</email>
-            <url>https://tacc-cloud.readthedocs.io</url>
-            <organization>TACC</organization>
-            <organizationUrl>https://www.tacc.utexas.edu</organizationUrl>
-            <roles>
-                <role>developer</role>
-            </roles>
-        </developer>
-        <developer>
-            <id>scblack</id>
-            <name>Steven C. Black</name>
-            <email>scblack@tacc.utexas.edu</email>
-            <url>https://tacc-cloud.readthedocs.io</url>
-            <organization>TACC</organization>
-            <organizationUrl>https://www.tacc.utexas.edu</organizationUrl>
-            <roles>
-                <role>developer</role>
-            </roles>
-        </developer>
-    </developers>
-
-    <distributionManagement>
-        <snapshotRepository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-        </snapshotRepository>
-        <repository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-        </repository>
-    </distributionManagement>
 
     <properties>
         <!--  Default to no release to suppress signing etc      -->
         <skip.signing>true</skip.signing>
-
         <!-- Source encoding -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <!-- Java version -->
-        <java-source.version>1.12</java-source.version>
-        <java-target.version>1.12</java-target.version>
-        <maven-compiler-plugin-release>12</maven-compiler-plugin-release>
-        <buildnumber-maven-plugin.version>1.4</buildnumber-maven-plugin.version>
-        <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
-
     </properties>
     <build>
-        <pluginManagement>
-            <!-- Document what each plugin is used for -->
-            <plugins>
-                <!-- This plugin is used to compile the project's sources. -->
-                <!-- It also forces the IDE to use the specified Java version -->
-                <!-- when creating new projects. -->
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-compiler-plugin</artifactId>
-                    <version>${maven-compiler-plugin.version}</version>
-                    <configuration>
-                        <!-- The release tells maven what version of -->
-                        <!-- the Java compiler to use internally. -->
-                        <release>${maven-compiler-plugin-release}</release>
-                        <source>${java-source.version}</source>
-                        <target>${java-target.version}</target>
-                    </configuration>
-                </plugin>
-
-                <plugin>
-                    <groupId>org.codehaus.mojo</groupId>
-                    <artifactId>buildnumber-maven-plugin</artifactId>
-                    <version>${buildnumber-maven-plugin.version}</version>
-                    <executions>
-                        <execution>
-                            <phase>validate</phase>
-                            <goals>
-                                <goal>create</goal>
-                            </goals>
-                        </execution>
-                    </executions>
-                    <configuration>
-                        <doCheck>false</doCheck>
-                        <doUpdate>false</doUpdate>
-                        <shortRevisionLength>8</shortRevisionLength>
-                    </configuration>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-source-plugin</artifactId>
-                    <version>3.0.1</version>
-                    <executions>
-                        <execution>
-                            <id>attach-sources</id>
-                            <goals>
-                                <goal>jar</goal>
-                            </goals>
-                        </execution>
-                    </executions>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-deploy-plugin</artifactId>
-                    <configuration>
-                        <skip>true</skip>
-                    </configuration>
-                </plugin>
-                <plugin>
-                    <groupId>org.sonatype.plugins</groupId>
-                    <artifactId>nexus-staging-maven-plugin</artifactId>
-                    <version>1.6.7</version>
-                    <extensions>true</extensions>
-                    <configuration>
-                        <serverId>ossrh</serverId>
-                        <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-                        <autoReleaseAfterClose>true</autoReleaseAfterClose>
-                    </configuration>
-                    <executions>
-                        <execution>
-                            <id>default-deploy</id>
-                            <phase>deploy</phase>
-                            <goals>
-                                <goal>deploy</goal>
-                            </goals>
-                        </execution>
-                    </executions>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-javadoc-plugin</artifactId>
-                    <version>3.0.0</version>
-                    <configuration>
-                        <doclint>none</doclint>
-                    </configuration>
-                    <executions>
-                        <execution>
-                            <id>attach-javadocs</id>
-                            <goals>
-                                <goal>jar</goal>
-                            </goals>
-                        </execution>
-                    </executions>
-                </plugin>
-            </plugins>
-        </pluginManagement>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+            </plugin>
             <plugin>
                 <groupId>org.sonatype.plugins</groupId>
                 <artifactId>nexus-staging-maven-plugin</artifactId>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-gpg-plugin</artifactId>
                 <executions>
                     <execution>
-                        <id>sign-artifacts</id>
-                        <phase>verify</phase>
-                        <goals>
-                            <goal>sign</goal>
-                        </goals>
                         <configuration>
                             <skip>${skip.signing}</skip>
                         </configuration>
@@ -291,17 +70,6 @@
         </plugins>
     </build>
 
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>edu.utexas.tacc</groupId>
-                <artifactId>tapis-bom</artifactId>
-                <version>1.0.7</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
     <dependencies>
         <dependency>
             <!-- There are only test dependencies on testng -->
