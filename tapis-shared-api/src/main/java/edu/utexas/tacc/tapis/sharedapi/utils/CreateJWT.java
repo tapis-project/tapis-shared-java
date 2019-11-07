@@ -44,6 +44,9 @@ public class CreateJWT
     // Local logger.
     private static final Logger _log = LoggerFactory.getLogger(CreateJWT.class);
     
+    // The signature algorithm we use.
+    private static final SignatureAlgorithm signatureAlg = SignatureAlgorithm.RS256;
+    
     /* ********************************************************************** */
     /*                                 Fields                                 */
     /* ********************************************************************** */
@@ -100,8 +103,9 @@ public class CreateJWT
         PrivateKey privateKey = getPrivateKey();
         
         // Create the encode JWT object.
-        String encodedJwt = Jwts.builder().setHeaderParam("typ", "JWT").setClaims(claims).
-                              signWith(SignatureAlgorithm.RS256, privateKey).compact();
+        String encodedJwt = Jwts.builder().setHeaderParam("typ", "JWT")
+            .setClaims(claims)
+            .signWith(signatureAlg, privateKey).compact();
         
         // Output the encoded string.
         outputJwt(encodedJwt);

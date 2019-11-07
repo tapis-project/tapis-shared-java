@@ -32,7 +32,7 @@ public class ServiceUtils
 		if (StringUtils.isEmpty(value)) {
 			return false;
 		} else {
-			return org.apache.commons.validator.routines.EmailValidator.getInstance(false).isValid(value);
+			return EmailValidator.getInstance(false).isValid(value);
 		}
 	}
 
@@ -205,7 +205,7 @@ public class ServiceUtils
 	 * <p>
 	 * The current machine could have more than one local IP address so might
 	 * prefer to use {@link #getAllLocalIPs() } or
-	 * {@link #getAllLocalIPs(java.lang.String) }.
+	 * {@link #getAllLocalIPs(String) }.
 	 * <p>
 	 * If you want just one IP, this is the right method and it tries to find
 	 * out the most accurate (primary) IP address. It prefers addresses that

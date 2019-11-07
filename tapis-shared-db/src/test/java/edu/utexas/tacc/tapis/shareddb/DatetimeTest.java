@@ -30,7 +30,7 @@ import edu.utexas.tacc.tapis.shareddb.datasource.HikariDSGenerator;
  * 
  * @author rcardone
  */
-//@Test(groups={"integration"}, enabled=false)
+@Test(groups={"integration"})
 public class DatetimeTest 
 {
 	/* **************************************************************************** */
@@ -57,7 +57,7 @@ public class DatetimeTest
     /* ---------------------------------------------------------------------- */
     /* setup:                                                                 */
     /* ---------------------------------------------------------------------- */
-    @BeforeSuite(enabled = false)
+    @BeforeSuite
     private void setup()
     {
 		// Get an Hikari data source using the multi-argument constructor.
@@ -76,7 +76,7 @@ public class DatetimeTest
     /* ---------------------------------------------------------------------- */
     /* teardown:                                                              */
     /* ---------------------------------------------------------------------- */
-    @AfterSuite(enabled = false)
+    @AfterSuite
     private void teardown()
     {
         // Close the datasource and its pool.
@@ -91,7 +91,7 @@ public class DatetimeTest
 	/* ---------------------------------------------------------------------------- */
 	/* testDatetime:                                                                */
 	/* ---------------------------------------------------------------------------- */
-	@Test(enabled=false)
+	@Test(enabled=true)
 	public void testDatetime()
 	{
 		// Control the deletion of the temporary table in case of error.

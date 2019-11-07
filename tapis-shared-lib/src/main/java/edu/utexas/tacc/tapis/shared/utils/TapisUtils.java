@@ -381,25 +381,6 @@ public static Timestamp getUTCTimestamp()
   }
   
   /* ---------------------------------------------------------------------------- */
-  /* transformRawTenantId                                                         */
-  /* ---------------------------------------------------------------------------- */
-  /** Convert the raw tenant id encode in the http request header key name into
-   * the actual tenant id defined in the tenants table.  Nulls and empty strings
-   * are passed back as received.
-   * 
-   * @param rawTenantId tenantId as encoded in the http request header key name
-   * @return the transformed tenant id 
-   */
-  public static String transformRawTenantId(String rawTenantId)
-  {
-      if (StringUtils.isBlank(rawTenantId)) return rawTenantId;
-      String tenantId = rawTenantId.toLowerCase();
-      tenantId = tenantId.replace('-', '.');
-      tenantId = tenantId.replace('_', '.');
-      return tenantId;
-  }
-  
-  /* ---------------------------------------------------------------------------- */
   /* tapisify:                                                                    */
   /* ---------------------------------------------------------------------------- */
   /** Wrap non-tapis exceptions in an TapisException keeping the same error message
@@ -438,8 +419,8 @@ public static Timestamp getUTCTimestamp()
       // -------- Wrapper for TapisRecoverableException
       else if (e instanceof TapisRecoverableException) {
           // Wrap the recoverable exception in a generic tapis exception.
-          // Recoverable exceptions are discovered by search the cause chain
-          // using findInChain(), so there's no loss in burying them inside
+          // Recoverable exceptions are discovered by searching the cause chain
+          // using findInChain(), so there's no loss when burying them inside
           // another exception.
           tapisException = new TapisException(msg, e);
       }

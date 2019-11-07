@@ -49,6 +49,8 @@ public class HikariDSGenerator
   public static final String  TAPIS_SEC_DB_NAME = "tapissecdb";
   public static final String  TAPIS_SCHEMA_NAME = "public";
   public static final String  TAPIS_SEC_SCHEMA_NAME = "public";
+  public static final String  TAPIS_SYS_DB_NAME = "tapissysdb";
+  public static final String  TAPIS_SYS_SCHEMA_NAME = "public";
   
   // Other database defaults.
   public static final String  DEFAULT_DBMS_NAME = "postgresql";
@@ -173,7 +175,7 @@ public class HikariDSGenerator
    		throw new TapisRuntimeException(msg);
    	}
    	if (maxPoolSize < 1) {
-   	    String msg = MsgUtils.getMsg("TAPIS_INVALID_PARAMETER", "getDataSource", maxPoolSize);
+   	    String msg = MsgUtils.getMsg("TAPIS_INVALID_PARAMETER", "getDataSource", "maxPoolSize", maxPoolSize);
    		_log.error(msg);
    		throw new TapisRuntimeException(msg);
    	}
