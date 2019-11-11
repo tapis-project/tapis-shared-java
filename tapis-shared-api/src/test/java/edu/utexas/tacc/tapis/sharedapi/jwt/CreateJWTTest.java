@@ -31,7 +31,7 @@ import io.jsonwebtoken.SignatureAlgorithm;
  * @author spadhy
  *
  */
-@Test(groups= {"unit"}, enabled = false)
+@Test(groups= {"unit"})
 public class CreateJWTTest 
 {
 	/* **************************************************************************** */
@@ -87,7 +87,7 @@ public class CreateJWTTest
 	/*                              Test                                      */
 	/* ********************************************************************** */  
 
-	@Test(enabled=false)
+	@Test(enabled=true)
 	public void createJWTTest() throws Exception
 	{
 

@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <packaging>pom</packaging>
 
-    <artifactId>tapis-shared</artifactId>
+    <artifactId>tapis-shared-java</artifactId>
     <version>1.1-SNAPSHOT</version>
 
     <parent>
