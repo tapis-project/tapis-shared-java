@@ -84,7 +84,7 @@ public class JJWTTestNGTest
 		// Note that setClaims needs called before setSubject otherwise subject information in the claim gets overwritten by setClaims
 		Claims claims = Jwts.claims();
 		claims.put("fruit", "banana");
-		String json = Jwts.builder().setClaims(claims).setSubject("bud").signWith( SignatureAlgorithm.RS384, keyPair.getPrivate()).compact();
+		String json = Jwts.builder().setClaims(claims).setSubject("bud").signWith(keyPair.getPrivate(), SignatureAlgorithm.RS384).compact();
 
 		// Validate JWT.
 		try {
@@ -133,7 +133,7 @@ public class JJWTTestNGTest
 		// Note that setClaims needs called before setSubject otherwise subject information in the claim gets overwritten by setClaims
 		Claims claims = Jwts.claims();
 		claims.put("fruit", "apple");
-		String json = Jwts.builder().setClaims(claims).setSubject("bud").signWith(SignatureAlgorithm.RS384, keyPair.getPrivate()).compact();
+		String json = Jwts.builder().setClaims(claims).setSubject("bud").signWith(keyPair.getPrivate(), SignatureAlgorithm.RS384).compact();
 
 		try {
 			Jwt jwt = Jwts.parser().setSigningKey(keyPair.getPublic()).parse(json);

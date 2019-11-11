@@ -157,7 +157,7 @@ public class JJWTTest
         // Create and print json.
         Claims claims = Jwts.claims();
         claims.put("fruit", "banana");
-        String json = Jwts.builder().setSubject("bud").setClaims(claims).signWith(SignatureAlgorithm.RS384, keyPair.getPrivate()).compact();
+        String json = Jwts.builder().setSubject("bud").setClaims(claims).signWith(keyPair.getPrivate(), SignatureAlgorithm.RS384).compact();
         System.out.println("Generated JWT:");
         System.out.println(json);
         
@@ -225,7 +225,7 @@ public class JJWTTest
         // Create and print json.
         Claims claims = Jwts.claims();
         claims.put("fruit", "apple");
-        String json = Jwts.builder().setClaims(claims).setSubject("bud").signWith(SignatureAlgorithm.RS384, keyPair.getPrivate()).compact();
+        String json = Jwts.builder().setClaims(claims).setSubject("bud").signWith(keyPair.getPrivate(), SignatureAlgorithm.RS384).compact();
         System.out.println("Generated JWT:");
         System.out.println(json);
         

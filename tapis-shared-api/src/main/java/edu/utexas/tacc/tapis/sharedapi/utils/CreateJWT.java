@@ -103,9 +103,8 @@ public class CreateJWT
         PrivateKey privateKey = getPrivateKey();
         
         // Create the encode JWT object.
-        String encodedJwt = Jwts.builder().setHeaderParam("typ", "JWT")
-            .setClaims(claims)
-            .signWith(signatureAlg, privateKey).compact();
+        String encodedJwt = Jwts.builder().setHeaderParam("typ", "JWT").setClaims(claims).
+                              signWith(privateKey, signatureAlg).compact();
         
         // Output the encoded string.
         outputJwt(encodedJwt);
