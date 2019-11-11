@@ -3,9 +3,8 @@
 
 	<parent>
 		<groupId>edu.utexas.tacc.tapis</groupId>
-		<artifactId>tapis-shared</artifactId>
+		<artifactId>tapis-shared-java</artifactId>
 		<version>1.1-SNAPSHOT</version>
-
 	</parent>
 
 	<artifactId>tapis-shared-lib</artifactId>
