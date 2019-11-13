@@ -11,9 +11,12 @@ import java.util.List;
 import java.util.Map.Entry;
 
 import javax.annotation.Priority;
+import javax.annotation.security.PermitAll;
 import javax.ws.rs.Priorities;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
+import javax.ws.rs.container.ResourceInfo;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -88,6 +91,10 @@ public class JWTValidateRequestFilter
     // The public key used to check the JWT signature.  This cached copy is
     // used by all instances of this class.
     private static PublicKey _jwtPublicKey;
+
+    @Context
+    private ResourceInfo resourceInfo;
+
     
     /* ********************************************************************** */
     /*                            Public Methods                              */
@@ -103,8 +110,12 @@ public class JWTValidateRequestFilter
             _log.trace("Executing JAX-RX request filter: " + this.getClass().getSimpleName() + ".");
         
         // Skip JWT processing for non-authenticated requests.
-        if (isNoAuthRequest(requestContext)) return;   
-        
+        if (isNoAuthRequest(requestContext)) return;
+
+        // @PermitAll on the method takes precedence over @RolesAllowed on the class, allow all
+        // requests with @PermitAll to go through
+        if (resourceInfo.getResourceMethod().isAnnotationPresent(PermitAll.class)) return;
+
         // ------------------------ Extract Encoded JWT ------------------------
         // Parse variables.
         String encodedJWT = null;
