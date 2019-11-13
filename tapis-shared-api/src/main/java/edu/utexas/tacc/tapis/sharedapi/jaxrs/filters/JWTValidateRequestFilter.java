@@ -6,7 +6,6 @@ import java.security.PublicKey;
 import java.security.cert.Certificate;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
 
@@ -75,6 +74,10 @@ public class JWTValidateRequestFilter
     private static final String CLAIM_DELEGATION     = "tapis/delegation";
     private static final String CLAIM_DELEGATION_SUB = "tapis/delegation_sub";
     
+    // No-auth openapi resource names.
+    private static final String OPENAPI_JSON = "/openapi.json";
+    private static final String OPENAPI_YAML = "/openapi.yaml";
+    
     // The token types this filter expects.
     private static final String TOKEN_ACCESS = "access";
     
@@ -85,9 +88,6 @@ public class JWTValidateRequestFilter
     /* ********************************************************************** */
     /*                                Fields                                  */
     /* ********************************************************************** */
-    // List all of url substrings that identify authentication exempt requests.
-    private static final HashSet<String> _noAuthRequests = initNoAuthRequests();
-    
     // The public key used to check the JWT signature.  This cached copy is
     // used by all instances of this class.
     private static PublicKey _jwtPublicKey;
@@ -448,33 +448,11 @@ public class JWTValidateRequestFilter
         // segment and includes a leading slash.  
         String relativePath = requestContext.getUriInfo().getRequestUri().getPath();
         
-        // No authentication requires an exact match.
-        if (_noAuthRequests.contains(relativePath)) return true;
+        // Allow anyone to access the openapi requests.
+        if (relativePath.endsWith(OPENAPI_JSON)) return true;
+        if (relativePath.endsWith(OPENAPI_YAML)) return true; 
         
         // Authentication required.
         return false;
-    }
-    
-    /* ---------------------------------------------------------------------- */
-    /* initNoAuthRequests:                                                    */
-    /* ---------------------------------------------------------------------- */
-    /** Populate the set of requests that don't require JWTs.  The requests are
-     * identified by strings that start with the slash (inclusive) following the 
-     * host:port in the request URL.  Each string in the set identifies a path 
-     * to the request's base URI.  This approach allows requests from different 
-     * services to safely coexist in the same set since each string contains a
-     * service name.     
-     * 
-     * @return the initialized hash set
-     */
-    private static HashSet<String> initNoAuthRequests()
-    {
-        // Create the set of requests that do not require authentication.
-        var set = new HashSet<String>();
-        set.add("/security/v3/healthcheck");
-        set.add("/security/v3/openapi.json");
-        set.add("/security/v3/openapi.yaml");
-        
-        return set;
     }
 }
