@@ -109,12 +109,12 @@ public class JWTValidateRequestFilter
         if (_log.isTraceEnabled())
             _log.trace("Executing JAX-RX request filter: " + this.getClass().getSimpleName() + ".");
         
-        // Skip JWT processing for non-authenticated requests.
-        if (isNoAuthRequest(requestContext)) return;
-
         // @PermitAll on the method takes precedence over @RolesAllowed on the class, allow all
         // requests with @PermitAll to go through
         if (resourceInfo.getResourceMethod().isAnnotationPresent(PermitAll.class)) return;
+
+        // Skip JWT processing for non-authenticated requests.
+        if (isNoAuthRequest(requestContext)) return;
 
         // ------------------------ Extract Encoded JWT ------------------------
         // Parse variables.
