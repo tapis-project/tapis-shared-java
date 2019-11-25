@@ -11,37 +11,34 @@ public class AuthenticatedUser implements Principal {
 
     private final String username;
     private final String tenantId;
-    private final String roles;
-    private final Jwt jwt;
+    private final String accountType;
+    private final String delegator;
+    private final String jwt;
 
-
-
-    public AuthenticatedUser(String username, String tenantId, String roles, Jwt jwt) {
+    public AuthenticatedUser(String username, String tenantId, String accountType, String delegator, String jwt) {
         this.username = username;
         this.tenantId = tenantId;
-        this.roles = roles;
+        this.accountType = accountType;
+        this.delegator = delegator;
         this.jwt = jwt;
     }
 
     @Override
     public String getName() {
-        return this.username;
-    }
-
-    public String getRoles() {
-        return roles;
-    }
-
-    public String getUsername() {
         return username;
     }
+
+    public String getAccountType() { return accountType; }
+
+    public String getDelegator() { return delegator; }
 
     public String getTenantId() {
         return tenantId;
     }
 
-    public Jwt getJwt() {
+    public String getJwt() {
         return jwt;
     }
+
 }
 
