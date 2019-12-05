@@ -13,4 +13,18 @@ public final class TapisDBUtils
     {
         return "jdbc:postgresql://" + host + ":" + port + "/" + database;
     }
+    
+    /** SQL queries on string fields can contain wildcard characters (% and _).
+     * This method escapes those characters to avoid having them interpreted 
+     * by SQL as wildcards.
+     * 
+     * @param s the string that might contain wildcards
+     * @return the string with wildcards escaped
+     */
+    public static String escapeSqlWildcards(String s)
+    {
+        s = s.replace("%", "\\%");
+        s = s.replace("_", "\\_");
+        return s;
+    }
 }
