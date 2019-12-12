@@ -3,11 +3,11 @@ package edu.utexas.tacc.tapis.sharedapi.security;
 import javax.ws.rs.core.SecurityContext;
 import java.security.Principal;
 
-public class TapisSecurtiyContext implements SecurityContext {
+public class TapisSecurityContext implements SecurityContext {
 
     private AuthenticatedUser user;
 
-    public TapisSecurtiyContext(AuthenticatedUser user) {
+    public TapisSecurityContext(AuthenticatedUser user) {
         this.user = user;
     }
 

@@ -22,7 +22,7 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.ext.Provider;
 
 import edu.utexas.tacc.tapis.sharedapi.security.AuthenticatedUser;
-import edu.utexas.tacc.tapis.sharedapi.security.TapisSecurtiyContext;
+import edu.utexas.tacc.tapis.sharedapi.security.TapisSecurityContext;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -269,7 +269,7 @@ public class JWTValidateRequestFilter
 
         // Inject the user and JWT into the security context and request context
         AuthenticatedUser requestUser = new AuthenticatedUser(user, tenant, accountTypeStr, delegator, encodedJWT);
-        requestContext.setSecurityContext(new TapisSecurtiyContext(requestUser));
+        requestContext.setSecurityContext(new TapisSecurityContext(requestUser));
     }
 
     /* ********************************************************************** */
