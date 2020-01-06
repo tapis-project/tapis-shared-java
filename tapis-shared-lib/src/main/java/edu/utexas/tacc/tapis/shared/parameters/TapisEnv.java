@@ -170,7 +170,35 @@ public class TapisEnv
 	  
       // The email address of tapis support.
       TAPIS_SUPPORT_EMAIL("tapis.support.email"),
+      
+      // ------------------- SK Parameters -----------------------------
+      // Whether to disable the secrets subsystem.
+      TAPIS_SK_VAULT_DISABLE("tapis.sk.vault.disable"),
+      
+      // The address of the vault server (ex: http://myhost:8200)
+      TAPIS_SK_VAULT_ADDRESS("tapis.sk.vault.address"),
+      
+      // The approle role id assigned by vault to SK.
+      TAPIS_SK_VAULT_ROLE_ID("tapis.sk.vault.roleid"),
+      
+      // The short-lived approle secret id required for login.
+      TAPIS_SK_VAULT_SECRET_ID("tapis.sk.vault.secretid"),
+      
+      // Vault connection timeout in seconds.
+      TAPIS_SK_VAULT_OPEN_TIMEOUT("tapis.sk.vault.open.timeout"),
+      
+      // Vault response timeout in seconds after connection is established.
+      TAPIS_SK_VAULT_READ_TIMEOUT("tapis.sk.vault.read.timeout"),
+      
+      // Whether http or https with cert should be used for vault communication.
+      TAPIS_SK_VAULT_SSL_VERIFY("tapis.sk.vault.ssl.verify"),
 	  
+      // The file path to the pem certificate (see SslConfig).
+      TAPIS_SK_VAULT_SSL_CERT_FILE("tapis.sk.vault.ssl.cert.file"),
+      
+      // The file path to the pem certificate (see SslConfig).
+      TAPIS_SK_VAULT_SK_KEY_PEM_FILE("tapis.sk.vault.sk.key.pem.file"),
+      
 	  // ------------------- Env Only Parameters -----------------------
       // ENV-VARIABLE-ONLY: The flag to log security information such as JWT headers.  
       // Boolean value, the default is false.
