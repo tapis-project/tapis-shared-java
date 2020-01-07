@@ -31,9 +31,13 @@ public class TapisExceptionMapper implements ExceptionMapper<Exception> {
                     .type(MediaType.APPLICATION_JSON)
                     .entity(resp).build();
         } else if (exception instanceof NotAuthorizedException ) {
-            return Response.status(Response.Status.FORBIDDEN)
-                    .type(MediaType.APPLICATION_JSON)
-                    .entity(resp).build();
+             return Response.status(Response.Status.FORBIDDEN)
+                     .type(MediaType.APPLICATION_JSON)
+                     .entity(resp).build();
+        } else if (exception instanceof BadRequestException) {
+             return Response.status(Response.Status.BAD_REQUEST)
+                     .type(MediaType.APPLICATION_JSON)
+                     .entity(resp).build();
         } else {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .type(MediaType.APPLICATION_JSON)
