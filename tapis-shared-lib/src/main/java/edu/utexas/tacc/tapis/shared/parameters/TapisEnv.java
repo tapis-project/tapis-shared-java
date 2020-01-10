@@ -199,6 +199,18 @@ public class TapisEnv
       // The file path to the pem certificate (see SslConfig).
       TAPIS_SK_VAULT_SK_KEY_PEM_FILE("tapis.sk.vault.sk.key.pem.file"),
       
+      // The time-to-live of SK vault token in seconds.  Must be less than or 
+      // equal to the maximum number of seconds defined in the sk-role.json file.
+      // Type is integer, default value is 28,800 (8 hours).
+      TAPIS_SK_VAULT_TOKEN_RENEWAL_SECONDS("tapis.sk.vault.token.renewal.seconds"),
+      
+      // When to begin issuing token renewal requests as a percent of token total
+      // ttl.  Up to 10 token renewal requests will be attempted, beginning
+      // approximately at the renewal threshold point and re-attempted at equal 
+      // intervals until attempts expire.  Type is integer, a percentage between 
+      // 20 and 80, with a default value of 50.
+      TAPIS_SK_VAULT_TOKEN_RENEWAL_THRESHOLD("tapis.sk.vault.token.renewal.threshold"),
+      
 	  // ------------------- Env Only Parameters -----------------------
       // ENV-VARIABLE-ONLY: The flag to log security information such as JWT headers.  
       // Boolean value, the default is false.
