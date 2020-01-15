@@ -1,14 +1,12 @@
 package edu.utexas.tacc.tapis.sharedapi.providers;
 
-import edu.utexas.tacc.tapis.sharedapi.responses.TapisResponse;
-
-import javax.annotation.Priority;
 import javax.validation.ValidationException;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
+
+import edu.utexas.tacc.tapis.sharedapi.responses.TapisResponse;
 
 
 /**
@@ -24,7 +22,7 @@ public class ValidationExceptionMapper implements ExceptionMapper<ValidationExce
     @Override
     public Response toResponse(ValidationException exception){
         //TODO: I think we can add in a list of all the validation errors in here?
-        TapisResponse resp = TapisResponse.createErrorResponse(exception.getMessage());
+        TapisResponse<String> resp = TapisResponse.createErrorResponse(exception.getMessage());
 
         return Response.status(Response.Status.BAD_REQUEST)
                 .type(MediaType.APPLICATION_JSON)

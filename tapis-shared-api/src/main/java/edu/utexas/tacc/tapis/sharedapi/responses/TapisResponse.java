@@ -82,7 +82,7 @@ public class TapisResponse<T> {
         return resp;
     }
 
-    public static TapisResponse createErrorResponse(String msg) {
+    public static TapisResponse<String> createErrorResponse(String msg) {
         TapisResponse<String> resp = new TapisResponse<>();
         resp.setStatus("error");
         resp.setMessage(msg);
