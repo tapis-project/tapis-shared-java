@@ -25,6 +25,7 @@ public class TapisConstants
 	public static final int JAXRS_FILTER_PRIORITY_BEFORE_AUTHENTICATION  = 900;
 	public static final int JAXRS_FILTER_PRIORITY_AFTER_AUTHENTICATION   = 1100;
 	public static final int JAXRS_FILTER_PRIORITY_AFTER_AUTHENTICATION_2 = 1200;
+	public static final int JAXRS_FILTER_PRIORITY_AFTER_AUTHENTICATION_3 = 1300;
 	
 	// Convenience definition.
 	public static final String EMPTY_JSON = "{}";
@@ -42,9 +43,9 @@ public class TapisConstants
 	public static final String META_SERVICE          = "meta/" + API_VERSION + "/";
 	public static final String NOTIFICATIONS_SERVICE = "notifications/" + API_VERSION + "/";
 
-	public static final String META_SCHEMA_SERVICE  = "schemas/";
-	public static final String SYSTEMS_SERVICE  = "systems/" + API_VERSION + "/";
-    public static final String TRANSFERS_SERVICE  = "transfers/" + API_VERSION + "/";
+	public static final String META_SCHEMA_SERVICE   = "schemas/";
+	public static final String SYSTEMS_SERVICE       = "systems/" + API_VERSION + "/";
+    public static final String TRANSFERS_SERVICE     = "transfers/" + API_VERSION + "/";
 
 	        
 	// Placeholder URLs used before tenant URL substitution takes place.
