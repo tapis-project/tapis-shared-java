@@ -23,10 +23,17 @@ public final class TapisThreadContext
 	// Account type also cannot be null.  The delegator subject is either null when
 	// no delegation has occurred or in the 'user@tenant' format when there is 
 	// delegation.
-	private String tenantId = INVALID_ID;
-	private String user = INVALID_ID;
-	private AccountType accountType;
-    private String delegatorSubject = null; 
+	private String tenantId = INVALID_ID;       // always from JWT
+	private String user = INVALID_ID;           // from JWT or X-Tapis-User header
+	private AccountType accountType;            // determines source of user value
+    private String delegatorSubject = null;     // always from JWT
+    
+    // Header values that are saved if present in the request.
+    private String headerTenantId;              // X-Tapis-Tenant header
+    
+    // Information from service type JWTs
+    private String serviceUser;                 // user from JWT if a service token
+    private String UserJwtHash;                 // X-Tapis-User-Token-Hash header
 	
 	// The execution context is set at a certain point in request processing, 
 	// usually well after processing has begun.
@@ -88,5 +95,29 @@ public final class TapisThreadContext
     }
     public void setDelegatorSubject(String delegatorSubject) {
         this.delegatorSubject = delegatorSubject;
+    }
+
+    public String getHeaderTenantId() {
+        return headerTenantId;
+    }
+
+    public void setHeaderTenantId(String headerTenantId) {
+        this.headerTenantId = headerTenantId;
+    }
+
+    public String getServiceUser() {
+        return serviceUser;
+    }
+
+    public void setServiceUser(String serviceUser) {
+        this.serviceUser = serviceUser;
+    }
+
+    public String getUserJwtHash() {
+        return UserJwtHash;
+    }
+
+    public void setUserJwtHash(String userJwtHash) {
+        UserJwtHash = userJwtHash;
     }
 }

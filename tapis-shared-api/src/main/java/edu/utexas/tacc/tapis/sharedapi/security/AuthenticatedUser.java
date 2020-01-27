@@ -1,7 +1,5 @@
 package edu.utexas.tacc.tapis.sharedapi.security;
 
-import io.jsonwebtoken.Jwt;
-
 import java.security.Principal;
 
 /**
@@ -13,13 +11,22 @@ public class AuthenticatedUser implements Principal {
     private final String tenantId;
     private final String accountType;
     private final String delegator;
+    private final String serviceUser;
+    private final String headerTenantId;
+    private final String headerUserTokenHash;
     private final String jwt;
 
-    public AuthenticatedUser(String username, String tenantId, String accountType, String delegator, String jwt) {
+    public AuthenticatedUser(String username, String tenantId, String accountType, String delegator,
+                             String serviceUser, String headerTenantId, String headerUserTokenHash, 
+                             String jwt) 
+    {
         this.username = username;
         this.tenantId = tenantId;
         this.accountType = accountType;
         this.delegator = delegator;
+        this.serviceUser = serviceUser;
+        this.headerTenantId = headerTenantId;
+        this.headerUserTokenHash = headerUserTokenHash;
         this.jwt = jwt;
     }
 
