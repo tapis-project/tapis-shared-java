@@ -416,8 +416,10 @@ public class TapisLoggingFilter
       for (String headerName : headerList) {
         // Avoid logging security information unless the 
         // controlling environment variable is set to true.
-        if (!TapisEnv.getBoolean(EnvVar.TAPIS_ENVONLY_LOG_SECURITY_INFO))
-          if (headerName.toLowerCase().startsWith("x-jwt-assertion")) continue;
+        if (!TapisEnv.getBoolean(EnvVar.TAPIS_ENVONLY_LOG_SECURITY_INFO)) {
+          if (headerName.toLowerCase().startsWith("x-tapis-token")) continue;
+          if (headerName.toLowerCase().startsWith("authorization")) continue;
+        }
         
         // Allow this header key/value pair.
         if (!first) buf.append(", ");

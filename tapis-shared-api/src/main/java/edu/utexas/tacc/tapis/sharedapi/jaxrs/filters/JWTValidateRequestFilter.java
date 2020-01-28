@@ -147,6 +147,7 @@ public class JWTValidateRequestFilter
         // ------------------------ Read Tenant Claim --------------------------
         // Get the JWT without verifying the signature.  Decoding checks that
         // the token has not expired.
+        @SuppressWarnings("rawtypes")
         Jwt unverifiedJwt = null;
         try {unverifiedJwt = decodeJwt(encodedJWT);}
         catch (Exception e) {
@@ -254,40 +255,60 @@ public class JWTValidateRequestFilter
         
         // ------------------------ Assign Header Values -----------------------
         // The user on behalf of whom the request is being made.
-        String effectiveUser = null;
+        String effectiveUser     = null;
+        String effectiveTenantId = null;
         
         // The user specified in a service jwt.
         String serviceUser = null;
         
         // Get information that may have been relayed in request headers.
-        String headerUserTokenHash = null;
         String headerTenantId = headers.getFirst(TAPIS_TENANT_HEADER);
+        String headerUser     = headers.getFirst(TAPIS_USER_HEADER);
+        String headerUserTokenHash = headers.getFirst(TAPIS_HASH_HEADER);
         
         // These headers are only considered on service tokens.
         if (accountType == AccountType.service) {
-            String headerUser   = headers.getFirst(TAPIS_USER_HEADER);
-            headerUserTokenHash = headers.getFirst(TAPIS_HASH_HEADER);
-            
             // The X-Tapis-User header is mandatory when a service jwt is used.
             if (StringUtils.isBlank(headerUser)) {
-                String msg = MsgUtils.getMsg("TAPIS_SECURITY_MISSING_USER_HEADER", jwtUser);
+                String msg = MsgUtils.getMsg("TAPIS_SECURITY_MISSING_HEADER", jwtUser, tenant,
+                                             accountType.name(), TAPIS_USER_HEADER);
+                _log.error(msg);
+                requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
+                return;
+            }
+            
+            // The X-Tapis-User header is mandatory when a service jwt is used.
+            if (StringUtils.isBlank(headerTenantId)) {
+                String msg = MsgUtils.getMsg("TAPIS_SECURITY_MISSING_HEADER", jwtUser, tenant,
+                                             accountType.name(), TAPIS_TENANT_HEADER);
                 _log.error(msg);
                 requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
                 return;
             }
             
             // Set the effective user and service user when service jwts are received.
-            effectiveUser = headerUser;
-            serviceUser   = jwtUser;
+            effectiveUser     = headerUser;
+            effectiveTenantId = headerTenantId;
+            serviceUser       = jwtUser;
+        } else {
+            // Account type is user. Make sure the user header is not present.
+            if (StringUtils.isNotBlank(headerUser)) {
+                String msg = MsgUtils.getMsg("TAPIS_SECURITY_UNEXPECTED_HEADER", jwtUser, 
+                                             tenant, accountType.name(), TAPIS_USER_HEADER);
+                _log.error(msg);
+                requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
+                return;
+            }
+            
+            // Set the effective values for user jwts.
+            effectiveUser     = jwtUser;
+            effectiveTenantId = tenant;
         }
         
-        // Set the effective user for user jwts.
-        if (effectiveUser == null) effectiveUser = jwtUser;
-        
         // ------------------------ Assign Effective Values --------------------
-        // Assign pertinent claims to our threadlocal context.
+        // Assign pertinent claims and header values to our threadlocal context.
         TapisThreadContext threadContext = TapisThreadLocal.tapisThreadContext.get();
-        threadContext.setTenantId(tenant);                 // from jwt, never null
+        threadContext.setTenantId(effectiveTenantId);      // from jwt or header, never null
         threadContext.setUser(effectiveUser);              // from jwt or header, never null
         threadContext.setAccountType(accountType);         // from jwt, never null
         threadContext.setDelegatorSubject(delegator);      // from jwt, can be null
@@ -297,9 +318,9 @@ public class JWTValidateRequestFilter
 
         // Inject the user and JWT into the security context and request context
         AuthenticatedUser requestUser = 
-            new AuthenticatedUser(effectiveUser, tenant, accountTypeStr, delegator, 
-                                  serviceUser, headerTenantId, headerUserTokenHash,
-                                  encodedJWT);
+            new AuthenticatedUser(effectiveUser, effectiveTenantId, accountTypeStr, 
+                                  delegator, serviceUser, headerTenantId, 
+                                  headerUserTokenHash, encodedJWT);
         requestContext.setSecurityContext(new TapisSecurityContext(requestUser));
     }
 
@@ -315,6 +336,7 @@ public class JWTValidateRequestFilter
      * @return the decoded but not verified jwt
      * @throws TapisSecurityException on error
      */
+    @SuppressWarnings("rawtypes")
     private Jwt decodeJwt(String encodedJWT)
      throws TapisSecurityException
     {
@@ -368,6 +390,7 @@ public class JWTValidateRequestFilter
         //PublicKey publicKey = getJwtPublicKeyFromTestKeyStore();
         
         // Verify and import the jwt data.
+        @SuppressWarnings({ "unused", "rawtypes" })
         Jwt jwt = null; 
         try {jwt = Jwts.parser().setSigningKey(publicKey).parse(encodedJwt);}
             catch (Exception e) {
@@ -458,6 +481,7 @@ public class JWTValidateRequestFilter
             km.load(password);
 
             // ----- Get the private key from the keystore.
+            @SuppressWarnings("unused")
             PrivateKey privateKey = km.getPrivateKey(alias, password);
             Certificate cert = km.getCertificate(alias);
             publicKey = cert.getPublicKey();
