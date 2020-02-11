@@ -23,7 +23,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
 import edu.utexas.tacc.tapis.shared.exceptions.TapisSecurityException;
+import edu.utexas.tacc.tapis.shared.exceptions.runtime.TapisRuntimeException;
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
 import edu.utexas.tacc.tapis.shared.parameters.TapisEnv;
 import edu.utexas.tacc.tapis.shared.parameters.TapisEnv.EnvVar;
@@ -33,6 +35,7 @@ import edu.utexas.tacc.tapis.shared.threadlocal.TapisThreadLocal;
 import edu.utexas.tacc.tapis.sharedapi.keys.KeyManager;
 import edu.utexas.tacc.tapis.sharedapi.security.AuthenticatedUser;
 import edu.utexas.tacc.tapis.sharedapi.security.TapisSecurityContext;
+import edu.utexas.tacc.tapis.sharedapi.security.TenantManager;
 import edu.utexas.tacc.tapis.sharedapi.utils.TapisRestUtils;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwt;
@@ -286,6 +289,24 @@ public class JWTValidateRequestFilter
                 return;
             }
             
+            // Check that the jwt tenant is allowed to act on behalf of the header tenant.
+            boolean allowedTenant;
+            try {allowedTenant = isAllowedTenant(tenant, headerTenantId);}
+                catch (Exception e) {
+                    String msg = MsgUtils.getMsg("TAPIS_SECURITY_ALLOWABLE_TENANT_ERROR", 
+                                                 jwtUser, tenant, headerTenantId);
+                    _log.error(msg, e);
+                    requestContext.abortWith(Response.status(Status.INTERNAL_SERVER_ERROR).entity(msg).build());
+                    return;
+                }
+            if (!allowedTenant) {
+                String msg = MsgUtils.getMsg("TAPIS_SECURITY_TENANT_NOT_ALLOWED", 
+                                             jwtUser, tenant, headerTenantId);
+                _log.error(msg);
+                requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
+                return;
+            }
+            
             // Set the effective user and service user when service jwts are received.
             effectiveUser     = headerUser;
             effectiveTenantId = headerTenantId;
@@ -515,5 +536,29 @@ public class JWTValidateRequestFilter
         
         // Authentication required.
         return false;
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* isAllowedTenant:                                                       */
+    /* ---------------------------------------------------------------------- */
+    /** Determine if the tenant specified in the jwt tapis/tenant_id claim is
+     * allowed to execute on behalf of the tenant specified in the 
+     * X-Tapis-Tenant header.  This method should only be called on service
+     * tokens and neither parameter can be null.s
+     * 
+     * @param jwtTenantId the tenant assigned in the jwt tapis/tenant_id claim
+     * @param headerTenantId the tenant assigned in the X-Tapis-Tenant header
+     * @return
+     * @throws TapisException 
+     * @throws TapisRuntimeException 
+     */
+    private boolean isAllowedTenant(String jwtTenantId, String headerTenantId) 
+     throws TapisRuntimeException, TapisException
+    {
+        // This method will return a non-null tenant or throw an exception.
+        var jwtTenant = TenantManager.getInstance().getTenant(jwtTenantId);
+        var allowableTenantIds = jwtTenant.getAllowableXTenantIds();
+        if (allowableTenantIds == null) return false;
+        return allowableTenantIds.contains(headerTenantId);
     }
 }
