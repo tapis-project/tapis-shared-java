@@ -26,10 +26,12 @@ import edu.utexas.tacc.tapis.tokens.client.model.TokenResponsePackage;
  * The parameters passed to this class on construction cannot be changed, but any 
  * number of instances can be created for the same service.  The service password is 
  * used only to acquire a new token from the Tokens service during construction and 
- * is not saved in this class's instances.
+ * is not saved in this class's instances.  If the constructor returns without 
+ * throwing an exception, then a newly minted access token has been received from
+ * the Tokens service and is ready for use.
  * 
  * The default access and refresh token lifetimes are set in the ServiceJWTParms
- * class by default, but can be overridden.  The refresh time-to-live must be at lease
+ * class by default, but can be overridden.  The refresh time-to-live must be at least
  * as long as the access token's, but making it much longer is of no use since no 
  * attempt to refresh the access token occur after the access token expires. 
  * 
