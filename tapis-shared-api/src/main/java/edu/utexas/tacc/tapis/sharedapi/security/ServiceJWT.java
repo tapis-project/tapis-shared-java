@@ -71,9 +71,13 @@ public final class ServiceJWT
     private final String _delegationUser;
     private final String _additionalClaims;
     
-    // Generated tokens. Use synchronized accessors to read contents.
-    // Multiple threads read and write this field.
+    // Generated tokens. We use unsynchronized accessors to read contents since
+    // once the field is assign all thread only read its values.  Upon refresh,
+    // the JVM guarantees that the field reference is atomically assigned.
     private volatile TokenResponsePackage _tokPkg;
+    
+    // The thread in charge of automatic refresh operations.
+    private TokenRefreshThread _refreshThread;
     
     /* **************************************************************************** */
     /*                                 Constructors                                 */
@@ -128,13 +132,13 @@ public final class ServiceJWT
     
     // Generated access token information.  There's no chance
     // of the tokens package being null nor its access token.
-    public synchronized String getAccessJWT() {
+    public String getAccessJWT() {
         return _tokPkg.getAccessToken().getAccessToken();
     }
-    public synchronized Instant getAccessExpiresAt() {
+    public Instant getAccessExpiresAt() {
         return _tokPkg.getAccessToken().getExpiresAt();
     }
-    public synchronized Integer getAccessExpiresIn() {
+    public Integer getAccessExpiresIn() {
         return _tokPkg.getAccessToken().getExpiresIn();
     }
     
@@ -143,21 +147,15 @@ public final class ServiceJWT
     /* **************************************************************************** */
     // Generated access token information.  There's no chance
     // of the tokens package being null nor its access token.
-    private synchronized String getRefreshJWT() {
+    private String getRefreshJWT() {
         return _tokPkg.getRefreshToken().getRefreshToken();
-    }
-    private synchronized Instant getRefreshExpiresAt() {
-        return _tokPkg.getRefreshToken().getExpiresAt();
-    }
-    private synchronized Integer getRefreshExpiresIn() {
-        return _tokPkg.getRefreshToken().getExpiresIn();
     }
     
     /* **************************************************************************** */
     /*                                Public Methods                                */
     /* **************************************************************************** */
     /* ---------------------------------------------------------------------------- */
-    /* hasExpiredAccessToken:                                                       */
+    /* hasExpiredAccessJWT:                                                         */
     /* ---------------------------------------------------------------------------- */
     /** The service application using this class to manage its service tokens can
      * poll this method to determine if the access token has expired.  If it has,
@@ -166,8 +164,20 @@ public final class ServiceJWT
      * 
      * @return true if the access token is expired, false if still useable
      */
-    public boolean hasExpiredAccessToken() {
+    public boolean hasExpiredAccessJWT() {
         return Instant.now().isAfter(getAccessExpiresAt());
+    }
+    
+    /* ---------------------------------------------------------------------------- */
+    /* interrupt:                                                                   */
+    /* ---------------------------------------------------------------------------- */
+    /** Interrupt the token refresh thread.  The method causes the token refresh
+     * to exit and the current access JWT will eventually expire if it hasn't already
+     * expire. 
+     */
+    public void interrupt()
+    {
+        _refreshThread.interrupt();
     }
     
     /* **************************************************************************** */
@@ -379,10 +389,10 @@ public final class ServiceJWT
     {
         // Create and start the daemon thread only AFTER token is first acquired.
         var threadGroup = new ThreadGroup(THREADGROUP_NAME);
-        var refreshThread = new TokenRefreshThread(threadGroup, REFRESH_THREAD_NAME);
-        refreshThread.setDaemon(true);
-        refreshThread.setUncaughtExceptionHandler(this);
-        refreshThread.start();
+        _refreshThread = new TokenRefreshThread(threadGroup, REFRESH_THREAD_NAME);
+        _refreshThread.setDaemon(true);
+        _refreshThread.setUncaughtExceptionHandler(this);
+        _refreshThread.start();
     }
 
     /* ---------------------------------------------------------------------- */
@@ -479,13 +489,18 @@ public final class ServiceJWT
                 }
                 
                 // Info message.
-                if (_log.isInfoEnabled()) 
-                    MsgUtils.getMsg("TAPIS_TOKEN_REFRESH_WAIT",
-                                    _serviceName, _tenant, 
-                                    Thread.currentThread().getName(),
-                                    sleepMillis);
+                if (_log.isInfoEnabled()) {
+                    String msg = MsgUtils.getMsg("TAPIS_TOKEN_REFRESH_WAIT",
+                                                 _serviceName, _tenant, 
+                                                 Thread.currentThread().getName(),
+                                                 sleepMillis);
+                    _log.info(msg);
+                }
  
-                // Sleep for the prescribed time.
+                // Sleep for the prescribed time unless this thread was interrupted.
+                // There is a period of time between the check and the sleep call 
+                // in which the interrupt would go unnoticed until the next iteration.
+                if (_refreshThread.isInterrupted()) return false;
                 try {Thread.sleep(sleepMillis);}
                 catch (InterruptedException e) {
                     if (_log.isWarnEnabled()) {

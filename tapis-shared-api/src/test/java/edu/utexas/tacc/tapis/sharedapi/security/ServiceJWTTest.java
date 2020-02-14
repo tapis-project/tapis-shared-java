@@ -1,7 +1,7 @@
 package edu.utexas.tacc.tapis.sharedapi.security;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.time.Instant;
+
 import org.testng.annotations.Test;
 
 import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
@@ -19,7 +19,7 @@ public class ServiceJWTTest
     private static final String SERVICE = "jobs";
     private static final String SERVICE_PWD = "3qLT0gy3MQrQKIiljEIRa2ieMEBIYMUyPSdYeNjIgZs=";
     private static final int    TTL_SECS = 30;
-    private static final int    TEST_SECS = 3 * TTL_SECS + 10;
+    private static final int    ITERATIONS = 3;
     
     /* ********************************************************************** */
     /*                              Tests                                     */
@@ -38,13 +38,33 @@ public class ServiceJWTTest
         parms.setAccessTTL(TTL_SECS);
         parms.setRefreshTTL(TTL_SECS);
         
+        // Get start time.
+        var start = Instant.now();
+        
         // Create the service tokens.  This will refresh 
         // forever until shutdown.
         var serviceJwt = new ServiceJWT(parms, SERVICE_PWD);
         
+        // Get each new JWT.
+        for (int i = 0; i < ITERATIONS; i++) {
+            System.out.println("JWT " + i + ": " + serviceJwt.getAccessJWT());
+            Thread.sleep(TTL_SECS * 1000);
+        }
+        
+        // Stop automatic refreshes.
+        serviceJwt.interrupt();
+        System.out.println("JWT " + ITERATIONS + ": " + serviceJwt.getAccessJWT());
+        
+        // Wait until the last JWT expires.
+        System.out.println("Waiting for JWT expiration...");
+        while (!serviceJwt.hasExpiredAccessJWT()) Thread.sleep(1000);
+        
+        // Calculate elapsed time in seconds.
+        var stop = Instant.now();
+        long elapsed = stop.minusSeconds(start.getEpochSecond()).getEpochSecond();
+            
         // Wait for several refresh cycles.
-        Thread.currentThread().sleep(TEST_SECS * 1000);
-        System.out.println("Completed " + TEST_SECS + " seconds wait.");
+        System.out.println("Completed in " + elapsed + " seconds.");
     }
 
 }
