@@ -173,7 +173,7 @@ public final class ServiceJWT
     /* ---------------------------------------------------------------------------- */
     /** Interrupt the token refresh thread.  The method causes the token refresh
      * to exit and the current access JWT will eventually expire if it hasn't already
-     * expire. 
+     * expired. 
      */
     public void interrupt()
     {

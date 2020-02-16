@@ -1,11 +1,11 @@
 package edu.utexas.tacc.tapis.sharedapi.jaxrs.filters;
 
 import java.security.KeyFactory;
-import java.security.PrivateKey;
 import java.security.PublicKey;
-import java.security.cert.Certificate;
 import java.security.spec.X509EncodedKeySpec;
+import java.time.Instant;
 import java.util.Base64;
+import java.util.HashMap;
 
 import javax.annotation.Priority;
 import javax.annotation.security.PermitAll;
@@ -32,25 +32,38 @@ import edu.utexas.tacc.tapis.shared.parameters.TapisEnv.EnvVar;
 import edu.utexas.tacc.tapis.shared.threadlocal.TapisThreadContext;
 import edu.utexas.tacc.tapis.shared.threadlocal.TapisThreadContext.AccountType;
 import edu.utexas.tacc.tapis.shared.threadlocal.TapisThreadLocal;
-import edu.utexas.tacc.tapis.sharedapi.keys.KeyManager;
 import edu.utexas.tacc.tapis.sharedapi.security.AuthenticatedUser;
 import edu.utexas.tacc.tapis.sharedapi.security.TapisSecurityContext;
 import edu.utexas.tacc.tapis.sharedapi.security.TenantManager;
 import edu.utexas.tacc.tapis.sharedapi.utils.TapisRestUtils;
+import edu.utexas.tacc.tapis.tenants.client.gen.model.Tenant;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwt;
 import io.jsonwebtoken.Jwts;
 
-/** This jax-rs filter performs the following:
+/** This jax-rs filter is the main authentication mechanism for Tapis services 
+ * written in Java.  This class depends on the Tapis Tenants service to acquire
+ * the public keys of all tenants.  The Tenants service is accessed through the
+ * TenantManager class.  The public keys are used to validate JWT signatures.
+ * Additional tenant information is used to authorize tenants to act on behalf
+ * of other tenants. 
+ * 
+ * This filter performs the following:
  * 
  *      - Reads the tapis jwt assertion header from the http request.
- *      - Determines whether the header is required and takes appropriate action.
+ *      - Determines whether the header is required and takes further action.
  *      - Extracts the tenant id from the unverified claims.
  *      - Optionally verifies the JWT signature using a tenant-specific key.
  *      - Enforces service and user token semantics.       
  *      - Extracts the user name and other values from the JWT claims.
  *      - Assigns claim values to their thread-local fields.
  *      - Assigns security related header values to their thread-local fields.
+ *  
+ * This class caches tenant public keys after it decodes them the first time.  
+ * It inspects the TenantManager's last update time to determine if is cache
+ * might be stale and, if so, clears the caches.  Tenant information rarely 
+ * changes, but the information cached in this class automatically stays in
+ * sync with the TenantManager, no restarts or manual intervention required.
  *      
  * The test parameter filter run after this filter and may override the values
  * set by this filter.
@@ -69,10 +82,10 @@ public class JWTValidateRequestFilter
     private static final Logger _log = LoggerFactory.getLogger(JWTValidateRequestFilter.class);
     
     // Header key for jwts.
-    private static final String TAPIS_JWT_HEADER    = "X-Tapis-Token";
-    private static final String TAPIS_TENANT_HEADER = "X-Tapis-Tenant";
-    private static final String TAPIS_USER_HEADER   = "X-Tapis-User";
-    private static final String TAPIS_HASH_HEADER   = "X-Tapis-User-Token-Hash";
+    private static final String TAPIS_JWT_HEADER     = "X-Tapis-Token";
+    private static final String TAPIS_TENANT_HEADER  = "X-Tapis-Tenant";
+    private static final String TAPIS_USER_HEADER    = "X-Tapis-User";
+    private static final String TAPIS_HASH_HEADER    = "X-Tapis-User-Token-Hash";
     
     // Tapis claim keys.
     private static final String CLAIM_TENANT         = "tapis/tenant_id";
@@ -89,20 +102,19 @@ public class JWTValidateRequestFilter
     // The token types this filter expects.
     private static final String TOKEN_ACCESS = "access";
     
-    // TODO: Hardcode signature verification key for all tenants until SK becomes available.
-    private static final String TEMP_TAPIS_PUBLIC_KEY = 
-      "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAz7rr5CsFM7rHMFs7uKIdcczn0uL4ebRMvH8pihrg1tW/fp5Q+5ktltoBTfIaVDrXGF4DiCuzLsuvTG5fGElKEPPcpNqaCzD8Y1v9r3tfkoPT3Bd5KbF9f6eIwrGERMTs1kv7665pliwehz91nAB9DMqqSyjyKY3tpSIaPKzJKUMsKJjPi9QAS167ylEBlr5PECG4slWLDAtSizoiA3fZ7fpngfNr4H6b2iQwRtPEV/EnSg1N3Oj1x8ktJPwbReKprHGiEDlqdyT6j58l/I+9ihR6ettkMVCq7Ho/bsIrwm5gP0PjJRvaD5Flsze7P4gQT37D1c5nbLR+K6/T0QTiyQIDAQAB";
+    // Extraneous public key text.
+    private static final String KEY_PROLOGUE = "-----BEGIN PUBLIC KEY-----\n";
+    private static final String KEY_EPILOGUE = "\n-----END PUBLIC KEY-----";
     
     /* ********************************************************************** */
     /*                                Fields                                  */
     /* ********************************************************************** */
-    // The public key used to check the JWT signature.  This cached copy is
-    // used by all instances of this class.
-    private static PublicKey _jwtPublicKey;
-
     @Context
     private ResourceInfo resourceInfo;
-
+    
+    // Cache of tenant public keys, mapping tenant id to public key.
+    // All access to this map must be limited to one thread at a time.
+    private static final HashMap<String,PublicKey> _keyCache = new HashMap<>();
     
     /* ********************************************************************** */
     /*                            Public Methods                              */
@@ -241,8 +253,8 @@ public class JWTValidateRequestFilter
             requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
             return;
         }
-        
-        // Get the delation information if it exists.
+       
+        // Get the delegation information if it exists.
         String delegator = null;
         Boolean delegation = (Boolean)claims.get(CLAIM_DELEGATION);
         if (delegation != null && delegation) {
@@ -254,6 +266,15 @@ public class JWTValidateRequestFilter
                 requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
                 return;
             }
+            
+            // Get the tenant component of the user@tenant string.  The  
+            // above validation call guarantees that this won't blow up.
+            String delegationTenant = delegator.substring(delegator.indexOf('@') + 1);
+            
+            // Check that the jwt tenant is allowed to act on behalf of the delegation tenant.
+            // If false if returned, the called method has already modified the context to 
+            // abort the request, in which case we immediately return from here.
+            if (!allowTenant(requestContext, jwtUser, tenant, delegationTenant)) return;
         }
         
         // ------------------------ Assign Header Values -----------------------
@@ -290,22 +311,9 @@ public class JWTValidateRequestFilter
             }
             
             // Check that the jwt tenant is allowed to act on behalf of the header tenant.
-            boolean allowedTenant;
-            try {allowedTenant = isAllowedTenant(tenant, headerTenantId);}
-                catch (Exception e) {
-                    String msg = MsgUtils.getMsg("TAPIS_SECURITY_ALLOWABLE_TENANT_ERROR", 
-                                                 jwtUser, tenant, headerTenantId);
-                    _log.error(msg, e);
-                    requestContext.abortWith(Response.status(Status.INTERNAL_SERVER_ERROR).entity(msg).build());
-                    return;
-                }
-            if (!allowedTenant) {
-                String msg = MsgUtils.getMsg("TAPIS_SECURITY_TENANT_NOT_ALLOWED", 
-                                             jwtUser, tenant, headerTenantId);
-                _log.error(msg);
-                requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
-                return;
-            }
+            // If false if returned, the called method has already modified the context to 
+            // abort the request, in which case we immediately return from here.
+            if (!allowTenant(requestContext, jwtUser, tenant, headerTenantId)) return;
             
             // Set the effective user and service user when service jwts are received.
             effectiveUser     = headerUser;
@@ -427,30 +435,49 @@ public class JWTValidateRequestFilter
     /** Return the cached public key if it exists.  If it doesn't exist, load it
      * from the keystore, cache it, and then return it. 
      * 
-     * This exceptions thrown by this method all use the TAPIS_SECURITY_JWT_KEY_ERROR
+     * The exceptions thrown by this method all use the TAPIS_SECURITY_JWT_KEY_ERROR
      * message.  This message is used by calling routines to distinguish between
      * server and requestor errors.
      * 
-     * @param tenant the tenant whose signature verification key is requested
+     * @param tenantId the tenant whose signature verification key is requested
      * @return the tenant's signature verification key
      * @throws TapisSecurityException on error
      */
-    private PublicKey getJwtPublicKey(String tenant)
+    private PublicKey getJwtPublicKey(String tenantId)
      throws TapisSecurityException
      {
-        // Use the cached copy if it has already been loaded.
-        if (_jwtPublicKey != null) return _jwtPublicKey;
+        // Get when the tenant information was last updated.
+        Instant lastTenantUpdate = TenantManager.getInstance().getLastUpdateTime();
         
-        // Serialize access to this code.
-        synchronized (JWTValidateRequestFilter.class) 
+        // Synchronize access to the key cache across all instances of this class.
+        synchronized (_keyCache) 
         {
-            // Maybe another thread loaded the key in the intervening time.
-            if (_jwtPublicKey != null) return _jwtPublicKey; 
+            // ------------------- Check For Cached Key -------------------
+            // See if we need to clear the cache because the tenant information has changed.
+            if (lastTenantUpdate != null)  // should never be null but we check anyway
+                if (Instant.now().isBefore(lastTenantUpdate)) _keyCache.clear();
+                  else {
+                      // Return the previously calculated public key if it exists.
+                      PublicKey publicKey = _keyCache.get(tenantId);
+                      if (publicKey != null) return publicKey;
+                  }
             
-            // TODO: replace with SK call in real code.
+            // ------------------- Decode New Key -------------------------
+            // Get the tenant's public key as saved in the tenants table.
+            Tenant tenant;
+            try {tenant = TenantManager.getInstance().getTenant(tenantId);} 
+                catch (Exception e) {
+                    String msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_KEY_ERROR", e.getMessage());
+                    _log.error(msg, e);
+                    throw new TapisSecurityException(msg, e);
+                }
+            
+            // Trim prologue and epilogue if they are present.
+            String encodedPublicKey = trimPublicKey(tenant.getPublicKey());
+            
             // Decode the base 64 string.
             byte[] publicBytes;
-            try {publicBytes = Base64.getDecoder().decode(TEMP_TAPIS_PUBLIC_KEY);}
+            try {publicBytes = Base64.getDecoder().decode(encodedPublicKey);}
                 catch (Exception e) {
                     String msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_KEY_ERROR", e.getMessage());
                     _log.error(msg, e);
@@ -469,50 +496,34 @@ public class JWTValidateRequestFilter
                 _log.error(msg, e);
                 throw new TapisSecurityException(msg, e);
             }
-
-            // Success!
-            _jwtPublicKey = publicKey;
-        }
         
-        return _jwtPublicKey;
+            // Add the key to the cache before returning.
+            _keyCache.put(tenantId, publicKey);
+            return publicKey;
+        }
      }
     
     /* ---------------------------------------------------------------------- */
-    /* getJwtPublicKeyFromTestKeyStore:                                       */
+    /* trimPublicKey:                                                         */
     /* ---------------------------------------------------------------------- */
-    /** TEMPORARY TEST CODE
+    /** Remove the prologue and epilogue text if they exist from an base64 
+     * encoded key string.
      * 
-     * TODO: remove this code when we switch to using the tokens-api keys
-     * 
-     * @return
-     * @throws TapisSecurityException
+     * @param encodedPublicKey base64 encoded public key
+     * @return trimmed encoded public key
      */
-    private PublicKey getJwtPublicKeyFromTestKeyStore() 
-      throws TapisSecurityException
+    private String trimPublicKey(String encodedPublicKey)
     {
-        // Hardcode parameters for testing...
-        String alias = "jwt";
-        String password = "!akxK3CuHfqzI#97";
-        String keystoreFilename = ".TapisTestKeyStore.p12";
+        // This should never happen.
+        if (encodedPublicKey == null) return "";
         
-        PublicKey publicKey = null;
-        try {
-            // ----- Load the keystore.
-            KeyManager km = new KeyManager(null, keystoreFilename);
-            km.load(password);
-
-            // ----- Get the private key from the keystore.
-            @SuppressWarnings("unused")
-            PrivateKey privateKey = km.getPrivateKey(alias, password);
-            Certificate cert = km.getCertificate(alias);
-            publicKey = cert.getPublicKey();
-        } catch (Exception e) {
-            String msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_KEY_ERROR", e.getMessage());
-            _log.error(msg, e);
-            throw new TapisSecurityException(msg, e);
-        }
-        
-        return publicKey;
+        // Remove prologue and epilogue if they exist.
+        if (encodedPublicKey.startsWith(KEY_PROLOGUE))
+            encodedPublicKey = encodedPublicKey.substring(KEY_PROLOGUE.length());
+        if (encodedPublicKey.endsWith(KEY_EPILOGUE))
+            encodedPublicKey = encodedPublicKey.substring(0, 
+                                encodedPublicKey.length()-KEY_EPILOGUE.length());
+        return encodedPublicKey;
     }
     
     /* ---------------------------------------------------------------------- */
@@ -539,12 +550,56 @@ public class JWTValidateRequestFilter
     }
     
     /* ---------------------------------------------------------------------- */
+    /* allowTenant:                                                           */
+    /* ---------------------------------------------------------------------- */
+    /** Determine whether the tenant specified in the JWT can operate on behalf
+     * of the new tenant.  This method will abort the request if the new tenant
+     * is not allowed.  False is returned to immediately abort the request, true 
+     * to continue request processing.
+     * 
+     * @param requestContext the context passed into this filter
+     * @param jwtUser the user designated in the JWT
+     * @param jwtTenantId the tenant designated in the JWT
+     * @param newTenantId the substitute tenant
+     * @return true if request processing can continue, false to abort
+     */
+    private boolean allowTenant(ContainerRequestContext requestContext, String jwtUser, 
+                                String jwtTenantId, String newTenantId)
+    {
+        // Consult the jwt tenant definition for allowable tenants. 
+        boolean allowedTenant;
+        try {allowedTenant = isAllowedTenant(jwtTenantId, newTenantId);}
+        catch (Exception e) {
+            String msg = MsgUtils.getMsg("TAPIS_SECURITY_ALLOWABLE_TENANT_ERROR", 
+                                         jwtUser, jwtTenantId, newTenantId);
+            _log.error(msg, e);
+            requestContext.abortWith(Response.status(Status.INTERNAL_SERVER_ERROR).entity(msg).build());
+            return false;
+        }
+        
+        // Can the new tenant id be used by the jwt tenant?
+        if (!allowedTenant) {
+            String msg = MsgUtils.getMsg("TAPIS_SECURITY_TENANT_NOT_ALLOWED", 
+                                         jwtUser, jwtTenantId, newTenantId);
+            _log.error(msg);
+            requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
+            return false;
+        }
+        
+        // The new tenant is allowed.
+        return true;
+    }
+    
+    /* ---------------------------------------------------------------------- */
     /* isAllowedTenant:                                                       */
     /* ---------------------------------------------------------------------- */
     /** Determine if the tenant specified in the jwt tapis/tenant_id claim is
      * allowed to execute on behalf of the tenant specified in the 
      * X-Tapis-Tenant header.  This method should only be called on service
-     * tokens and neither parameter can be null.s
+     * tokens and neither parameter can be null.
+     * 
+     * If the number of allowable tenants becomes too great we may have to 
+     * arrange for a constant time search rather than the current linear search.
      * 
      * @param jwtTenantId the tenant assigned in the jwt tapis/tenant_id claim
      * @param headerTenantId the tenant assigned in the X-Tapis-Tenant header

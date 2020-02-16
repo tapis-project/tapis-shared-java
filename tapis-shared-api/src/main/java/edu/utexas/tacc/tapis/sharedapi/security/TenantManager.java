@@ -239,11 +239,13 @@ public final class TenantManager
     /* ---------------------------------------------------------------------------- */
     /* getTenantServiceBaseUrl:                                                     */
     /* ---------------------------------------------------------------------------- */
-    public String getTenantServiceBaseUrl() 
-    {
-        return _tenantServiceBaseUrl;
-    }
-    
+    public String getTenantServiceBaseUrl() {return _tenantServiceBaseUrl;}
+
+    /* ---------------------------------------------------------------------------- */
+    /* getLastUpdateTime:                                                           */
+    /* ---------------------------------------------------------------------------- */
+    public Instant getLastUpdateTime() {return _lastUpdateTime;}
+
     /* **************************************************************************** */
     /*                               Private Methods                                */
     /* **************************************************************************** */
