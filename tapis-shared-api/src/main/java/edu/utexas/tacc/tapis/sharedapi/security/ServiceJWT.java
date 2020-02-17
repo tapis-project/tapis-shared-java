@@ -76,6 +76,10 @@ public final class ServiceJWT
     // the JVM guarantees that the field reference is atomically assigned.
     private volatile TokenResponsePackage _tokPkg;
     
+    // Fields that get updated on each successful refresh.
+    private int     _refreshCount;
+    private Instant _lastRefreshTime;
+    
     // The thread in charge of automatic refresh operations.
     private TokenRefreshThread _refreshThread;
     
@@ -124,7 +128,7 @@ public final class ServiceJWT
     public String getTenant() {return _tenant;}
     public String getTokensBaseUrl() {return _tokensBaseUrl;}
     public TokenResponsePackage get_tokPkg() {return _tokPkg;}
-    public int getSccessTTL() {return _accessTTL;}
+    public int getAccessTTL() {return _accessTTL;}
     public int getRefreshTTL() {return _refreshTTL;}
     public String getDelegationTenant() {return _delegationTenant;}
     public String getDelegationUser() {return _delegationUser;}
@@ -180,6 +184,16 @@ public final class ServiceJWT
         _refreshThread.interrupt();
     }
     
+    /* ---------------------------------------------------------------------------- */
+    /* getRefreshCount:                                                             */
+    /* ---------------------------------------------------------------------------- */
+    public int getRefreshCount() {return _refreshCount;}
+
+    /* ---------------------------------------------------------------------------- */
+    /* getLastRefreshTime:                                                          */
+    /* ---------------------------------------------------------------------------- */
+    public Instant getLastRefreshTime() {return _lastRefreshTime;}
+
     /* **************************************************************************** */
     /*                                Private Methods                               */
     /* **************************************************************************** */
@@ -528,9 +542,16 @@ public final class ServiceJWT
                         continue;
                     }
                 
-                // The refresh succeeded and was validated.  
-                // Atomically update the enclosing class's tokens.
+                // The refresh succeeded and was validated. Atomically 
+                // update the enclosing class's tokens by reassigning
+                // the field to point to the new token package.  The 
+                // other two assignments are also safe, but the group
+                // of three assignments is not an atomic transaction.
+                // We should be fine--there's nothing critical going 
+                // on here.
                 _tokPkg = tokPkg;
+                _refreshCount++;
+                _lastRefreshTime = Instant.now();
                 return true;
             }
         }
