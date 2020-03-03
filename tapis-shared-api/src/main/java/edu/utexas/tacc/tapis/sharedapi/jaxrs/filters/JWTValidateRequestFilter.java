@@ -102,10 +102,6 @@ public class JWTValidateRequestFilter
     // The token types this filter expects.
     private static final String TOKEN_ACCESS = "access";
     
-    // Extraneous public key text.
-    private static final String KEY_PROLOGUE = "-----BEGIN PUBLIC KEY-----\n";
-    private static final String KEY_EPILOGUE = "\n-----END PUBLIC KEY-----";
-    
     /* ********************************************************************** */
     /*                                Fields                                  */
     /* ********************************************************************** */
@@ -416,7 +412,6 @@ public class JWTValidateRequestFilter
     {
         // Get the public part of the signing key.
         PublicKey publicKey = getJwtPublicKey(tenant);
-        //PublicKey publicKey = getJwtPublicKeyFromTestKeyStore();
         
         // Verify and import the jwt data.
         @SuppressWarnings({ "unused", "rawtypes" })
@@ -510,19 +505,32 @@ public class JWTValidateRequestFilter
      * encoded key string.
      * 
      * @param encodedPublicKey base64 encoded public key
-     * @return trimmed encoded public key
+     * @return trimmed base64 public key
      */
     private String trimPublicKey(String encodedPublicKey)
     {
         // This should never happen.
         if (encodedPublicKey == null) return "";
         
-        // Remove prologue and epilogue if they exist.
-        if (encodedPublicKey.startsWith(KEY_PROLOGUE))
-            encodedPublicKey = encodedPublicKey.substring(KEY_PROLOGUE.length());
-        if (encodedPublicKey.endsWith(KEY_EPILOGUE))
-            encodedPublicKey = encodedPublicKey.substring(0, 
-                                encodedPublicKey.length()-KEY_EPILOGUE.length());
+        // Remove prologue and epilogue if they exist.  The Tapis Tenants service
+        // often stores keys with the following PEM prologue and epilogue (see
+        // https://tools.ietf.org/html/rfc1421 for the specification):
+        //
+        //      "-----BEGIN PUBLIC KEY-----\n"
+        //      "\n-----END PUBLIC KEY-----"
+        //
+        // In general, different messages can appear after the BEGIN and END text,
+        // so stripping out the prologue and epilogue requires some care.  The  
+        // approach below handles only unix-style line endings.  
+        // 
+        // Check for unix style prologue.
+        int index = encodedPublicKey.indexOf("-\n");
+        if (index > 0) encodedPublicKey = encodedPublicKey.substring(index + 2);
+        
+        // Check for unix style epilogue.
+        index = encodedPublicKey.lastIndexOf("\n-");
+        if (index > 0) encodedPublicKey = encodedPublicKey.substring(0, index);
+        
         return encodedPublicKey;
     }
     
