@@ -15,7 +15,7 @@ import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
 import edu.utexas.tacc.tapis.tenants.client.TenantsClient;
 import edu.utexas.tacc.tapis.tenants.client.gen.model.Tenant;
 
-public final class TenantManager 
+public class TenantManager
 {
     /* **************************************************************************** */
     /*                                   Constants                                  */
