@@ -18,16 +18,16 @@ public class TenantCache {
     private static CacheLoader<String, Tenant> cacheLoader;
 
     @Inject
-    public TenantCache(TenantsClient tenantsClient, @NotNull String baseUrl) throws TapisException {
+    public TenantCache(@NotNull TenantsClient tenantsClient, @NotNull String baseUrl) throws TapisException {
 
         // Set the basePath on the client
         tenantsClient.getApiClient().setBasePath(baseUrl);
 
         // The cache will call this if the tenantId is not already in the cache, or when it refreshes.
-        cacheLoader = new CacheLoader<String, Tenant>() {
+        cacheLoader = new CacheLoader<>() {
             @Override
             public Tenant load(@NotNull String tenantId) throws Exception {
-               return tenantsClient.getTenant(tenantId);
+                return tenantsClient.getTenant(tenantId);
             }
         };
 

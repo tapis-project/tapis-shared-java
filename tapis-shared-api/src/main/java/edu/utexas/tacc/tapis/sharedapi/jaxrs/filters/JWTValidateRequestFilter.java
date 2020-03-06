@@ -9,6 +9,7 @@ import java.util.HashMap;
 
 import javax.annotation.Priority;
 import javax.annotation.security.PermitAll;
+import javax.inject.Inject;
 import javax.ws.rs.Priorities;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
@@ -19,6 +20,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.ext.Provider;
 
+import edu.utexas.tacc.tapis.sharedapi.security.TenantCache;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +36,6 @@ import edu.utexas.tacc.tapis.shared.threadlocal.TapisThreadContext.AccountType;
 import edu.utexas.tacc.tapis.shared.threadlocal.TapisThreadLocal;
 import edu.utexas.tacc.tapis.sharedapi.security.AuthenticatedUser;
 import edu.utexas.tacc.tapis.sharedapi.security.TapisSecurityContext;
-import edu.utexas.tacc.tapis.sharedapi.security.TenantManager;
 import edu.utexas.tacc.tapis.sharedapi.utils.TapisRestUtils;
 import edu.utexas.tacc.tapis.tenants.client.gen.model.Tenant;
 import io.jsonwebtoken.Claims;
@@ -72,9 +73,14 @@ import io.jsonwebtoken.Jwts;
  */
 @Provider
 @Priority(Priorities.AUTHENTICATION)
-public class JWTValidateRequestFilter 
- implements ContainerRequestFilter
-{
+public class JWTValidateRequestFilter  implements ContainerRequestFilter {
+
+    private TenantCache tenantCache;
+
+    @Inject
+    public JWTValidateRequestFilter(TenantCache tenCache) {
+        tenantCache = tenCache;
+    }
     /* ********************************************************************** */
     /*                               Constants                                */
     /* ********************************************************************** */
@@ -446,61 +452,42 @@ public class JWTValidateRequestFilter
     private PublicKey getJwtPublicKey(String tenantId)
      throws TapisSecurityException
      {
-        // Get when the tenant information was last updated.
-        Instant lastTenantUpdate = TenantManager.getInstance().getLastUpdateTime();
-        
-        // Synchronize access to the key cache across all instances of this class.
-        synchronized (_keyCache) 
-        {
-            // ------------------- Check For Cached Key -------------------
-            // See if we need to clear the cache because the tenant information has changed.
-            if (lastTenantUpdate != null)  // should never be null but we check anyway
-                if (Instant.now().isBefore(lastTenantUpdate)) _keyCache.clear();
-                  else {
-                      // Return the previously calculated public key if it exists.
-                      PublicKey publicKey = _keyCache.get(tenantId);
-                      if (publicKey != null) return publicKey;
-                  }
-            
-            // ------------------- Decode New Key -------------------------
-            // Get the tenant's public key as saved in the tenants table.
-            Tenant tenant;
-            try {tenant = TenantManager.getInstance().getTenant(tenantId);} 
-                catch (Exception e) {
-                    String msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_KEY_ERROR", e.getMessage());
-                    _log.error(msg, e);
-                    throw new TapisSecurityException(msg, e);
-                }
-            
-            // Trim prologue and epilogue if they are present.
-            String encodedPublicKey = trimPublicKey(tenant.getPublicKey());
-            
-            // Decode the base 64 string.
-            byte[] publicBytes;
-            try {publicBytes = Base64.getDecoder().decode(encodedPublicKey);}
-                catch (Exception e) {
-                    String msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_KEY_ERROR", e.getMessage());
-                    _log.error(msg, e);
-                    throw new TapisSecurityException(msg, e);
-                }
-            
-            // Create the public key object from the byte array.
-            PublicKey publicKey;
-            try {
-                X509EncodedKeySpec keySpec = new X509EncodedKeySpec(publicBytes);
-                KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-                publicKey = keyFactory.generatePublic(keySpec);
-            }
+        // ------------------- Decode New Key -------------------------
+        // Get the tenant's public key as saved in the tenants table.
+        Tenant tenant;
+        try {tenant = tenantCache.getCache().get(tenantId);}
             catch (Exception e) {
                 String msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_KEY_ERROR", e.getMessage());
                 _log.error(msg, e);
                 throw new TapisSecurityException(msg, e);
             }
-        
-            // Add the key to the cache before returning.
-            _keyCache.put(tenantId, publicKey);
-            return publicKey;
+
+        // Trim prologue and epilogue if they are present.
+        String encodedPublicKey = trimPublicKey(tenant.getPublicKey());
+
+        // Decode the base 64 string.
+        byte[] publicBytes;
+        try {publicBytes = Base64.getDecoder().decode(encodedPublicKey);}
+            catch (Exception e) {
+                String msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_KEY_ERROR", e.getMessage());
+                _log.error(msg, e);
+                throw new TapisSecurityException(msg, e);
+            }
+
+        // Create the public key object from the byte array.
+        PublicKey publicKey;
+        try {
+            X509EncodedKeySpec keySpec = new X509EncodedKeySpec(publicBytes);
+            KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+            publicKey = keyFactory.generatePublic(keySpec);
         }
+        catch (Exception e) {
+            String msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_KEY_ERROR", e.getMessage());
+            _log.error(msg, e);
+            throw new TapisSecurityException(msg, e);
+        }
+
+        return publicKey;
      }
     
     /* ---------------------------------------------------------------------- */
@@ -609,10 +596,10 @@ public class JWTValidateRequestFilter
      * @throws TapisRuntimeException 
      */
     private boolean isAllowedTenant(String jwtTenantId, String newTenantId) 
-     throws TapisRuntimeException, TapisException
+     throws TapisRuntimeException, Exception
     {
         // This method will return a non-null tenant or throw an exception.
-        var jwtTenant = TenantManager.getInstance().getTenant(jwtTenantId);
+        var jwtTenant = tenantCache.getCache().get(jwtTenantId);
         var allowableTenantIds = jwtTenant.getAllowableXTenantIds();
         if (allowableTenantIds == null) return false;
         return allowableTenantIds.contains(newTenantId);
