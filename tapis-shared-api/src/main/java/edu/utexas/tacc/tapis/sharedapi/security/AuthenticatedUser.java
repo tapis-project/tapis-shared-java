@@ -7,32 +7,32 @@ import java.security.Principal;
  */
 public class AuthenticatedUser implements Principal {
 
-    private final String username;
-    private final String tenantId;
+    private final String jwtUser;
+    private final String jwtTenantId;
     private final String accountType;
     private final String delegator;
-    private final String serviceUser;
-    private final String headerTenantId;
+    private final String oboUser;
+    private final String oboTenantId;
     private final String headerUserTokenHash;
     private final String jwt;
 
-    public AuthenticatedUser(String username, String tenantId, String accountType, String delegator,
-                             String serviceUser, String headerTenantId, String headerUserTokenHash, 
+    public AuthenticatedUser(String jwtUser, String jwtTenantId, String accountType, String delegator,
+                             String oboUser, String oboTenantId, String headerUserTokenHash, 
                              String jwt) 
     {
-        this.username = username;
-        this.tenantId = tenantId;
+        this.jwtUser = jwtUser;
+        this.jwtTenantId = jwtTenantId;
         this.accountType = accountType;
         this.delegator = delegator;
-        this.serviceUser = serviceUser;
-        this.headerTenantId = headerTenantId;
+        this.oboUser = oboUser;
+        this.oboTenantId = oboTenantId;
         this.headerUserTokenHash = headerUserTokenHash;
         this.jwt = jwt;
     }
 
     @Override
     public String getName() {
-        return username;
+        return jwtUser;
     }
 
     public String getAccountType() { return accountType; }
@@ -40,7 +40,7 @@ public class AuthenticatedUser implements Principal {
     public String getDelegator() { return delegator; }
 
     public String getTenantId() {
-        return tenantId;
+        return jwtTenantId;
     }
 
     public String getJwt() {

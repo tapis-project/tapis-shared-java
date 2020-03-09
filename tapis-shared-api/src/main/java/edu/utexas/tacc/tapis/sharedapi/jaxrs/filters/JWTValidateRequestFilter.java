@@ -186,8 +186,8 @@ public class JWTValidateRequestFilter
         }
         
         // Retrieve the user name from the claims section.
-        String tenant = (String)claims.get(CLAIM_TENANT);
-        if (StringUtils.isBlank(tenant)) {
+        String jwtTenant = (String)claims.get(CLAIM_TENANT);
+        if (StringUtils.isBlank(jwtTenant)) {
             String msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_CLAIM_NOT_FOUND", unverifiedJwt, 
                                          CLAIM_TENANT);
             _log.error(msg);
@@ -199,7 +199,7 @@ public class JWTValidateRequestFilter
         // Do we need to verify the JWT?
         boolean skipJWTVerify = TapisEnv.getBoolean(EnvVar.TAPIS_ENVONLY_SKIP_JWT_VERIFY);
         if (!skipJWTVerify) {
-            try {verifyJwt(encodedJWT, tenant);}
+            try {verifyJwt(encodedJWT, jwtTenant);}
             catch (Exception e) {
                 Status status = Status.UNAUTHORIZED;
                 String msg = e.getMessage();
@@ -270,27 +270,24 @@ public class JWTValidateRequestFilter
             // Check that the jwt tenant is allowed to act on behalf of the delegation tenant.
             // If false if returned, the called method has already modified the context to 
             // abort the request, in which case we immediately return from here.
-            if (!allowTenant(requestContext, jwtUser, tenant, delegationTenant)) return;
+            if (!allowTenant(requestContext, jwtUser, jwtTenant, delegationTenant)) return;
         }
         
         // ------------------------ Assign Header Values -----------------------
-        // The user on behalf of whom the request is being made.
-        String effectiveUser     = null;
-        String effectiveTenantId = null;
-        
-        // The user specified in a service jwt.
-        String serviceUser = null;
-        
         // Get information that may have been relayed in request headers.
-        String headerTenantId = headers.getFirst(TAPIS_TENANT_HEADER);
-        String headerUser     = headers.getFirst(TAPIS_USER_HEADER);
         String headerUserTokenHash = headers.getFirst(TAPIS_HASH_HEADER);
         
-        // These headers are only considered on service tokens.
+        // These headers are only required on service tokens.
+        String oboTenantId = null;
+        String oboUser     = null;
         if (accountType == AccountType.service) {
+            // These headers should always be set.
+            oboTenantId = headers.getFirst(TAPIS_TENANT_HEADER);
+            oboUser     = headers.getFirst(TAPIS_USER_HEADER);
+            
             // The X-Tapis-User header is mandatory when a service jwt is used.
-            if (StringUtils.isBlank(headerUser)) {
-                String msg = MsgUtils.getMsg("TAPIS_SECURITY_MISSING_HEADER", jwtUser, tenant,
+            if (StringUtils.isBlank(oboUser)) {
+                String msg = MsgUtils.getMsg("TAPIS_SECURITY_MISSING_HEADER", jwtUser, jwtTenant,
                                              accountType.name(), TAPIS_USER_HEADER);
                 _log.error(msg);
                 requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
@@ -298,8 +295,8 @@ public class JWTValidateRequestFilter
             }
             
             // The X-Tapis-User header is mandatory when a service jwt is used.
-            if (StringUtils.isBlank(headerTenantId)) {
-                String msg = MsgUtils.getMsg("TAPIS_SECURITY_MISSING_HEADER", jwtUser, tenant,
+            if (StringUtils.isBlank(oboTenantId)) {
+                String msg = MsgUtils.getMsg("TAPIS_SECURITY_MISSING_HEADER", jwtUser, jwtTenant,
                                              accountType.name(), TAPIS_TENANT_HEADER);
                 _log.error(msg);
                 requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
@@ -309,42 +306,37 @@ public class JWTValidateRequestFilter
             // Check that the jwt tenant is allowed to act on behalf of the header tenant.
             // If false if returned, the called method has already modified the context to 
             // abort the request, in which case we immediately return from here.
-            if (!allowTenant(requestContext, jwtUser, tenant, headerTenantId)) return;
-            
-            // Set the effective user and service user when service jwts are received.
-            effectiveUser     = headerUser;
-            effectiveTenantId = headerTenantId;
-            serviceUser       = jwtUser;
+            if (!allowTenant(requestContext, jwtUser, jwtTenant, oboTenantId)) return;
         } else {
             // Account type is user. Make sure the user header is not present.
-            if (StringUtils.isNotBlank(headerUser)) {
+            if (StringUtils.isNotBlank(oboUser)) {
                 String msg = MsgUtils.getMsg("TAPIS_SECURITY_UNEXPECTED_HEADER", jwtUser, 
-                                             tenant, accountType.name(), TAPIS_USER_HEADER);
+                                             jwtTenant, accountType.name(), TAPIS_USER_HEADER);
                 _log.error(msg);
                 requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
                 return;
             }
             
-            // Set the effective values for user jwts.
-            effectiveUser     = jwtUser;
-            effectiveTenantId = tenant;
+            // Set the on-behalf-of values to the jwt claim values with user tokens.
+            oboTenantId = jwtTenant;
+            oboUser     = jwtUser;
         }
         
         // ------------------------ Assign Effective Values --------------------
         // Assign pertinent claims and header values to our threadlocal context.
         TapisThreadContext threadContext = TapisThreadLocal.tapisThreadContext.get();
-        threadContext.setTenantId(effectiveTenantId);      // from jwt or header, never null
-        threadContext.setUser(effectiveUser);              // from jwt or header, never null
+        threadContext.setJwtTenantId(jwtTenant);           // from jwt claim, never null
+        threadContext.setJwtUser(jwtUser);                 // from jwt claim, never null
+        threadContext.setOboTenantId(oboTenantId);         // from jwt or header, never null
+        threadContext.setOboUser(oboUser);                 // from jwt or header, never null
         threadContext.setAccountType(accountType);         // from jwt, never null
         threadContext.setDelegatorSubject(delegator);      // from jwt, can be null
-        threadContext.setServiceUser(serviceUser);         // from jwt, null on user jwts
-        threadContext.setHeaderTenantId(headerTenantId);   // from header, can be null
         threadContext.setUserJwtHash(headerUserTokenHash); // from header, can be null
 
         // Inject the user and JWT into the security context and request context
         AuthenticatedUser requestUser = 
-            new AuthenticatedUser(effectiveUser, effectiveTenantId, accountTypeStr, 
-                                  delegator, serviceUser, headerTenantId, 
+            new AuthenticatedUser(jwtUser, jwtTenant, accountTypeStr, 
+                                  delegator, oboUser, oboTenantId, 
                                   headerUserTokenHash, encodedJWT);
         requestContext.setSecurityContext(new TapisSecurityContext(requestUser));
     }
