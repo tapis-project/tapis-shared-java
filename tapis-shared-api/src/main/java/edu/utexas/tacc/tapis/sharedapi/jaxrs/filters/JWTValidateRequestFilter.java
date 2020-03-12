@@ -23,9 +23,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
 import edu.utexas.tacc.tapis.shared.exceptions.TapisSecurityException;
-import edu.utexas.tacc.tapis.shared.exceptions.runtime.TapisRuntimeException;
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
 import edu.utexas.tacc.tapis.shared.parameters.TapisEnv;
 import edu.utexas.tacc.tapis.shared.parameters.TapisEnv.EnvVar;
@@ -568,7 +566,7 @@ public class JWTValidateRequestFilter
     {
         // Consult the jwt tenant definition for allowable tenants. 
         boolean allowedTenant;
-        try {allowedTenant = isAllowedTenant(jwtTenantId, newTenantId);}
+        try {allowedTenant = TapisRestUtils.isAllowedTenant(jwtTenantId, newTenantId);}
         catch (Exception e) {
             String msg = MsgUtils.getMsg("TAPIS_SECURITY_ALLOWABLE_TENANT_ERROR", 
                                          jwtUser, jwtTenantId, newTenantId);
@@ -590,31 +588,4 @@ public class JWTValidateRequestFilter
         return true;
     }
     
-    /* ---------------------------------------------------------------------- */
-    /* isAllowedTenant:                                                       */
-    /* ---------------------------------------------------------------------- */
-    /** Determine if the tenant specified in the jwt's tapis/tenant_id claim is
-     * allowed to execute on behalf of the target tenant specified in the 
-     * X-Tapis-Tenant header or the delegation_sub claim.  Neither parameter 
-     * can be null.
-     * 
-     * If the number of allowable tenants becomes too great we may have to 
-     * arrange for a constant time search rather than the current linear search.
-     * 
-     * @param jwtTenantId the tenant assigned in the jwt tapis/tenant_id claim
-     * @param newTenantId the tenant assigned in the X-Tapis-Tenant header
-     * @return true if the jwt tenant can execute on behalf of the new tenant,
-     *         false otherwise
-     * @throws TapisException 
-     * @throws TapisRuntimeException 
-     */
-    private boolean isAllowedTenant(String jwtTenantId, String newTenantId) 
-     throws TapisRuntimeException, TapisException
-    {
-        // This method will return a non-null tenant or throw an exception.
-        var jwtTenant = TenantManager.getInstance().getTenant(jwtTenantId);
-        var allowableTenantIds = jwtTenant.getAllowableXTenantIds();
-        if (allowableTenantIds == null) return false;
-        return allowableTenantIds.contains(newTenantId);
-    }
 }
