@@ -65,28 +65,28 @@ public class TapisThreadLocalTest
   {
     // Get the original context.
     TapisThreadContext context1 = TapisThreadLocal.tapisThreadContext.get();
-    context1.setTenantId("tenant1");
+    context1.setJwtTenantId("tenant1");
     TapisThreadContext context2 = TapisThreadLocal.push();
     Assert.assertTrue(context2 == TapisThreadLocal.tapisThreadContext.get(),
                         "Expected current context to be the same object returned from push().");
-    Assert.assertEquals(context2.getTenantId(), context1.getTenantId(), 
+    Assert.assertEquals(context2.getJwtTenantId(), context1.getJwtTenantId(), 
                         "Expected cloned context tenantId to match original.");
     
     // Change the current tenantId.
-    context2.setTenantId("tenant2");
-    Assert.assertEquals(TapisThreadLocal.tapisThreadContext.get().getTenantId(), "tenant2", 
+    context2.setJwtTenantId("tenant2");
+    Assert.assertEquals(TapisThreadLocal.tapisThreadContext.get().getJwtTenantId(), "tenant2", 
                         "Expected current context tenantId to have changed.");
     
     // Push the current context.
     TapisThreadContext context3 = TapisThreadLocal.push();
     Assert.assertTrue(context3 == TapisThreadLocal.tapisThreadContext.get(),
         "Expected current context to be the same object returned from push().");
-    Assert.assertEquals(context3.getTenantId(), context2.getTenantId(), 
+    Assert.assertEquals(context3.getJwtTenantId(), context2.getJwtTenantId(), 
         "Expected cloned context tenantId to match second context.");
     
     // Change the current tenantId.
-    context3.setTenantId("tenant3");
-    Assert.assertEquals(TapisThreadLocal.tapisThreadContext.get().getTenantId(), "tenant3", 
+    context3.setJwtTenantId("tenant3");
+    Assert.assertEquals(TapisThreadLocal.tapisThreadContext.get().getJwtTenantId(), "tenant3", 
                         "Expected current context tenantId to have changed.");
     
     // Pop last context.
@@ -95,7 +95,7 @@ public class TapisThreadLocalTest
         "Expected popped context to be the last pushed context.");
     Assert.assertTrue(pop2 == TapisThreadLocal.tapisThreadContext.get(),
         "Expected popped context to be the current context.");
-    Assert.assertEquals(pop2.getTenantId(), "tenant2", 
+    Assert.assertEquals(pop2.getJwtTenantId(), "tenant2", 
         "Expected current context tenantId to the second tenantId.");
     
     // Pop last context.
@@ -104,7 +104,7 @@ public class TapisThreadLocalTest
         "Expected popped context to be the first pushed context.");
     Assert.assertTrue(pop1 == TapisThreadLocal.tapisThreadContext.get(),
         "Expected popped context to be the current context.");
-    Assert.assertEquals(pop1.getTenantId(), "tenant1", 
+    Assert.assertEquals(pop1.getJwtTenantId(), "tenant1", 
         "Expected current context tenantId to be the first tenantId.");
   }
   
@@ -125,10 +125,10 @@ public class TapisThreadLocalTest
         @Override
         public void run() {
         	TapisThreadContext context = TapisThreadLocal.tapisThreadContext.get();
-        	if (tenantId != null) context.setTenantId(tenantId);
+        	if (tenantId != null) context.setJwtTenantId(tenantId);
     
         	// Get the thread local tenant id.
-        	Assert.assertEquals(context.getTenantId(), 
+        	Assert.assertEquals(context.getJwtTenantId(), 
         			            (tenantId == null) ? TapisThreadContext.INVALID_ID : tenantId,
         	                    "Unexpected tenantId value on thread " + id);
             
@@ -136,7 +136,7 @@ public class TapisThreadLocalTest
         	// to be reinitialized on the next get call.
             TapisThreadLocal.tapisThreadContext.remove();
             context = TapisThreadLocal.tapisThreadContext.get();
-        	Assert.assertEquals(context.getTenantId(), 
+        	Assert.assertEquals(context.getJwtTenantId(), 
 		                        TapisThreadContext.INVALID_ID,
                                 "Expected the default tenantId value on thread: " + id);
         }

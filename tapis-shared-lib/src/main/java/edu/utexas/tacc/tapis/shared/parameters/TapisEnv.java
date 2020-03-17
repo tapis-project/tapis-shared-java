@@ -175,6 +175,9 @@ public class TapisEnv
       // The protocol and host/port of the Tapis installation's tenants service.
       TAPIS_TENANT_SVC_BASEURL("tapis.tenant.svc.baseurl"),
       
+      // The password used by services to obtain their initial service JWT.
+      TAPIS_SERVICE_PASSWORD("tapis.service.password"),
+      
       // ------------------- SK Parameters -----------------------------
       // Whether to disable the secrets subsystem.
       TAPIS_SK_VAULT_DISABLE("tapis.sk.vault.disable"),

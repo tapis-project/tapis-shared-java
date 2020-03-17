@@ -114,8 +114,8 @@ public class TestParameterRequestFilter
 
         // Assign non-null test values to thread-local variables.
         TapisThreadContext threadContext = TapisThreadLocal.tapisThreadContext.get();
-        if (!StringUtils.isBlank(tenantId)) threadContext.setTenantId(tenantId);
-        if (!StringUtils.isBlank(user)) threadContext.setUser(user);
+        if (!StringUtils.isBlank(tenantId)) threadContext.setJwtTenantId(tenantId);
+        if (!StringUtils.isBlank(user)) threadContext.setJwtUser(user);
         if (accountType != null) threadContext.setAccountType(accountType);
         if (!StringUtils.isBlank(delegationSub)) threadContext.setDelegatorSubject(delegationSub);
     }

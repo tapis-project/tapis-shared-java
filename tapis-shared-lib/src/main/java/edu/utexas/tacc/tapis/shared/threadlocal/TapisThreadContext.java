@@ -14,25 +14,25 @@ public final class TapisThreadContext
     /* **************************************************************************** */
     /*                                     Enums                                    */
     /* **************************************************************************** */
+	// The account type determines the token type.
 	public enum AccountType {user, service}
 	
 	/* **************************************************************************** */
 	/*                                    Fields                                    */
 	/* **************************************************************************** */
 	// The tenant and user of the current thread's request initialized to non-null.
-	// Account type also cannot be null.  The delegator subject is either null when
-	// no delegation has occurred or in the 'user@tenant' format when there is 
-	// delegation.
-	private String tenantId = INVALID_ID;       // always from JWT
-	private String user = INVALID_ID;           // from JWT or X-Tapis-User header
+	private String jwtTenantId = INVALID_ID;    // as specified in the JWT
+	private String jwtUser = INVALID_ID;        // as specified in the JWT
+    private String oboTenantId = INVALID_ID;    // on-behalf-of tenant id
+    private String oboUser = INVALID_ID;        // on-behalf-of user
+	
+    // Account type also cannot be null.  The delegator subject is either null when
+    // no delegation has occurred or in the 'user@tenant' format when there is 
+    // delegation.
 	private AccountType accountType;            // determines source of user value
     private String delegatorSubject = null;     // always from JWT
     
-    // Header values that are saved if present in the request.
-    private String headerTenantId;              // X-Tapis-Tenant header
-    
     // Information from service type JWTs
-    private String serviceUser;                 // user from JWT if a service token
     private String UserJwtHash;                 // X-Tapis-User-Token-Hash header
 	
 	// The execution context is set at a certain point in request processing, 
@@ -56,8 +56,8 @@ public final class TapisThreadContext
 	public boolean validate()
 	{
 	    // Make sure required parameters have been assigned.
-	    if (INVALID_ID.contentEquals(tenantId) || StringUtils.isBlank(tenantId)) return false;
-	    if (INVALID_ID.contentEquals(user)     || StringUtils.isBlank(user))     return false;
+	    if (INVALID_ID.contentEquals(jwtTenantId) || StringUtils.isBlank(jwtTenantId)) return false;
+	    if (INVALID_ID.contentEquals(jwtUser)     || StringUtils.isBlank(jwtUser))     return false;
 	    if (accountType == null) return false;
 	            
 	    return true;
@@ -72,15 +72,25 @@ public final class TapisThreadContext
 	/* **************************************************************************** */
 	/*                                   Accessors                                  */
 	/* **************************************************************************** */
-	public String getTenantId(){return tenantId;}
-	public void setTenantId(String tenantId) {
-		if (!StringUtils.isBlank(tenantId)) this.tenantId = tenantId;
+	public String getJwtTenantId(){return jwtTenantId;}
+	public void setJwtTenantId(String tenantId) {
+		if (!StringUtils.isBlank(tenantId)) this.jwtTenantId = tenantId;
 	}
 	
-	public String getUser(){return user;}
-	public void setUser(String user) {
-	    if (!StringUtils.isBlank(user)) this.user = user;
+	public String getJwtUser(){return jwtUser;}
+	public void setJwtUser(String user) {
+	    if (!StringUtils.isBlank(user)) this.jwtUser = user;
 	}
+
+    public String getOboTenantId(){return oboTenantId;}
+    public void setOboTenantId(String oboTenantId) {
+        if (!StringUtils.isBlank(oboTenantId)) this.oboTenantId = oboTenantId;
+    }
+
+    public String getOboUser(){return oboUser;}
+    public void setOboUser(String oboUser) {
+        if (!StringUtils.isBlank(oboUser)) this.oboUser = oboUser;
+    }
 
     public AccountType getAccountType() {return accountType;}
     public void setAccountType(AccountType accountType) {this.accountType = accountType;}
@@ -95,22 +105,6 @@ public final class TapisThreadContext
     }
     public void setDelegatorSubject(String delegatorSubject) {
         this.delegatorSubject = delegatorSubject;
-    }
-
-    public String getHeaderTenantId() {
-        return headerTenantId;
-    }
-
-    public void setHeaderTenantId(String headerTenantId) {
-        this.headerTenantId = headerTenantId;
-    }
-
-    public String getServiceUser() {
-        return serviceUser;
-    }
-
-    public void setServiceUser(String serviceUser) {
-        this.serviceUser = serviceUser;
     }
 
     public String getUserJwtHash() {
