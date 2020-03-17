@@ -47,5 +47,17 @@ public class AuthenticatedUser implements Principal {
         return jwt;
     }
 
+    public String getOboUser() {
+        return oboUser;
+    }
+
+    public String getOboTenantId() {
+        return oboTenantId;
+    }
+
+    public String getHeaderUserTokenHash() {
+        return headerUserTokenHash;
+    }
+
 }
 
