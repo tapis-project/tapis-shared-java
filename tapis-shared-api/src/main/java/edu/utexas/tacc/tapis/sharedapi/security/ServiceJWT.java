@@ -38,7 +38,7 @@ import edu.utexas.tacc.tapis.tokens.client.model.TokenResponsePackage;
  * @author rcardone
  */
 public final class ServiceJWT 
- implements Thread.UncaughtExceptionHandler
+ implements Thread.UncaughtExceptionHandler, IServiceJWT
 {
     /* **************************************************************************** */
     /*                                   Constants                                  */
@@ -124,24 +124,36 @@ public final class ServiceJWT
     /*                               Public Accessors                               */
     /* **************************************************************************** */
     // Original inputs.
+    @Override
     public String getServiceName() {return _serviceName;}
+    @Override
     public String getTenant() {return _tenant;}
+    @Override
     public String getTokensBaseUrl() {return _tokensBaseUrl;}
-    public TokenResponsePackage get_tokPkg() {return _tokPkg;}
+    @Override
+    public TokenResponsePackage getTokPkg() {return _tokPkg;}
+    @Override
     public int getAccessTTL() {return _accessTTL;}
+    @Override
     public int getRefreshTTL() {return _refreshTTL;}
+    @Override
     public String getDelegationTenant() {return _delegationTenant;}
+    @Override
     public String getDelegationUser() {return _delegationUser;}
+    @Override
     public String getAdditionalClaims() {return _additionalClaims;}
     
     // Generated access token information.  There's no chance
     // of the tokens package being null nor its access token.
+    @Override
     public String getAccessJWT() {
         return _tokPkg.getAccessToken().getAccessToken();
     }
+    @Override
     public Instant getAccessExpiresAt() {
         return _tokPkg.getAccessToken().getExpiresAt();
     }
+    @Override
     public Integer getAccessExpiresIn() {
         return _tokPkg.getAccessToken().getExpiresIn();
     }
@@ -168,6 +180,7 @@ public final class ServiceJWT
      * 
      * @return true if the access token is expired, false if still useable
      */
+    @Override
     public boolean hasExpiredAccessJWT() {
         return Instant.now().isAfter(getAccessExpiresAt());
     }
@@ -187,11 +200,13 @@ public final class ServiceJWT
     /* ---------------------------------------------------------------------------- */
     /* getRefreshCount:                                                             */
     /* ---------------------------------------------------------------------------- */
+    @Override
     public int getRefreshCount() {return _refreshCount;}
 
     /* ---------------------------------------------------------------------------- */
     /* getLastRefreshTime:                                                          */
     /* ---------------------------------------------------------------------------- */
+    @Override
     public Instant getLastRefreshTime() {return _lastRefreshTime;}
 
     /* **************************************************************************** */

@@ -16,6 +16,7 @@ import edu.utexas.tacc.tapis.tenants.client.TenantsClient;
 import edu.utexas.tacc.tapis.tenants.client.gen.model.Tenant;
 
 public final class TenantManager 
+ implements ITenantManager 
 {
     /* **************************************************************************** */
     /*                                   Constants                                  */
@@ -33,16 +34,16 @@ public final class TenantManager
     /*                                    Fields                                    */
     /* **************************************************************************** */
     // Singleton instance.
-    private static TenantManager _instance;
+    private static ITenantManager _instance;
     
     // Base url for the tenant's service.
-    private final String         _tenantServiceBaseUrl;
+    private final String          _tenantServiceBaseUrl;
     
     // The map tenant ids to tenants retrieved from the tenant's service.
-    private Map<String,Tenant>   _tenants;
+    private Map<String,Tenant>    _tenants;
     
     // Time of the last update.
-    private Instant              _lastUpdateTime;
+    private Instant               _lastUpdateTime;
     
     /* **************************************************************************** */
     /*                                 Constructors                                 */
@@ -63,7 +64,7 @@ public final class TenantManager
     /* ---------------------------------------------------------------------------- */
     /* getInstance:                                                                 */
     /* ---------------------------------------------------------------------------- */
-    public static TenantManager getInstance(String tenantServiceBaseUrl) 
+    public static ITenantManager getInstance(String tenantServiceBaseUrl) 
      throws TapisRuntimeException
     {
         // Only create a new instance if one doesn't exist.
@@ -94,7 +95,7 @@ public final class TenantManager
      * @return the non-null instance
      * @throws TapisRuntimeException if the tenants manager instance does not exist
      */
-    public static TenantManager getInstance() throws TapisRuntimeException
+    public static ITenantManager getInstance() throws TapisRuntimeException
     {
         // Throw runtime exception if we are not initialized.
         if (_instance == null) {
@@ -116,6 +117,7 @@ public final class TenantManager
      * @return the tenants map
      * @throws TapisRuntimeException if the list cannot be attained
      */
+    @Override
     public Map<String,Tenant> getTenants() throws TapisRuntimeException
     {
         // Initialize the list if necessary.
@@ -166,6 +168,7 @@ public final class TenantManager
      * @return a tenants list that may have been refreshed
      * @throws TapisRuntimeException if a map cannot be attained
      */
+    @Override
     public Map<String,Tenant> refreshTenants() throws TapisRuntimeException
     {
         // Maybe we are not initialized.
@@ -192,6 +195,7 @@ public final class TenantManager
      * @return the non-null tenant
      * @throws TapisException if no tenant can be returned
      */
+    @Override
     public Tenant getTenant(String tenantId) throws TapisException
     {
         // See if we can find the tenant.
@@ -227,6 +231,7 @@ public final class TenantManager
      * @return true if the tenant substitution is allowed, false otherwise
      * @throws TapisException if the jwt tenant object cannot be retrieved 
      */
+    @Override
     public boolean allowTenantId(String jwtTenantId, String hdrTenantId)
      throws TapisException
     {
@@ -239,11 +244,13 @@ public final class TenantManager
     /* ---------------------------------------------------------------------------- */
     /* getTenantServiceBaseUrl:                                                     */
     /* ---------------------------------------------------------------------------- */
+    @Override
     public String getTenantServiceBaseUrl() {return _tenantServiceBaseUrl;}
 
     /* ---------------------------------------------------------------------------- */
     /* getLastUpdateTime:                                                           */
     /* ---------------------------------------------------------------------------- */
+    @Override
     public Instant getLastUpdateTime() {return _lastUpdateTime;}
 
     /* **************************************************************************** */

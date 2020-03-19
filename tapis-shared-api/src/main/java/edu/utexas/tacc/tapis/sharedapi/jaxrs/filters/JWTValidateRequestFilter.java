@@ -9,6 +9,7 @@ import java.util.HashMap;
 
 import javax.annotation.Priority;
 import javax.annotation.security.PermitAll;
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.Priorities;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
@@ -31,6 +32,7 @@ import edu.utexas.tacc.tapis.shared.threadlocal.TapisThreadContext;
 import edu.utexas.tacc.tapis.shared.threadlocal.TapisThreadContext.AccountType;
 import edu.utexas.tacc.tapis.shared.threadlocal.TapisThreadLocal;
 import edu.utexas.tacc.tapis.sharedapi.security.AuthenticatedUser;
+import edu.utexas.tacc.tapis.sharedapi.security.ITenantManager;
 import edu.utexas.tacc.tapis.sharedapi.security.TapisSecurityContext;
 import edu.utexas.tacc.tapis.sharedapi.security.TenantManager;
 import edu.utexas.tacc.tapis.sharedapi.utils.TapisRestUtils;
@@ -110,6 +112,42 @@ public class JWTValidateRequestFilter
     // All access to this map must be limited to one thread at a time.
     private static final HashMap<String,PublicKey> _keyCache = new HashMap<>();
     
+    // A real or mocked tenant manager object.
+    private ITenantManager _tenantManager;
+    
+    /* ********************************************************************** */
+    /*                            Constructors                                */
+    /* ********************************************************************** */
+    /* ---------------------------------------------------------------------- */
+    /* constructor:                                                           */
+    /* ---------------------------------------------------------------------- */
+    /** This is the constructor used everywhere except for unit testing.  It
+     * assumes that the real TenantManager class will have been initialized
+     * by the time the first request comes through.  All request filters 
+     * constructed in this manner have their _tenantManager field assigned
+     * during processing.  Attempting to assign the field here causes an
+     * exception because of the order in which JAX-RS does things.
+     */
+    public JWTValidateRequestFilter() {}
+    
+    /* ---------------------------------------------------------------------- */
+    /* constructor:                                                           */
+    /* ---------------------------------------------------------------------- */
+    /** This is a unit test only constructor.  Callers are able to substitute
+     * any mock tenant manager they would like by calling this constructor.
+     * 
+     * Attempting to put an Inject annotation on this constructor causes JAX-RS
+     * to get throw numerous exceptions, so it's up to the caller to integrate
+     * this constructor into their test harness.  
+     * 
+     * @param tenantManager a mock object
+     */
+    public JWTValidateRequestFilter(@NotNull ITenantManager tenantManager)
+    {
+        // Assign a mock tenant manager instance provided explicitly by the caller.
+        _tenantManager = tenantManager;
+    }
+    
     /* ********************************************************************** */
     /*                            Public Methods                              */
     /* ********************************************************************** */
@@ -131,6 +169,11 @@ public class JWTValidateRequestFilter
         if (isNoAuthRequest(requestContext)) return;
 
         // ------------------------ Extract Encoded JWT ------------------------
+        // Assign the default tenant manager instance that is a singleton expected 
+        // to already exist.  This field is not null when a mock object is provided
+        // on construction during unit testing.
+        if (_tenantManager == null) _tenantManager = TenantManager.getInstance();
+        
         // Parse variables.
         String encodedJWT = null;
         
@@ -432,7 +475,7 @@ public class JWTValidateRequestFilter
      throws TapisSecurityException
      {
         // Get when the tenant information was last updated.
-        Instant lastTenantUpdate = TenantManager.getInstance().getLastUpdateTime();
+        Instant lastTenantUpdate = _tenantManager.getLastUpdateTime();
         
         // Synchronize access to the key cache across all instances of this class.
         synchronized (_keyCache) 
@@ -450,7 +493,7 @@ public class JWTValidateRequestFilter
             // ------------------- Decode New Key -------------------------
             // Get the tenant's public key as saved in the tenants table.
             Tenant tenant;
-            try {tenant = TenantManager.getInstance().getTenant(tenantId);} 
+            try {tenant = _tenantManager.getTenant(tenantId);} 
                 catch (Exception e) {
                     String msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_KEY_ERROR", e.getMessage());
                     _log.error(msg, e);
