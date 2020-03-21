@@ -37,7 +37,7 @@ import edu.utexas.tacc.tapis.tokens.client.model.TokenResponsePackage;
  * 
  * @author rcardone
  */
-public final class ServiceJWT 
+public class ServiceJWT
  implements Thread.UncaughtExceptionHandler, IServiceJWT
 {
     /* **************************************************************************** */

@@ -15,7 +15,7 @@ import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
 import edu.utexas.tacc.tapis.tenants.client.TenantsClient;
 import edu.utexas.tacc.tapis.tenants.client.gen.model.Tenant;
 
-public final class TenantManager 
+public class TenantManager
  implements ITenantManager 
 {
     /* **************************************************************************** */
@@ -34,7 +34,7 @@ public final class TenantManager
     /*                                    Fields                                    */
     /* **************************************************************************** */
     // Singleton instance.
-    private static ITenantManager _instance;
+    private static TenantManager _instance;
     
     // Base url for the tenant's service.
     private final String          _tenantServiceBaseUrl;
@@ -64,7 +64,7 @@ public final class TenantManager
     /* ---------------------------------------------------------------------------- */
     /* getInstance:                                                                 */
     /* ---------------------------------------------------------------------------- */
-    public static ITenantManager getInstance(String tenantServiceBaseUrl) 
+    public static TenantManager getInstance(String tenantServiceBaseUrl)
      throws TapisRuntimeException
     {
         // Only create a new instance if one doesn't exist.
@@ -95,7 +95,7 @@ public final class TenantManager
      * @return the non-null instance
      * @throws TapisRuntimeException if the tenants manager instance does not exist
      */
-    public static ITenantManager getInstance() throws TapisRuntimeException
+    public static TenantManager getInstance() throws TapisRuntimeException
     {
         // Throw runtime exception if we are not initialized.
         if (_instance == null) {
