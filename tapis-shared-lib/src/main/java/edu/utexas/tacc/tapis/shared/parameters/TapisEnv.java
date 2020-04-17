@@ -182,6 +182,9 @@ public class TapisEnv
       // Whether to disable the secrets subsystem.
       TAPIS_SK_VAULT_DISABLE("tapis.sk.vault.disable"),
       
+      // Whether to disable automatic vault token renewal.
+      TAPIS_SK_VAULT_RENEWAL_DISABLE("tapis.sk.vault.renewal.disable"),
+      
       // The address of the vault server (ex: http://myhost:8200)
       TAPIS_SK_VAULT_ADDRESS("tapis.sk.vault.address"),
       
