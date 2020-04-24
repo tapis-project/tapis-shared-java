@@ -9,6 +9,8 @@ import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
 import edu.utexas.tacc.tapis.sharedapi.responses.TapisResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -19,9 +21,12 @@ import edu.utexas.tacc.tapis.sharedapi.responses.TapisResponse;
 @Provider
 public class TapisExceptionMapper implements ExceptionMapper<Exception> {
 
+    private static final Logger log = LoggerFactory.getLogger(TapisExceptionMapper.class);
+
+
     @Override
     public Response toResponse(Exception exception){
-
+        log.error("TapisExceptionMapper : ", exception);
         TapisResponse<String> resp = TapisResponse.createErrorResponse(exception.getMessage());
 
          if (exception instanceof NotFoundException) {
