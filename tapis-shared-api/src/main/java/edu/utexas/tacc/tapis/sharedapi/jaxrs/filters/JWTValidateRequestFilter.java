@@ -10,6 +10,7 @@ import java.util.HashMap;
 import javax.annotation.Priority;
 import javax.annotation.security.PermitAll;
 import javax.validation.constraints.NotNull;
+import javax.ws.rs.HttpMethod;
 import javax.ws.rs.Priorities;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
@@ -160,7 +161,10 @@ public class JWTValidateRequestFilter
         // Tracing.
         if (_log.isTraceEnabled())
             _log.trace("Executing JAX-RX request filter: " + this.getClass().getSimpleName() + ".");
-        
+
+        // OPTIONS requests should not have any authentication
+        if (requestContext.getMethod().equals(HttpMethod.OPTIONS)) return;
+
         // @PermitAll on the method takes precedence over @RolesAllowed on the class, allow all
         // requests with @PermitAll to go through
         if (resourceInfo.getResourceMethod().isAnnotationPresent(PermitAll.class)) return;
