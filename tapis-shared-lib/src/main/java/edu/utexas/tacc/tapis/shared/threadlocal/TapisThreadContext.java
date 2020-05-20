@@ -2,6 +2,8 @@ package edu.utexas.tacc.tapis.shared.threadlocal;
 
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.List;
+
 public final class TapisThreadContext 
  implements Cloneable
 {
@@ -25,6 +27,8 @@ public final class TapisThreadContext
 	private String jwtUser = INVALID_ID;        // as specified in the JWT
     private String oboTenantId = INVALID_ID;    // on-behalf-of tenant id
     private String oboUser = INVALID_ID;        // on-behalf-of user
+    private boolean prettyPrint = false;
+    private List<String> selectList;
 	
     // Account type also cannot be null.  The delegator subject is either null when
     // no delegation has occurred or in the 'user@tenant' format when there is 
@@ -72,6 +76,10 @@ public final class TapisThreadContext
 	/* **************************************************************************** */
 	/*                                   Accessors                                  */
 	/* **************************************************************************** */
+    public List<String> getSelectList(){return selectList;}
+    public void setSelectList(List<String> l) { selectList = l; }
+    public boolean getPrettyPrint(){return prettyPrint;}
+    public void setPrettyPrint(boolean p) { prettyPrint = p; }
 	public String getJwtTenantId(){return jwtTenantId;}
 	public void setJwtTenantId(String tenantId) {
 		if (!StringUtils.isBlank(tenantId)) this.jwtTenantId = tenantId;
