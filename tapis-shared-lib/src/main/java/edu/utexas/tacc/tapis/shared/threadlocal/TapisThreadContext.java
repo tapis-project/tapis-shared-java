@@ -27,9 +27,15 @@ public final class TapisThreadContext
 	private String jwtUser = INVALID_ID;        // as specified in the JWT
     private String oboTenantId = INVALID_ID;    // on-behalf-of tenant id
     private String oboUser = INVALID_ID;        // on-behalf-of user
+
+    // Information that is extracted from query parameters
+    // TODO Re-evaluate - remove if not ultimately used
     private boolean prettyPrint = false;
-    private List<String> selectList;
-	
+    private List<String> searchList;
+    private List<String> returnAttributesList;
+    private int limit = -1;
+    private String startAfter;
+
     // Account type also cannot be null.  The delegator subject is either null when
     // no delegation has occurred or in the 'user@tenant' format when there is 
     // delegation.
@@ -76,8 +82,14 @@ public final class TapisThreadContext
 	/* **************************************************************************** */
 	/*                                   Accessors                                  */
 	/* **************************************************************************** */
-    public List<String> getSelectList(){return selectList;}
-    public void setSelectList(List<String> l) { selectList = l; }
+    public String getStartAfter(){return startAfter;}
+    public void setStartAfter(String s) { startAfter = s; }
+    public int getLimit(){return limit;}
+    public void setLimit(int i) { limit = i; }
+    public List<String> getReturnAttributesList(){return returnAttributesList;}
+    public void setReturnAttributesList(List<String> l) { returnAttributesList = l; }
+    public List<String> getSearchList(){return searchList;}
+    public void setSearchList(List<String> l) { searchList = l; }
     public boolean getPrettyPrint(){return prettyPrint;}
     public void setPrettyPrint(boolean p) { prettyPrint = p; }
 	public String getJwtTenantId(){return jwtTenantId;}
