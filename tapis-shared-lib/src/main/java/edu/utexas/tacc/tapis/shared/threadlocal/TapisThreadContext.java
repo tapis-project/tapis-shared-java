@@ -70,6 +70,12 @@ public final class TapisThreadContext
 	    if (INVALID_ID.contentEquals(jwtUser)     || StringUtils.isBlank(jwtUser))     return false;
 	    if (accountType == null) return false;
 	            
+        // These are required on service tokens.
+        if (accountType == AccountType.service) {
+            if (INVALID_ID.contentEquals(oboTenantId) || StringUtils.isBlank(oboTenantId)) return false;
+            if (INVALID_ID.contentEquals(oboUser)     || StringUtils.isBlank(oboUser))     return false;
+        }
+                
 	    return true;
 	}
 
