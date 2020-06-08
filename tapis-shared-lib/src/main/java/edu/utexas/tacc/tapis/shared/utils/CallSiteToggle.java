@@ -2,22 +2,22 @@ package edu.utexas.tacc.tapis.shared.utils;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/** This class can be used to turn on and off individual logging call sites by providing
+/** This class can be used to turn on and off individual call sites by providing
  * a theadsafe toggle switch that can be turned on and off.  The methods that change the
  * position of the switch, toggleOn and toggleOff, return true only when the switch 
  * transitions between states.  For example, if toggleOn is called when the switch is
- * already on, then no transition occurs, the switch remains on and false is returned.  
+ * already on, then no transition occurs, the switch remains on, and false is returned.  
  * The testing and state transition of the toggle take place atomically.
  * 
- * The intended usage pattern is to control whether logging takes place at a particular
+ * The motivating use case is to control whether logging takes place at a particular site
  * by adjusting this toggle on error and non-error paths through a method.  The goal is
- * to minimize redundant log records that fill up log file when a error condition persists
- * over time across multiple calls.  Logging is turned off when a certain condition is
- * detected and only turned back on when the condition clears. 
+ * to minimize redundant log records that fill up log files when a error condition persists
+ * across multiple calls.  Logging is turned off when the error condition is first detected 
+ * and only turned back on when the condition clears. 
  * 
  * @author rcardone
  */
-public final class LogSiteToggle 
+public final class CallSiteToggle 
 {
     // Thread-safe toggle switch initially set to ON (i.e., allow logging).
     private final AtomicBoolean _toggleSwitch = new AtomicBoolean(true);
