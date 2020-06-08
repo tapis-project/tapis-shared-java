@@ -67,8 +67,8 @@ public class HikariDSGenerator
   /*                                    Fields                                    */
   /* **************************************************************************** */
 	// The database management system serviced by this driver object.
-	private String _dbmsName;
-	private String _dbmsDriverName;
+	private final String _dbmsName;
+	private final String _dbmsDriverName;
 	
   /* **************************************************************************** */
   /*                                 Constructors                                 */

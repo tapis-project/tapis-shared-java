@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * 
  * The motivating use case is to control whether logging takes place at a particular site
  * by adjusting this toggle on error and non-error paths through a method.  The goal is
- * to minimize redundant log records that fill up log files when a error condition persists
+ * to minimize redundant log records that fill up log files when an error condition persists
  * across multiple calls.  Logging is turned off when the error condition is first detected 
  * and only turned back on when the condition clears. 
  * 

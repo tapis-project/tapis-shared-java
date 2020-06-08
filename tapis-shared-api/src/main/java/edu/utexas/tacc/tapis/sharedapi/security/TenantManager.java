@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
 import edu.utexas.tacc.tapis.shared.exceptions.runtime.TapisRuntimeException;
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
+import edu.utexas.tacc.tapis.shared.utils.CallSiteToggle;
 import edu.utexas.tacc.tapis.tenants.client.TenantsClient;
 import edu.utexas.tacc.tapis.tenants.client.gen.model.Tenant;
 
@@ -44,6 +45,9 @@ public class TenantManager
     
     // Time of the last update.
     private Instant               _lastUpdateTime;
+    
+    // Toggle switch that limits log output.
+    private static final CallSiteToggle _lastGetTenantsSucceeded = new CallSiteToggle();
     
     /* **************************************************************************** */
     /*                                 Constructors                                 */
@@ -136,12 +140,13 @@ public class TenantManager
                     } catch (Exception e) {
                         String msg = MsgUtils.getMsg("TAPIS_TENANT_LIST_ERROR",
                                                      getTenantsPath());
-                        _log.error(msg, e);
+                        if (_lastGetTenantsSucceeded.toggleOff()) _log.error(msg, e);
                         throw new TapisRuntimeException(msg, e);
                     }
                     
                     // Mark the time of the download.
                     _lastUpdateTime = Instant.now();
+                    _lastGetTenantsSucceeded.toggleOn();
                     
                     // Write a message to the log.
                     if (_log.isInfoEnabled())
