@@ -56,8 +56,11 @@ public class TapisUtils
   // The tapis version resource path name. Maven 
   // fills in the version number at build time.
   public static final String TAPIS_VERSION_FILE = "/tapis.version";
-  
-  // Used to generate 3 bytes of randomness that fit into 2^24 - 1. 
+
+  // Full version includes git info
+  public static final String TAPIS_FULLVERSION_FILE = "/tapis.fullversion";
+
+  // Used to generate 3 bytes of randomness that fit into 2^24 - 1.
   private static final int CEILING = 0x1000000;
   
   /* **************************************************************************** */
@@ -65,7 +68,8 @@ public class TapisUtils
   /* **************************************************************************** */
   // The version string read in from the tapis version resource file.
   private static String _tapisVersion;
-  
+  private static String _tapisFullVersion;
+
   /* **************************************************************************** */
   /*                                Public Methods                                */
   /* **************************************************************************** */
@@ -202,7 +206,41 @@ public static Timestamp getUTCTimestamp()
     }
     return _tapisVersion;
   }
-  
+
+  /* ---------------------------------------------------------------------------- */
+  /* getTapisFullVersion:                                                         */
+  /* ---------------------------------------------------------------------------- */
+  /** Read the Tapis full version from a file.  The file contains version and git
+   *  info as written by Maven during the build. Fall back to basic version
+   *  if resource file not found or on error.
+   *
+   * @return the current software's full version including git info or basic version if full version not found
+   */
+  public static String getTapisFullVersion()
+  {
+    // Assign the version string only on the first time through.
+    if (_tapisFullVersion == null)
+    {
+      if (TapisUtils.class.getResource(TAPIS_FULLVERSION_FILE) != null)
+      {
+        try (InputStream ins = TapisUtils.class.getResourceAsStream(TAPIS_FULLVERSION_FILE)) {
+          _tapisFullVersion = IOUtils.toString(ins, StandardCharsets.UTF_8).trim();
+        }
+        catch (Exception e) {
+          // Error. Fall back to basic version
+          _log.warn(MsgUtils.getMsg("TAPIS_VERSION_FILE_ERROR", TAPIS_FULLVERSION_FILE));
+          _tapisFullVersion = getTapisVersion();
+        }
+      }
+      else
+      {
+        // Resource not found. Fall back to basic version
+        _tapisFullVersion = getTapisVersion();
+      }
+    }
+    return _tapisFullVersion;
+  }
+
   /* ---------------------------------------------------------------------------- */
   /* getPasswordFromConsole:                                                      */
   /* ---------------------------------------------------------------------------- */
