@@ -4,11 +4,15 @@ import java.io.ByteArrayOutputStream;
 import java.io.StringWriter;
 import java.nio.charset.Charset;
 
+import org.apache.commons.lang3.StringUtils;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import edu.utexas.tacc.tapis.shared.exceptions.TapisJDBCException;
+import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
 import edu.utexas.tacc.tapis.shareddb.datasource.HikariDSGenerator;;
 
 /** This is a simple container class for parsed input values.
@@ -20,6 +24,9 @@ public class TapisJDBCMigrateParms
  /* **************************************************************************** */
  /*                                 Constants                                    */
  /* **************************************************************************** */
+ // Tracing.
+ private static final Logger _log = LoggerFactory.getLogger(TapisJDBCMigrateParms.class);
+    
  // Default password for the service's runtime, non-admin user (tapis).
  private static final String DFT_TAPIS_USER_PASSWORD = "password"; // change on 1st use  
     
@@ -102,6 +109,7 @@ public class TapisJDBCMigrateParms
      throws TapisJDBCException
  {
   initializeParms(args);
+  validateParms();
  }
   
  /* **************************************************************************** */
@@ -157,5 +165,35 @@ public class TapisJDBCMigrateParms
      parser.printUsage(System.out);
      System.exit(0);
     }
+ }
+ 
+ /* ---------------------------------------------------------------------------- */
+ /* validateParms:                                                               */
+ /* ---------------------------------------------------------------------------- */
+ /** Validate the input arguments. */
+ protected void validateParms()
+     throws TapisJDBCException
+ {
+     // Make sure the parms with default values are still assigned.
+     if (StringUtils.isBlank(tapisPassword)) {
+         String msg = MsgUtils.getMsg("TAPIS_NULL_PARAMETER", "validateParms", "tapisPassword");
+         _log.error(msg);
+         throw new TapisJDBCException(msg);
+     }
+     if (StringUtils.isBlank(cmdDirectory)) {
+         String msg = MsgUtils.getMsg("TAPIS_NULL_PARAMETER", "validateParms", "cmdDirectory");
+         _log.error(msg);
+         throw new TapisJDBCException(msg);
+     }
+     if (StringUtils.isBlank(dbmsName)) {
+         String msg = MsgUtils.getMsg("TAPIS_NULL_PARAMETER", "validateParms", "dbmsName");
+         _log.error(msg);
+         throw new TapisJDBCException(msg);
+     }
+     if (StringUtils.isBlank(schema)) {
+         String msg = MsgUtils.getMsg("TAPIS_NULL_PARAMETER", "validateParms", "schema");
+         _log.error(msg);
+         throw new TapisJDBCException(msg);
+     }
  }
 }

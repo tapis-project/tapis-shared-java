@@ -152,25 +152,25 @@ public class HikariDSGenerator
     if (StringUtils.isBlank(appName)) {
         String msg = MsgUtils.getMsg("TAPIS_NULL_PARAMETER", "getDataSource", "appName");
         _log.error(msg);
-       throw new TapisRuntimeException(msg);
+        throw new TapisRuntimeException(msg);
     }
   	if (StringUtils.isBlank(poolName)) {
-  	  String msg = MsgUtils.getMsg("TAPIS_NULL_PARAMETER", "getDataSource", "poolName");
+  	    String msg = MsgUtils.getMsg("TAPIS_NULL_PARAMETER", "getDataSource", "poolName");
   		_log.error(msg);
   		throw new TapisRuntimeException(msg);
   	}
   	if (StringUtils.isBlank(jdbcUrl)) {
-  	  String msg = MsgUtils.getMsg("TAPIS_NULL_PARAMETER", "getDataSource", "jdbcUrl");
+  	    String msg = MsgUtils.getMsg("TAPIS_NULL_PARAMETER", "getDataSource", "jdbcUrl");
   		_log.error(msg);
   		throw new TapisRuntimeException(msg);
   	}
   	if (StringUtils.isBlank(user)) {
-  	  String msg = MsgUtils.getMsg("TAPIS_NULL_PARAMETER", "getDataSource", "user");
+  	    String msg = MsgUtils.getMsg("TAPIS_NULL_PARAMETER", "getDataSource", "user");
    		_log.error(msg);
    		throw new TapisRuntimeException(msg);
    	}
    	if (StringUtils.isBlank(password)) {
-   	 String msg = MsgUtils.getMsg("TAPIS_NULL_PARAMETER", "getDataSource", "password");
+   	    String msg = MsgUtils.getMsg("TAPIS_NULL_PARAMETER", "getDataSource", "password");
    		_log.error(msg);
    		throw new TapisRuntimeException(msg);
    	}

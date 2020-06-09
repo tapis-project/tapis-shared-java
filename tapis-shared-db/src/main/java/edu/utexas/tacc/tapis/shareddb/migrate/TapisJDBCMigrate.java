@@ -125,6 +125,8 @@ public class TapisJDBCMigrate
     // ------------------------ Initialization ----------------------
     // Parse and validate the command line parameters.
     _parms = getParms(args);
+// ***************** TEMP CODE.
+System.out.println(">>>>>>>>>>>>>>>>>>>>> _parms.tapisPassword = " + _parms.tapisPassword);
     
     // Create the connection pool.  We exit from here if
     // an exception is thrown.
@@ -427,6 +429,8 @@ public class TapisJDBCMigrate
       // Create the tapis user.
       String sql = "CREATE USER " + TAPIS_USER + " PASSWORD '" + 
                    _parms.tapisPassword + "'";
+// ***************** TEMP CODE.
+System.out.println(">>>>>>>>>>>>>>>>>>>>> sql = " + sql);
       Statement stmt = conn.createStatement();
       stmt.execute(sql);
       stmt.close();
@@ -436,7 +440,7 @@ public class TapisJDBCMigrate
           _log.info(MsgUtils.getMsg("MIGRATE_CREATED_USER", TAPIS_USER));
       
       // Customize the user's search path so that the public schema is used.
-      // This affect the user's search path in all databases.
+      // This affects the user's search path in all databases.
       sql = "ALTER ROLE " + TAPIS_USER + " SET search_path TO " + SEARCH_PATH; 
       stmt = conn.createStatement();
       stmt.execute(sql);
