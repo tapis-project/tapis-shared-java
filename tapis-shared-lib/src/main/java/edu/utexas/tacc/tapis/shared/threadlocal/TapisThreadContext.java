@@ -32,7 +32,6 @@ public final class TapisThreadContext
     // TODO Re-evaluate - remove if not ultimately used
     private boolean prettyPrint = false;
     private List<String> searchList;
-    private List<String> returnAttributesList;
     private int limit = -1;
     private String startAfter;
 
@@ -92,8 +91,6 @@ public final class TapisThreadContext
     public void setStartAfter(String s) { startAfter = s; }
     public int getLimit(){return limit;}
     public void setLimit(int i) { limit = i; }
-    public List<String> getReturnAttributesList(){return returnAttributesList;}
-    public void setReturnAttributesList(List<String> l) { returnAttributesList = l; }
     public List<String> getSearchList(){return searchList;}
     public void setSearchList(List<String> l) { searchList = l; }
     public boolean getPrettyPrint(){return prettyPrint;}
