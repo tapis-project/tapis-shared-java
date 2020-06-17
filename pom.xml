@@ -68,6 +68,7 @@
         <module>tapis-shared-api</module>
         <module>tapis-shared-lib</module>
         <module>tapis-shared-queue</module>
+        <module>tapis-shared-searchlib</module>
     </modules>
 
 </project>
