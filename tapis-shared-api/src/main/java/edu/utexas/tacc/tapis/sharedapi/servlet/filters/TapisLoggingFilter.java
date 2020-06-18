@@ -181,13 +181,13 @@ public class TapisLoggingFilter
   /* ---------------------------------------------------------------------------- */
   /* readServletRequest:                                                          */
   /* ---------------------------------------------------------------------------- */
-	/** Capture servlet request information.
-	 * 
-	 * @param request the source request
-	 * @param buf the output buffer
-	 */
-	private void readServletRequest(ServletRequest request, StringBuilder buf)
-	{
+  /** Capture servlet request information.
+   * 
+   * @param request the source request
+   * @param buf the output buffer
+   */
+  private void readServletRequest(ServletRequest request, StringBuilder buf)
+  {
 	  // ------------------ ServletRequest Processing ------------------
     buf.append("NETWORK: ");
     buf.append("serverName=");
@@ -220,9 +220,6 @@ public class TapisLoggingFilter
     buf.append("ENCODING: ");
     buf.append("characterEncoding=");
     buf.append(request.getCharacterEncoding());
-    buf.append(", ");
-    buf.append("contentLength=");
-    buf.append(request.getContentLength());
     buf.append(", ");
     buf.append("contentType=");
     buf.append(request.getContentType());
@@ -354,7 +351,7 @@ public class TapisLoggingFilter
       }
       buf.append("]\n");
     }
-	}
+  }
 
   /* ---------------------------------------------------------------------------- */
   /* readHttpServletRequest:                                                      */
@@ -388,6 +385,9 @@ public class TapisLoggingFilter
     buf.append("\n");
 
     buf.append("HTTP RESOURCE: ");
+    buf.append("method=");
+    buf.append(httpRequest.getMethod());
+    buf.append(", ");
     buf.append("requestURI=");
     buf.append(httpRequest.getRequestURI());
     buf.append(", ");
