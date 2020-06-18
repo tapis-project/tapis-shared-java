@@ -54,23 +54,19 @@ interface SelectorParserConstants {
   /** RegularExpression Id. */
   int NULL = 18;
   /** RegularExpression Id. */
-  int XPATH = 19;
+  int DECIMAL_LITERAL = 19;
   /** RegularExpression Id. */
-  int XQUERY = 20;
+  int HEX_LITERAL = 20;
   /** RegularExpression Id. */
-  int DECIMAL_LITERAL = 21;
+  int OCTAL_LITERAL = 21;
   /** RegularExpression Id. */
-  int HEX_LITERAL = 22;
+  int FLOATING_POINT_LITERAL = 22;
   /** RegularExpression Id. */
-  int OCTAL_LITERAL = 23;
+  int EXPONENT = 23;
   /** RegularExpression Id. */
-  int FLOATING_POINT_LITERAL = 24;
+  int STRING_LITERAL = 24;
   /** RegularExpression Id. */
-  int EXPONENT = 25;
-  /** RegularExpression Id. */
-  int STRING_LITERAL = 26;
-  /** RegularExpression Id. */
-  int ID = 27;
+  int ID = 25;
 
   /** Lexical state. */
   int DEFAULT = 0;
@@ -96,8 +92,6 @@ interface SelectorParserConstants {
     "\"TRUE\"",
     "\"FALSE\"",
     "\"NULL\"",
-    "\"XPATH\"",
-    "\"XQUERY\"",
     "<DECIMAL_LITERAL>",
     "<HEX_LITERAL>",
     "<OCTAL_LITERAL>",

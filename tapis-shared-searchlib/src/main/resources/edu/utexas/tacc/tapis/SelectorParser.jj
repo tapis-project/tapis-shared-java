@@ -64,8 +64,6 @@ import org.apache.activemq.filter.BooleanExpression;
 import org.apache.activemq.filter.ComparisonExpression;
 import org.apache.activemq.filter.ConstantExpression;
 import org.apache.activemq.filter.Expression;
-import org.apache.activemq.filter.FunctionCallExpression;
-import org.apache.activemq.filter.FunctionCallExpression.invalidFunctionExpressionException;
 import org.apache.activemq.filter.LogicExpression;
 import org.apache.activemq.filter.PropertyExpression;
 import org.apache.activemq.filter.UnaryExpression;
@@ -182,8 +180,6 @@ TOKEN [IGNORE_CASE] :
   | <  TRUE    : "TRUE" >
   | <  FALSE   : "FALSE" >
   | <  NULL    : "NULL" >
-  | <  XPATH   : "XPATH" >
-  | <  XQUERY  : "XQUERY" >
 }
 
 /* Literals */
@@ -492,61 +488,12 @@ Expression unaryExpr() :
             left = UnaryExpression.createNOT( asBooleanExpression(left) );
         }
         |
-        <XPATH> s=stringLitteral()
-        {
-            left = UnaryExpression.createXPath( s );
-        }
-        |
-        <XQUERY> s=stringLitteral()
-        {
-            left = UnaryExpression.createXQuery( s );
-        }
-        |
-            LOOKAHEAD( <ID> "(" )
-            left = functionCallExpr()
-        |
         left = primaryExpr()
     )
     {
         return left;
     }
 
-}
-
-Expression functionCallExpr () :
-{
-    Token      func_name;
-    FunctionCallExpression func_call = null;
-    Expression arg = null;
-    ArrayList arg_list = new ArrayList();
-}
-{
-    func_name = <ID> "("
-    (
-        arg = unaryExpr()
-        {
-            arg_list.add(arg);
-        }
-        (
-            ","
-            arg = unaryExpr()
-            {
-                arg_list.add(arg);
-            }
-        ) *
-    )
-    ")"
-    {
-        try
-        {
-            return FunctionCallExpression.createFunctionCall(func_name.image, arg_list);
-        }
-        catch ( invalidFunctionExpressionException inv_exc )
-        {
-            // Re-throw as an error to avoid the need to propogate the throws declaration.
-            throw new Error("invalid function call expression", inv_exc);
-        }
-    }
 }
 
 Expression primaryExpr() :

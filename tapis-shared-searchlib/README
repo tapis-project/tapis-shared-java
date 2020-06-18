@@ -43,8 +43,9 @@ Language Support
 ================
 
 The original ActiveMQ expression language includes support for built-in and custom functions,
-as well as xpath and xquery functions.  The built-in functions are defined in 
+as well as xpath and xquery expressions.  The built-in functions are defined in 
 org.apache.activemq.filter.function.BuiltinFunctionRegistry.  These functionss are: REGEX, 
 INLIST, MAKELIST, REPLACE and SPLIT.
 
-These capabilities are removed from the grammar in Tapis to maintain strict SQL '92 compliance.
+These capabilities have been removed from the Tapis grammar to maintain strict SQL '92 compliance.
+If we decided to add them back in the future, the initial commit contains the code.

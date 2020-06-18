@@ -51,12 +51,6 @@ public class ParserTest
         // Test NULL
         filter = "missing is NULL";
         ast = TapisSelectorParser.parse(filter);
-        
-        // Test REGEX.  Move this to the bad filters test after removing functions.
-        // --> FunctionCallExpression.deregisterFunction("REGEX");
-        filter = "REGEX('^a.c', 'abc')"; // hardcoded regex and value example
-        ast = TapisSelectorParser.parse(filter);
-        System.out.println(ast);
     }
 
     /* ---------------------------------------------------------------------- */
@@ -113,5 +107,15 @@ public class ParserTest
         try {ast = TapisSelectorParser.parse(filter);}
             catch (InvalidSelectorException e) {exceptionOccurred = true;}
         if (!exceptionOccurred) throw new IllegalArgumentException(filter);
-   }
+        
+        // Test REGEX as an indication that all function calls have been removed
+        // from the language.  If we want to add function calls in the future, we
+        // can selective remove the built-in function by deregistering them:
+        // --> FunctionCallExpression.deregisterFunction("REGEX");
+        exceptionOccurred = false;
+        filter = "REGEX('^a.c', 'abc')"; // hardcoded regex and value example
+        try {ast = TapisSelectorParser.parse(filter);}
+            catch (InvalidSelectorException e) {exceptionOccurred = true;}
+        if (!exceptionOccurred) throw new IllegalArgumentException(filter);
+  }
 }
