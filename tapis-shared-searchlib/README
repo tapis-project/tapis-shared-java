@@ -22,8 +22,8 @@ https://javacc.github.io/javacc/
 // Previous direct use of ActiveMQ parser in Aloe.
 https://bitbucket.org/tacc-cic/aloe/src/master/aloe-jobslib/src/main/java/edu/utexas/tacc/aloe/jobs/queue/SelectorFilter.java 
 
-Usage
-=====
+Building
+========
 
 After wasting an inordinate amount of time trying to get a single POM file to generate the parser 
 source files and then to compile those source files, I decided to go with a 2 step process:
@@ -38,6 +38,11 @@ likely be a MANUAL PROCESS since it occurs so rarely.
 
 Executing pom.xml performs the normal compile-test-jar build phases.  Both the builder class
 and the generated parser classes get built each time.
+
+Usage
+=====
+
+Only the TapisSelectorParser class should be called by Tapis code.  See ParserTest for usage examples.
 
 Language Support
 ================
