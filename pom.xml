@@ -14,7 +14,7 @@
     </parent>
 
     <artifactId>tapis-shared-java</artifactId>
-    <version>1.1-SNAPSHOT</version>
+    <version>1.1</version>
 
     <name>Tapis shared</name>
     <description>TAPIS shared Java code</description>
@@ -23,7 +23,7 @@
     <scm>
         <connection>scm:git:git@github.com:tapis-project/tapis-shared-java.git</connection>
         <url>https://github.com/tapis-project/tapis-shared-java</url>
-        <tag>tapis-shared-1.1-SNAPSHOT</tag>
+        <tag>tapis-shared-java-1.1</tag>
     </scm>
 
     <properties>
@@ -36,7 +36,7 @@
         <!-- Properties can be overridden here         -->
         <!-- Version of tapis-shared-java to be used.  --> 
         <!-- Individual projects may want to override. -->
-        <tapis-client-java.version>1.1</tapis-client-java.version>
+        <tapis-client-java.version>1.1-SNAPSHOT</tapis-client-java.version>
     </properties>
 
     <repositories>
