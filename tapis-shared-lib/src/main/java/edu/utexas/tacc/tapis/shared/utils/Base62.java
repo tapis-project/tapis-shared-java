@@ -17,14 +17,15 @@ import java.util.ArrayList;
  * length can yield different length string encodings.  
  * 
  * For random input, this algorithm produces a string with length equal to or 
- * less than that produced by base64 encoding more than 80% of the time.  It 
+ * less than that produced by base64 encoding more than 90% of the time.  It 
  * also produces shorter strings than hex encoding well over 99% of the time 
  * for random input.  
  * 
  * The algorithm uses an escape character (CODEFLAG) to signal bit sequences
  * of value 61, 62 or 63.  In the worst case, when input bytes are sequences
  * of only these bit patterns, each 3 input bytes are encoded into 8 output 
- * characters.
+ * characters.  This is worse than hex encoding, which always yields 2 
+ * characters for each byte.
  * 
  * Usage
  * -----
@@ -39,17 +40,19 @@ import java.util.ArrayList;
  * 
  * Implementation Revisions 
  * ------------------------
- * The original code was modified to improve performance and interface
- * consistency.  The main algorithm and bit manipulation code was not changed.  
+ * The original code was modified to improve comments, performance and 
+ * interface consistency.  The public methods were made threadsafe.  The
+ * main algorithm and bit manipulation code was not changed.  
  * 
  * @author John Jiyang Hou, revisions by rcardone
  */
 public class Base62
 {
-    
+    // Encoding alphabet.
     private static final String CODES =
             "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
+    // Escape character.
     private static final char CODEFLAG = '9';
     
     // ASCII 65, 66, 67.

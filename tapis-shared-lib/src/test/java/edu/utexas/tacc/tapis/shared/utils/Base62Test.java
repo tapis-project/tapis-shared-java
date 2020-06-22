@@ -31,7 +31,7 @@ import org.testng.annotations.Test;
  *  length: 32, count: 9
  *
  * In the above run, no output encoding was longer then the 32 character 
- * strings that hex encoding would generate.  Over 80% matched or beat
+ * strings that hex encoding would generate.  Over 90% matched or beat
  * the standard base64 output length of 24 characters.   
  * 
  * Decoding
@@ -48,7 +48,7 @@ public class Base62Test
 {
     // Constants.
     private static final int RANDOM_LEN = 16;
-    private static final int ITERATIONS = 1000000;
+    private static final int ITERATIONS = 100000;
     
     // Fields.
     private final Random _rand = new Random();
