@@ -2,6 +2,7 @@ package edu.utexas.tacc.tapis.sharedapi.security;
 
 import java.time.Instant;
 
+import edu.utexas.tacc.tapis.client.shared.exceptions.TapisClientException;
 import org.testng.annotations.Test;
 
 import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
@@ -29,7 +30,7 @@ public class ServiceJWTTest
     /* refreshTokens:                                                         */
     /* ---------------------------------------------------------------------- */
     @Test(enabled=true)
-    public void refreshTokens() throws TapisException, InterruptedException
+    public void refreshTokens() throws TapisException, TapisClientException, InterruptedException
     { 
         // Set the token parms.
         var parms = new ServiceJWTParms();
@@ -76,7 +77,7 @@ public class ServiceJWTTest
   /*   such as an env var.                                                  */
   /* ---------------------------------------------------------------------- */
   @Test(enabled=false)
-  public void getTokenForSystems() throws TapisException
+  public void getTokenForSystems() throws TapisException, TapisClientException
   {
     // Set the token parms.
     var parms = new ServiceJWTParms();

@@ -6,7 +6,7 @@
     <parent>
         <groupId>edu.utexas.tacc.tapis</groupId>
         <artifactId>tapis-bom</artifactId>
-        <version>1.7-SNAPSHOT</version>
+        <version>1.10</version>
         <!-- Set empty relative path to avoid maven warning and-->
         <!--   ensure parent is found in local repository if that-->
         <!--   is the only place it exists.-->
@@ -14,7 +14,7 @@
     </parent>
 
     <artifactId>tapis-shared-java</artifactId>
-    <version>1.4-SNAPSHOT</version>
+    <version>1.10</version>
 
     <name>Tapis shared</name>
     <description>TAPIS shared Java code</description>
@@ -23,7 +23,7 @@
     <scm>
         <connection>scm:git:git@github.com:tapis-project/tapis-shared-java.git</connection>
         <url>https://github.com/tapis-project/tapis-shared-java</url>
-        <tag>tapis-shared-1.4-SNAPSHOT</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <properties>
@@ -36,7 +36,7 @@
         <!-- Properties can be overridden here         -->
         <!-- Version of tapis-shared-java to be used.  --> 
         <!-- Individual projects may want to override. -->
-        <tapis-client-java.version>1.2</tapis-client-java.version>
+        <tapis-client-java.version>1.10</tapis-client-java.version>
     </properties>
 
     <repositories>

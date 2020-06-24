@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.util.Base64;
 import java.util.Map;
 
+import edu.utexas.tacc.tapis.client.shared.exceptions.TapisClientException;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -98,7 +99,7 @@ public class ServiceJWT
      * @throws TapisException if the tokens cannot be generated for any reason
      */
     public ServiceJWT(ServiceJWTParms parms, String servicePassword)
-     throws TapisException
+     throws TapisException, TapisClientException
     {
         // Unpack the parms object.
         _serviceName = parms.getServiceName();
@@ -216,7 +217,7 @@ public class ServiceJWT
     /* createServiceJWT:                                                            */
     /* ---------------------------------------------------------------------------- */
     private TokenResponsePackage createServiceJWT(String password) 
-     throws TapisException
+     throws TapisException, TapisClientException
     {
         // Check parameters.
         if (StringUtils.isBlank(password)) {
@@ -278,7 +279,7 @@ public class ServiceJWT
     /* refreshServiceJWT:                                                           */
     /* ---------------------------------------------------------------------------- */
     private TokenResponsePackage refreshServiceJWT() 
-     throws TapisException
+     throws TapisException, TapisClientException
     {
         // Create and populate the client parameter object.
         var refreshParms = new RefreshTokenParms();
