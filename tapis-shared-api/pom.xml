@@ -20,11 +20,6 @@
 		</dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>shared</artifactId>
-            <version>${tapis-client-java.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
             <artifactId>tenants-client</artifactId>
             <version>${tapis-client-java.version}</version>
         </dependency>
