@@ -1,16 +1,14 @@
 package edu.utexas.tacc.tapis.shared.parameters;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import edu.utexas.tacc.tapis.shared.parameters.TapisEnv;
-
-import java.util.HashMap;
-import java.util.Map;
 
 
 @Test(groups={"unit"})
@@ -45,6 +43,7 @@ public class TapisEnvTest
         newEnv.put(TapisEnv.EnvVar.TAPIS_SMTP_PORT.name(), LONG_TEST_VAL.toString());
         newEnv.put(TapisEnv.EnvVar.TAPIS_SMTP_PASSWORD.name(), DBL_TEST_VAL.toString());
         newEnv.put(TapisEnv.EnvVar.TAPIS_REQUEST_LOGGING_FILTER_PREFIXES.getEnvName(), "a,bc,def,/g/h/i");
+        newEnv.put(TapisEnv.EnvVar.TAPIS_REQUEST_LOGGING_IGNORE_SUFFIXES.getEnvName(), "/healthcheck;/ready;/hello");
         newEnv.put(TapisEnv.EnvVar.TAPIS_MAIL_PROVIDER.getEnvName(), "");
 
         newEnv.put(TapisEnv.EnvVar.TAPIS_ENVONLY_LOG_SECURITY_INFO.getEnvName(), "true");
@@ -172,6 +171,27 @@ public class TapisEnvTest
         Assert.assertFalse(TapisEnv.inEnvVarListPrefix(envVar, "a"));
     }
 
+    @Test(enabled=true)
+    public void testInEnvVarListSuffix()
+    {
+        TapisEnv.EnvVar envVar = TapisEnv.EnvVar.TAPIS_REQUEST_LOGGING_IGNORE_SUFFIXES;
+        // Check that false is returned if either parameter is null
+        Assert.assertFalse(TapisEnv.inEnvVarListPrefix(null,null));
+        Assert.assertFalse(TapisEnv.inEnvVarListPrefix(envVar,null));
+        Assert.assertFalse(TapisEnv.inEnvVarListPrefix(null,"/ready"));
+        
+        // Check that true is returned if value is a suffix in the list
+        Assert.assertTrue(TapisEnv.inEnvVarListSuffix(envVar, "/healthcheck"));
+        Assert.assertTrue(TapisEnv.inEnvVarListSuffix(envVar, "a/b/ready"));
+        Assert.assertTrue(TapisEnv.inEnvVarListSuffix(envVar, "/x/y/hello"));
+
+        // Check that false is returned if value is a suffix not in the list
+        Assert.assertFalse(TapisEnv.inEnvVarListSuffix(envVar, "healthcheck"));
+        Assert.assertFalse(TapisEnv.inEnvVarListSuffix(envVar, "/healthchec"));
+        Assert.assertFalse(TapisEnv.inEnvVarListSuffix(envVar, "banana"));
+        Assert.assertFalse(TapisEnv.inEnvVarListSuffix(envVar, "/banana"));
+    }
+    
     @Test
     public void testGetLogSecurityInfo()
     {

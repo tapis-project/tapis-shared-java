@@ -59,9 +59,13 @@ public class TapisEnv
 	  // other sources (e.g., properties file, etc.).
 	  
 	  // -------------------- General Parameters -------------------------
-	  // Comma or semi-colon separated list of servlet names 
-	  // for which logging filters should be turned on. 
+	  // Comma or semi-colon separated list of servlet path names 
+	  // prefixes for which logging filters should be turned on. 
 	  TAPIS_REQUEST_LOGGING_FILTER_PREFIXES("tapis.request.logging.filter.prefixes"),
+		
+	  // Comma or semi-colon separated list of servlet path names 
+	  // suffixes for which logging filters should be turned off. 
+	  TAPIS_REQUEST_LOGGING_IGNORE_SUFFIXES("tapis.request.logging.ignore.suffixes"),
 		
 		// The path to a properties file that contains a service's input parameters.
 	  TAPIS_SERVICE_PROPERTIES_PATHNAME("tapis.service.properties.pathname"),
@@ -396,7 +400,7 @@ public class TapisEnv
 	}
 	
 	/* ---------------------------------------------------------------------------- */
-	/* inEnvVarPrefixList:                                                          */
+	/* inEnvVarListPrefix:                                                          */
 	/* ---------------------------------------------------------------------------- */
 	/** Search a comma or semi-colon separated list of values assigned to the specified
 	 * environment variable.  A match is successful if one of the list entries is a 
@@ -406,7 +410,7 @@ public class TapisEnv
 	 * @param envVar the environment variable key
 	 * @param name the url string used to match against prefixes assigned in 
 	 *           the environment variable
-	 * @return true if an element in the list begins with prefix string, false otherwise
+	 * @return true if name starts with a prefix string in the list, false otherwise
 	 */
 	public static boolean inEnvVarListPrefix(EnvVar envVar, String name)
 	{
@@ -425,8 +429,38 @@ public class TapisEnv
 		return false;
 	}
 	
+	/* ---------------------------------------------------------------------------- */
+	/* inEnvVarListSuffix:                                                          */
+	/* ---------------------------------------------------------------------------- */
+	/** Search a comma or semi-colon separated list of values assigned to the specified
+	 * environment variable.  A match is successful if one of the list entries is a 
+	 * suffix of the specified name.  A list of one (i.e., a single value with no separator) 
+	 * is a valid list.
+	 * 
+	 * @param envVar the environment variable key
+	 * @param name the url string used to match against suffixes assigned in 
+	 *           the environment variable
+	 * @return true if name ends with a suffix string in the list, false otherwise
+	 */
+	public static boolean inEnvVarListSuffix(EnvVar envVar, String name)
+	{
+		// Garbage in, garbage out.
+		if ((envVar == null) || (name == null)) return false;
+		
+		// Get the list of environment values.
+		String values = get(envVar);
+		if (StringUtils.isBlank(values)) return false;
+		
+		// Tokenize the non-empty list.
+		String[] tokens = _namePattern.split(values);
+		for (String suffix : tokens)
+			if (name.endsWith(suffix)) return true;
+		
+		return false;
+	}
+	
 	/* **************************************************************************** */
-	/*                           Environment-Only Methods                           */
+	/*                          Environment-Only Methods                            */
 	/* **************************************************************************** */
 	/* ---------------------------------------------------------------------- */
 	/* getLogSecurityInfo:                                                    */
@@ -459,5 +493,4 @@ public class TapisEnv
 		if (retVal == null) retVal = System.getenv(envVar.name());
 		return retVal;
 	}
-
 }

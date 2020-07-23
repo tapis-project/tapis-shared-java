@@ -124,7 +124,8 @@ public class TapisLoggingFilter
 	    }
 	  
 	    // Determine if we are filtering.
-	    if (!TapisEnv.inEnvVarListPrefix(EnvVar.TAPIS_REQUEST_LOGGING_FILTER_PREFIXES, filterPath))
+	    if (TapisEnv.inEnvVarListSuffix(EnvVar.TAPIS_REQUEST_LOGGING_IGNORE_SUFFIXES, filterPath) ||
+	    	!TapisEnv.inEnvVarListPrefix(EnvVar.TAPIS_REQUEST_LOGGING_FILTER_PREFIXES, filterPath))
 	    {
 	        chain.doFilter(request, response);
 	        return;
