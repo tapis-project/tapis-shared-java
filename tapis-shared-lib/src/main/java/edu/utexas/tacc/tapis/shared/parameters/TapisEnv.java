@@ -27,6 +27,10 @@ public class TapisEnv
 	// Environment-only prefix.
 	public static final String ENVONLY_KEY_PREFIX = "tapis.envonly.";
 	
+	// Cache commonly used data.
+	private static String[] _loggingFilterPrefixes;
+	private static String[] _loggingFilterSuffixes;
+	
 	/* **************************************************************************** */
 	/*                                     Enums                                    */
 	/* **************************************************************************** */
@@ -417,12 +421,8 @@ public class TapisEnv
 		// Garbage in, garbage out.
 		if ((envVar == null) || (name == null)) return false;
 		
-		// Get the list of environment values.
-		String values = get(envVar);
-		if (StringUtils.isBlank(values)) return false;
-		
 		// Tokenize the non-empty list.
-		String[] tokens = _namePattern.split(values);
+		String[] tokens = getTokens(envVar);
 		for (String prefix : tokens)
 			if (name.startsWith(prefix)) return true;
 		
@@ -447,12 +447,8 @@ public class TapisEnv
 		// Garbage in, garbage out.
 		if ((envVar == null) || (name == null)) return false;
 		
-		// Get the list of environment values.
-		String values = get(envVar);
-		if (StringUtils.isBlank(values)) return false;
-		
 		// Tokenize the non-empty list.
-		String[] tokens = _namePattern.split(values);
+		String[] tokens = getTokens(envVar);
 		for (String suffix : tokens)
 			if (name.endsWith(suffix)) return true;
 		
@@ -477,6 +473,9 @@ public class TapisEnv
 	    return getBoolean(EnvVar.TAPIS_ENVONLY_LOG_SECURITY_INFO);
 	}
 
+	/* **************************************************************************** */
+	/*                               Private Methods                                */
+    /* **************************************************************************** */
 	/* ---------------------------------------------------------------------------- */
 	/* getEnvValue:                                                                 */
 	/* ---------------------------------------------------------------------------- */
@@ -492,5 +491,53 @@ public class TapisEnv
 		String retVal = System.getenv(envVar.getEnvName());
 		if (retVal == null) retVal = System.getenv(envVar.name());
 		return retVal;
+	}
+	
+	/* ---------------------------------------------------------------------------- */
+	/* getTokens:                                                                   */
+	/* ---------------------------------------------------------------------------- */
+	/** Get an environment variable value that represents a delimited list of strings.
+	 * Tokenize the value into a string array.  This method maintains a simple cache
+	 * of frequently used environment values to avoid constantly reparsing the same
+	 * value.
+	 * 
+	 * The returned string array can be empty if the environment variable is not 
+	 * assigned or empty.
+	 * 
+	 * @param envVar the environment variable enum
+	 * @return the tokenized array of values or empty array
+	 */
+	private static String[] getTokens(EnvVar envVar)
+	{
+		// ----- Check cache
+		// Return the cached tokens if they exist.
+		if (envVar == EnvVar.TAPIS_REQUEST_LOGGING_FILTER_PREFIXES && 
+				_loggingFilterPrefixes != null) 
+			return _loggingFilterPrefixes;
+		if (envVar == EnvVar.TAPIS_REQUEST_LOGGING_IGNORE_SUFFIXES && 
+				_loggingFilterSuffixes != null) 
+			return _loggingFilterSuffixes;
+				
+		// ----- Tokenize environment variable value
+		// Get the list of environment values and tokenize it.
+		String[] tokens;
+		String values = get(envVar);
+		if (StringUtils.isBlank(values)) tokens = new String[0];
+		  else tokens = _namePattern.split(values);
+			
+		// ---- Populate cache
+		// Cache frequently used tokens.  There's no need to worry about concurrent
+		// writes to the fields because that JVM guarantees that addresses are written
+		// atomically.  In the case of a race condition, the last writer wins, which 
+		// is ok since all values are the same.  Once assigned, the fields are only read.
+		if (_loggingFilterPrefixes == null && 
+				envVar == EnvVar.TAPIS_REQUEST_LOGGING_FILTER_PREFIXES)
+			_loggingFilterPrefixes = tokens;
+		if (_loggingFilterSuffixes == null && 
+				envVar == EnvVar.TAPIS_REQUEST_LOGGING_IGNORE_SUFFIXES)
+			_loggingFilterSuffixes = tokens;
+		
+		// Return newly parsed string array.
+		return tokens;
 	}
 }
