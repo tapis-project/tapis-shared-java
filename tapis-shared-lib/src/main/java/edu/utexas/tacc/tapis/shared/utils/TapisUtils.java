@@ -46,6 +46,7 @@ public class TapisUtils
   
   // Set the display text for null references.
   public static final String NULL_STRING = "[null]";
+  public static final String UNKNOWN_VALUE = "unknown";
   
   // Create the recursive dump styles.  The multiline style is readable by humans,
   // the comparable style is good for comparing the nested values of two objects
@@ -59,6 +60,10 @@ public class TapisUtils
 
   // Full version includes git info
   public static final String TAPIS_FULLVERSION_FILE = "/tapis.fullversion";
+  
+  // Build time and git info file names.
+  public static final String BUILD_TIME_FILE = "/build.time";
+  public static final String GIT_INFO_FILE   = "/git.info";
 
   // Used to generate 3 bytes of randomness that fit into 2^24 - 1.
   private static final int CEILING = 0x1000000;
@@ -69,6 +74,11 @@ public class TapisUtils
   // The version string read in from the tapis version resource file.
   private static String _tapisVersion;
   private static String _tapisFullVersion;
+  
+  // The build timestamp and git information.
+  private static String _buildTime;
+  private static String _gitBranch;
+  private static String _gitCommit;
 
   /* **************************************************************************** */
   /*                                Public Methods                                */
@@ -158,20 +168,20 @@ public class TapisUtils
   /* ---------------------------------------------------------------------------- */
   /* getUTCTimestamp:                                                             */
   /* ---------------------------------------------------------------------------- */
-
-  /* ---------------------------------------------------------------------------- */  /** Get the current instant's timestamp in UTC.
- *
- * @return a sql UTC timestamp object ready for persisting in the database.
- */
-public static Timestamp getUTCTimestamp()
-{
+  /** Get the current instant's timestamp in UTC.
+   *
+   * @return a sql UTC timestamp object ready for persisting in the database.
+   */
+  public static Timestamp getUTCTimestamp()
+  {
     // Return the current UTC timestamp for database operations.
     // Maybe there's a simpler way to do this, but just getting the current time
     // in milliseconds causes jvm local time to be saved to the database.
     return Timestamp.valueOf(LocalDateTime.now(ZoneId.of(ZoneOffset.UTC.getId())));
-}
+  }
 
-    /* getInstantFromSqlTimestamp:                                                  */
+  /* ---------------------------------------------------------------------------- */
+  /* getInstantFromSqlTimestamp:                                                  */
   /* ---------------------------------------------------------------------------- */
   /** Get the instant representation of a UTC timestamp retrieved the database.
    * 
@@ -199,9 +209,12 @@ public static Timestamp getUTCTimestamp()
     {
       try (InputStream ins = TapisUtils.class.getResourceAsStream(TAPIS_VERSION_FILE)) {
         _tapisVersion = IOUtils.toString(ins, StandardCharsets.UTF_8);
+        if (StringUtils.isBlank(_tapisVersion) || _tapisVersion.startsWith("${")) 
+        	_tapisVersion = UNKNOWN_VALUE;
       }
       catch (Exception e) {
         _log.error(MsgUtils.getMsg("TAPIS_VERSION_FILE_ERROR", TAPIS_VERSION_FILE));
+        _tapisVersion = UNKNOWN_VALUE;
       }
     }
     return _tapisVersion;
@@ -239,6 +252,97 @@ public static Timestamp getUTCTimestamp()
       }
     }
     return _tapisFullVersion;
+  }
+
+  /* ---------------------------------------------------------------------------- */
+  /* getBuildTime:                                                                */
+  /* ---------------------------------------------------------------------------- */
+  /** Read the Tapis build time file.  
+   * 
+   * @return the current software's build time.
+   */
+  public static String getBuildTime()
+  {
+    // Assign the build time string only on the first time through.
+    if (_buildTime == null) 
+    {
+      try (InputStream ins = TapisUtils.class.getResourceAsStream(BUILD_TIME_FILE)) {
+        _buildTime = IOUtils.toString(ins, StandardCharsets.UTF_8);
+        if (StringUtils.isBlank(_buildTime) || _buildTime.startsWith("${")) 
+        	_buildTime = UNKNOWN_VALUE;
+      }
+      catch (Exception e) {
+        _log.error(MsgUtils.getMsg("TAPIS_VERSION_FILE_ERROR", BUILD_TIME_FILE));
+        _buildTime = UNKNOWN_VALUE;
+      }
+    }
+    return _buildTime;
+  }
+
+  /* ---------------------------------------------------------------------------- */
+  /* getGitBranch:                                                                */
+  /* ---------------------------------------------------------------------------- */
+  /** Read the git info file and return the branch.  
+   * 
+   * @return the git branch used to build the current software.
+   */
+  public static String getGitBranch()
+  {
+    // Assign the git info only on the first time through.
+    if (_gitBranch == null) getGitInfo();
+    return _gitBranch;
+  }
+
+  /* ---------------------------------------------------------------------------- */
+  /* getGitCommit:                                                                */
+  /* ---------------------------------------------------------------------------- */
+  /** Read the git info file and return the commit number.  
+   * 
+   * @return the git commit used to build the current software.
+   */
+  public static String getGitCommit()
+  {
+    // Assign the git info only on the first time through.
+    if (_gitCommit == null) getGitInfo();
+    return _gitCommit;
+  }
+
+  /* ---------------------------------------------------------------------------- */
+  /* getGitInfo:                                                                */
+  /* ---------------------------------------------------------------------------- */
+  /** Read the git info file and assign the two git static fields.  
+   */
+  private static synchronized void getGitInfo()
+  {
+    // Assign the version string only on the first time through.
+    if (_gitBranch == null) 
+    {
+      try (InputStream ins = TapisUtils.class.getResourceAsStream(GIT_INFO_FILE)) {
+          // git.info file should contain "${scmBranch}  ${buildNumber}", e.g. "develop  b8cb6330"
+          // Split it into string array using one or more spaces as delimiter
+          String gitStr = IOUtils.toString(ins, StandardCharsets.UTF_8);
+          String[] gitInfo = gitStr.split("\\s+");
+          if (gitInfo.length < 2)
+          {
+        	  _log.error(MsgUtils.getMsg("TAPIS_VERSION_FILE_ERROR", GIT_INFO_FILE));
+              _gitBranch = UNKNOWN_VALUE;
+              _gitCommit = UNKNOWN_VALUE;
+          }	
+          else
+          {
+        	  // Assign the valid, non-null values.
+        	  _gitBranch = StringUtils.isBlank(gitInfo[0]) ? UNKNOWN_VALUE : gitInfo[0];
+        	  _gitCommit = StringUtils.isBlank(gitInfo[1]) ? UNKNOWN_VALUE : gitInfo[1];
+        	  if (_gitBranch.startsWith("${")) _gitBranch = UNKNOWN_VALUE;
+        	  if (_gitCommit.startsWith("${")) _gitCommit = UNKNOWN_VALUE;
+          }
+      }
+      catch (Exception e) {
+        _log.error(MsgUtils.getMsg("TAPIS_VERSION_FILE_ERROR", GIT_INFO_FILE));
+        _gitBranch = UNKNOWN_VALUE;
+        _gitCommit = UNKNOWN_VALUE;
+      }
+    }
   }
 
   /* ---------------------------------------------------------------------------- */
