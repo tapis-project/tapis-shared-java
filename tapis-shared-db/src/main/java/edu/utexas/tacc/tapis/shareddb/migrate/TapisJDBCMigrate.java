@@ -125,8 +125,6 @@ public class TapisJDBCMigrate
     // ------------------------ Initialization ----------------------
     // Parse and validate the command line parameters.
     _parms = getParms(args);
-// ***************** TEMP CODE.
-    _log.debug(">>>>>>>>>>>>>>>>>>>>> _parms.tapisPassword = " + _parms.tapisPassword);
     
     // Create the connection pool.  We exit from here if
     // an exception is thrown.
@@ -429,8 +427,6 @@ public class TapisJDBCMigrate
       // Create the tapis user.
       String sql = "CREATE USER " + TAPIS_USER + " PASSWORD '" + 
                    _parms.tapisPassword + "'";
-// ***************** TEMP CODE.
-      _log.debug(">>>>>>>>>>>>>>>>>>>>> sql = " + sql);
       Statement stmt = conn.createStatement();
       stmt.execute(sql);
       stmt.close();
