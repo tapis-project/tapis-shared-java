@@ -2,8 +2,6 @@ package edu.utexas.tacc.tapis.shared.threadlocal;
 
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.List;
-
 public final class TapisThreadContext 
  implements Cloneable
 {
@@ -31,9 +29,9 @@ public final class TapisThreadContext
     // Information that is extracted from query parameters
     // TODO Re-evaluate - remove if not ultimately used
     private boolean prettyPrint = false;
-    private List<String> searchList;
-    private int limit = -1;
-    private String startAfter;
+//    private List<String> searchList;
+//    private int limit = -1;
+//    private String startAfter;
 
     // Account type also cannot be null.  The delegator subject is either null when
     // no delegation has occurred or in the 'user@tenant' format when there is 
@@ -74,7 +72,7 @@ public final class TapisThreadContext
             if (INVALID_ID.contentEquals(oboTenantId) || StringUtils.isBlank(oboTenantId)) return false;
             if (INVALID_ID.contentEquals(oboUser)     || StringUtils.isBlank(oboUser))     return false;
         }
-                
+
 	    return true;
 	}
 
@@ -87,12 +85,12 @@ public final class TapisThreadContext
 	/* **************************************************************************** */
 	/*                                   Accessors                                  */
 	/* **************************************************************************** */
-    public String getStartAfter(){return startAfter;}
-    public void setStartAfter(String s) { startAfter = s; }
-    public int getLimit(){return limit;}
-    public void setLimit(int i) { limit = i; }
-    public List<String> getSearchList(){return searchList;}
-    public void setSearchList(List<String> l) { searchList = l; }
+//    public String getStartAfter(){return startAfter;}
+//    public void setStartAfter(String s) { startAfter = s; }
+//    public int getLimit(){return limit;}
+//    public void setLimit(int i) { limit = i; }
+//    public List<String> getSearchList(){return searchList;}
+//    public void setSearchList(List<String> l) { searchList = l; }
     public boolean getPrettyPrint(){return prettyPrint;}
     public void setPrettyPrint(boolean p) { prettyPrint = p; }
 	public String getJwtTenantId(){return jwtTenantId;}
