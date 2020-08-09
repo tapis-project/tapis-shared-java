@@ -5,8 +5,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -32,8 +34,76 @@ public class SearchUtils
   // ************************************************************************
 
   // Supported operators for search
-  public enum SearchOperation {eq, neq, gt, gte, lt, lte, in, nin, like, nlike, between};
-  public static final Set<String> SEARCH_OP_SET = Stream.of(SearchOperation.values()).map(Enum::name).collect(Collectors.toSet());
+  public enum SearchOperator {EQ, NEQ, GT, GTE, LT, LTE, IN, NIN, LIKE, NLIKE, BETWEEN, NBETWEEN}
+
+  public static final Set<String> SEARCH_OP_SET = Stream.of(SearchOperator.values()).map(Enum::name).collect(Collectors.toSet());
+
+  // Operators allowed for search when column is a string type
+  public static final List<SearchOperator> stringOps =
+          List.of(SearchOperator.EQ, SearchOperator.NEQ,
+                  SearchOperator.LT, SearchOperator.LTE,
+                  SearchOperator.GT, SearchOperator.GTE,
+                  SearchOperator.LIKE, SearchOperator.NLIKE,
+                  SearchOperator.BETWEEN, SearchOperator.NBETWEEN);
+  // Operators allowed for search when column is a number type
+  public static final List<SearchOperator> numberOps =
+          List.of(SearchOperator.EQ, SearchOperator.NEQ,
+                  SearchOperator.LT, SearchOperator.LTE,
+                  SearchOperator.GT, SearchOperator.GTE,
+                  SearchOperator.BETWEEN, SearchOperator.NBETWEEN);
+  // Operators allowed for search when column is a timestamp type
+  public static final List<SearchOperator> timeStampOps =
+          List.of(SearchOperator.EQ, SearchOperator.NEQ,
+                  SearchOperator.LT, SearchOperator.LTE,
+                  SearchOperator.GT, SearchOperator.GTE,
+                  SearchOperator.BETWEEN, SearchOperator.NBETWEEN);
+  // Operators allowed for search when column is a boolean type
+  public static final List<SearchOperator> boolOps =
+          List.of(SearchOperator.EQ, SearchOperator.NEQ);
+
+// TODO  public static final Set<SearchOperator> allOps = Arrays.asList(SearchOperator.values());
+
+  // Map of jdbc sql type to list of allowed search operators
+  public static final Map<Integer, List<SearchOperator>> allowedOpsByTypeMap =
+          Map.ofEntries(
+                  Map.entry(Types.CHAR, stringOps),
+                  Map.entry(Types.VARCHAR, stringOps),
+                  Map.entry(Types.BIGINT, numberOps),
+                  Map.entry(Types.DECIMAL, numberOps),
+                  Map.entry(Types.DOUBLE, numberOps),
+                  Map.entry(Types.FLOAT, numberOps),
+                  Map.entry(Types.INTEGER, numberOps),
+                  Map.entry(Types.NUMERIC, numberOps),
+                  Map.entry(Types.REAL, numberOps),
+                  Map.entry(Types.SMALLINT, numberOps),
+                  Map.entry(Types.TINYINT, numberOps),
+                  Map.entry(Types.DATE, timeStampOps),
+                  Map.entry(Types.TIMESTAMP, timeStampOps),
+                  Map.entry(Types.BOOLEAN, boolOps)
+          );
+
+  // TODO/TBD needed?
+  public static final Map<SearchOperator, List<Integer>> allowedTypesByOpMap =
+          Map.ofEntries(
+                  Map.entry(SearchOperator.EQ, List.of(Types.BOOLEAN)),
+                  Map.entry(SearchOperator.LT, List.of(Types.VARCHAR))
+          );
+
+  /**
+   * Convert a string into a SearchOperator
+   * @param opStr- String containing all search conditions
+   * @return the corresponding SearchOperator
+   * @throws IllegalArgumentException if string is not a SearchOperator
+   */
+  public static SearchOperator getSearchOperator(String opStr) throws IllegalArgumentException
+  {
+    if (!SEARCH_OP_SET.contains(opStr))
+    {
+      String msg = MsgUtils.getMsg("SEARCH_INVALID_OP", opStr);
+      throw new IllegalArgumentException(msg);
+    }
+    return SearchOperator.valueOf(opStr);
+  }
 
   /**
    * Validate a list of search conditions and extract the conditions
@@ -95,7 +165,7 @@ public class SearchUtils
    * @return the validated condition without surrounding parentheses
    * @throws IllegalArgumentException if condition is invalid
    */
-  private static String validateAndExtractSearchCondition(String cond) throws IllegalArgumentException
+  public static String validateAndExtractSearchCondition(String cond) throws IllegalArgumentException
   {
     if (StringUtils.isBlank(cond) || !cond.startsWith("(") || !cond.endsWith(")"))
     {
@@ -144,11 +214,26 @@ public class SearchUtils
       throw new IllegalArgumentException(errMsg);
     }
     // Verify <op> is supported.
-    if (!SEARCH_OP_SET.contains(op.toLowerCase()))
+    if (!SEARCH_OP_SET.contains(op.toUpperCase()))
     {
       String errMsg = MsgUtils.getMsg("SEARCH_COND_INVALID_OP", cond);
       throw new IllegalArgumentException(errMsg);
     }
     return retCond;
+  }
+
+  /**
+   * Check that value given as a string is a valid Tapis boolean
+   * Valid strings are True, true, False, false
+   * @param valStr value to check
+   * @return true if valid, else false
+   */
+  public static boolean isBoolean(String valStr)
+  {
+    if (StringUtils.isBlank(valStr)) return false;
+    if (valStr.equals("True") || valStr.equals("true") || valStr.equals("False") || valStr.equals("false"))
+      return true;
+    else
+      return false;
   }
 }
