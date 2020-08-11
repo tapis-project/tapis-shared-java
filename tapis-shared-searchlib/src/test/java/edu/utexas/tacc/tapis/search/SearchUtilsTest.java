@@ -7,8 +7,24 @@ import org.testng.annotations.Test;
 import java.util.List;
 import static org.testng.Assert.*;
 
+
 public class SearchUtilsTest
 {
+  // multiple escapes in: '\ \\ \\' <1> <2> <2>
+  private static final String multiEscapeIn1 = "\\ \\\\ \\\\";
+  // multiple escapes out: ' \ \'
+  private static final String multiEscapeOut1 = " \\ \\";
+
+  // TODO Support more than 2 escapes in a row
+//  // multiple escapes in: '\\\ \ \\ \\\' <3> <1> <2> <3>
+//  private static final String multiEscapeIn2 = "\\\\\\ \\ \\\\ \\\\\\";
+//  // multiple escapes out: '\  \ \'
+//  private static final String multiEscapeOut2 = "\\  \\ \\";
+//  // multiple escapes in: '\ \\ \\\ \\\\ \\\\\' <1> <2> <3> <4> <5>
+//  private static final String multiEscapeIn3 = "\\ \\\\ \\\\\\ \\\\\\\\ \\\\\\\\\\";
+//  // multiple escapes out: ' \ \ \\ \\'
+//  private static final String multiEscapeOut3 = " \\ \\ \\\\ \\\\";
+
   @BeforeMethod
   public void setUp()
   {
@@ -51,9 +67,11 @@ public class SearchUtilsTest
             "(enabled.eq.true)~(owner.eq.jdoe)~(proxy_port.lt.7)~(system_type.in.OBJECT_STORE,LINUX)",
             "(enabled.eq.true)~(port.lt.7)~(system_type.in.OBJECT_STORE,LINUX)~(description.like.my\\~system)", // ~ in value
             "(enabled.eq.true)~(port.gte.7)~(description.like.my\\ system)~(system_type.in.OBJECT_STORE,LINUX)", // space in value
-// TODO support literal \ in val            "(description.like.my\\,\\(\\)\\~\\*\\!\\\\system)~(port.lte.7)~(system_type.in.OBJECT_STORE)", // 7 special chars in value: ,()~*!\
-            "(description.like.my\\,\\(\\)\\~\\*\\!system)~(port.lte.7)~(system_type.in.OBJECT_STORE)", // 7 special chars in value: ,()~*!\
+            "(description.like.my\\,\\(\\)\\~\\*\\!\\\\system)~(port.lte.7)~(system_type.in.OBJECT_STORE)", // 7 special chars in value: ,()~*!\
             "(description.like.my'\\\"system)~(port.lte.7)", // more potentially problem chars ' "
+            "description.like." + multiEscapeIn1, // multiple escapes <1> <2> <2>
+//            "description.like." + multiEscapeIn2, // multiple escapes <3> <1> <2> <3>
+//            "description.like." + multiEscapeIn3, // multiple escapes <1> <2> <3> <4> <5>
             "()~( )~()",
             "()~()",
             "~()~",
@@ -90,9 +108,11 @@ public class SearchUtilsTest
             new ValidCaseOutput(4, new String[] {"enabled.eq.true","owner.eq.jdoe","proxy_port.lt.7","system_type.in.OBJECT_STORE,LINUX"}),
             new ValidCaseOutput(4, new String[] {"enabled.eq.true","port.lt.7","system_type.in.OBJECT_STORE,LINUX","description.like.my~system"}),
             new ValidCaseOutput(4, new String[] {"enabled.eq.true","port.gte.7","description.like.my system","system_type.in.OBJECT_STORE,LINUX"}),
-//TODO            new ValidCaseOutput(3, new String[] {"description.like.my,()~*!\\system","port.lte.7","system_type.in.OBJECT_STORE"}),
-            new ValidCaseOutput(3, new String[] {"description.like.my,()~*!system","port.lte.7","system_type.in.OBJECT_STORE"}),
+            new ValidCaseOutput(3, new String[] {"description.like.my,()~*!\\system","port.lte.7","system_type.in.OBJECT_STORE"}),
             new ValidCaseOutput(2, new String[] {"description.like.my'\"system","port.lte.7"}),
+            new ValidCaseOutput(1, new String[] {"description.like." + multiEscapeOut1}),
+//            new ValidCaseOutput(1, new String[] {"description.like." + multiEscapeOut2}),
+//            new ValidCaseOutput(1, new String[] {"description.like." + multiEscapeOut3}),
             new ValidCaseOutput(0, null), // "()~( )~()",
             new ValidCaseOutput(0, null), // "()~()",
             new ValidCaseOutput(0, null), // "~()~",

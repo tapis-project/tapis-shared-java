@@ -43,8 +43,11 @@ public class SearchUtils
   // Supported operators for search
   public enum SearchOperator {EQ, NEQ, GT, GTE, LT, LTE, IN, NIN, LIKE, NLIKE, BETWEEN, NBETWEEN}
 
+  // All search operator strings as a set
   public static final Set<String> SEARCH_OP_SET = Stream.of(SearchOperator.values()).map(Enum::name).collect(Collectors.toSet());
 
+  // All search operators as a set
+  public static final EnumSet<SearchOperator> allOpSet = EnumSet.allOf(SearchOperator.class);
   // Operators allowed for search when column is a string type
   public static final EnumSet<SearchOperator> stringOpSet =
         EnumSet.of(SearchOperator.EQ, SearchOperator.NEQ, SearchOperator.LT, SearchOperator.LTE,
@@ -68,8 +71,6 @@ public class SearchUtils
   public static final EnumSet<SearchOperator> listOpSet =
         EnumSet.of(SearchOperator.IN, SearchOperator.NIN, SearchOperator.BETWEEN, SearchOperator.NBETWEEN);
 
-  // TODO  public static final Set<SearchOperator> allOps = Arrays.asList(SearchOperator.values());
-
   // Map of jdbc sql type to list of allowed search operators
   public static final Map<Integer, EnumSet<SearchOperator>> allowedOpsByTypeMap =
           Map.ofEntries(
@@ -91,18 +92,14 @@ public class SearchUtils
 
   /**
    * Convert a string into a SearchOperator
-   * @param opStr- String containing all search conditions
-   * @return the corresponding SearchOperator
-   * @throws IllegalArgumentException if string is not a SearchOperator
+   * @param opStr String containing all search conditions
+   * @return the corresponding SearchOperator or null if not found
    */
-  public static SearchOperator getSearchOperator(String opStr) throws IllegalArgumentException
+  public static SearchOperator getSearchOperator(String opStr)
   {
-    if (!SEARCH_OP_SET.contains(opStr))
-    {
-      String msg = MsgUtils.getMsg("SEARCH_INVALID_OP", opStr);
-      throw new IllegalArgumentException(msg);
-    }
-    return SearchOperator.valueOf(opStr);
+    SearchOperator op = null;
+    if (SEARCH_OP_SET.contains(opStr)) op = SearchOperator.valueOf(opStr);
+    return op;
   }
 
   /**
@@ -119,20 +116,16 @@ public class SearchUtils
     var searchList = new ArrayList<String>();
     if (StringUtils.isBlank(searchListStr)) return searchList;
     _log.trace("Parsing SearchList: " + searchListStr);
-    // Use a regex pattern to split the string
+    // Parse search string into a list of conditions using a regex pattern to split
     // Set delimiter as ~ and escape as \
-    // Pattern.quote() does escaping of any special characters that need escaping in the regex
-//    String escape = Pattern.quote("\\");
-//    String delimiter = Pattern.quote("~");
-    // Parse search string into a list of conditions using a regex and split
 //    SEARCH_REGEX = "(?:\\\\.|[^~\\\\]++)+"
-//    String regexStr = "(" + // start a match group
-//                      "?:" + // match either of
-//                        escape + "." + // any escaped character
-//                       "|" + // or
-//                       "[^" + delimiter + escape + "]++" + // match any char except delim or escape, possessive match
-//                        ")" + // end a match group
-//                        "+"; // repeat any number of times, ignoring empty results. Use * instead of + to include empty results
+//        "(" +          // start a match group
+//        "?:" +         // match either of
+//        escape + "." + // any escaped character
+//        "|" +          // or
+//        "[^" + delimiter + escape + "]++" + // match any char except delim or escape, possessive match
+//        ")" +          // end a match group
+//        "+";           // repeat any number of times, ignoring empty results. Use * instead of + to include empty results
     Pattern regexPattern = Pattern.compile(SEARCH_REGEX);
     Matcher regexMatcher = regexPattern.matcher(searchListStr);
     while (regexMatcher.find()) { searchList.add(regexMatcher.group()); }
@@ -203,7 +196,6 @@ public class SearchUtils
     String op = retCond.substring(dot1 + 1, dot2);
     String val = retCond.substring(dot2 + 1);
     // <attr>, <op> and <val> must not be empty
-    // TODO/TBD: If we support unary operators then maybe <val> can be empty
     if (StringUtils.isBlank(attr) || StringUtils.isBlank(op) || StringUtils.isBlank(val))
     {
       String errMsg = MsgUtils.getMsg("SEARCH_COND_INVALID", cond);
@@ -232,10 +224,7 @@ public class SearchUtils
     // The value will require special processing
     List<String> valList = Collections.emptyList();
     boolean isListOperator = listOpSet.contains(operator);
-    if (isListOperator)
-    {
-      valList = Arrays.asList(val.split("(?<!\\\\),")); // match , but not \,
-    }
+    if (isListOperator) valList = getValueList(val);
 
     // Make sure value does not have unescaped special characters.
     // Some operators take a list in which case commas are allowed
@@ -244,21 +233,6 @@ public class SearchUtils
       String errMsg = MsgUtils.getMsg("SEARCH_COND_INVALID_VAL", cond);
       throw new IllegalArgumentException(errMsg);
     }
-
-    //    // Validate <val>
-//    // If value might be a list then extract the list now.
-//    // Otherwise build list with single item
-//    List<String> valList;
-//    if (listOpSet.contains(operator))
-//    {
-//      valList = Arrays.asList(val.split("(?<!\\\\),")); // match , but not \,
-//    }
-//    else
-//    {
-//     valList = Arrays.asList(val);
-//    }
-//    // Verify special chars are escaped
-//    validateValueListSpecialChars(valList, cond);
 
     // For BETWEEN/NBETWEEN the value must be a 2 element list
     if ((operator.equals(SearchOperator.BETWEEN) || operator.equals(SearchOperator.NBETWEEN))
@@ -273,22 +247,24 @@ public class SearchUtils
     // ! -> _
     if (operator.equals(SearchOperator.LIKE) || operator.equals(SearchOperator.NLIKE))
     {
+      // Existing % and _ must be escaped before going to SQL
+      //  so escape any unescaped %, _ characters
+      val = val.replaceAll("(?<!\\\\)%", "\\\\%"); // match % but not \%
+      val = val.replaceAll("(?<!\\\\)_", "\\\\_"); // match _ but not \_
+      // Now do translations
       // Use regex to skip escaped characters
-      // TODO What if % already present, or \%? same for _ or \_
       val = val.replaceAll("(?<!\\\\)\\*", "%"); // match * but not \*
       val = val.replaceAll("(?<!\\\\)!", "_"); // match ! but not \!
     }
 
     // All special processing of escaped characters should be done by now
-    // so any characters currently escaped get replaced by themselves.
+    //   so most characters currently escaped get replaced by themselves.
+    //   The one exception is for LIKE/NLIKE escaped % and _ must remain
     // If it is an operator that takes a list we will need to re-build the
     // list so we can retain escaped commas
     if (!isListOperator || valList.isEmpty())
     {
-      // TODO/TBD: Does this work correctly? what about odd number of escapes? \\\
-      //           what if string ends with odd number of escapes?
-      //   val = val.replaceAll("(?<!\\\\)\\\\", ""); // match \ but not \\
-      val = val.replaceAll("\\\\", ""); // Remove all escapes
+      val = unescapeValueString(val, operator);
     }
     else
     {
@@ -298,7 +274,7 @@ public class SearchUtils
       StringJoiner sj = new StringJoiner(",");
       for (String v : valList)
       {
-        String v1 = v.replaceAll("\\\\", ""); // Remove all escapes TODO see above
+        String v1 = unescapeValueString(v, operator);
         v1 = v1.replaceAll(",", "\\\\,"); // Escape all commas
         sj.add(v1);
       }
@@ -306,6 +282,43 @@ public class SearchUtils
     }
     retCond = attr + "." + op + "." + val;
     return retCond;
+  }
+
+  /**
+   * Check that value given as a string is a valid Tapis numeric
+   * Valid strings are True, true, False, false
+   * @param valStr value to check
+   * @return true if valid, else false
+   */
+  public static List<String> getValueList(String valStr)
+  {
+    List<String> retList = Collections.emptyList();
+    retList = Arrays.asList(valStr.split("(?<!\\\\),")); // match , but not \,
+    return retList;
+  }
+
+  /**
+   * Check that value given as a string is a valid Tapis numeric
+   * Valid strings are True, true, False, false
+   * @param valStr value to check
+   * @return true if valid, else false
+   */
+  public static boolean isNumeric(String valStr)
+  {
+    if (StringUtils.isBlank(valStr)) return false;
+    return true; // TODO
+  }
+
+  /**
+   * Check that value given as a string is a valid Tapis Timestamp
+   * Valid strings are True, true, False, false
+   * @param valStr value to check
+   * @return true if valid, else false
+   */
+  public static boolean isTimestamp(String valStr)
+  {
+    if (StringUtils.isBlank(valStr)) return false;
+    return true; // TODO
   }
 
   /**
@@ -349,55 +362,24 @@ public class SearchUtils
     return true;
   }
 
-//  /**
-//   * Check for unescaped special characters in a list of value strings
-//   * @param valListStr List of strings to check
-//   * @param cond Original condition, used for constructing error msg
-//   * @throws IllegalArgumentException if unescaped characters found
-//   */
-//  private static void validateValueListSpecialChars(List<String> valListStr, String cond) throws IllegalArgumentException
-//  {
-//    if (valListStr == null || valListStr.isEmpty()) return;
-//    for (String valStr : valListStr)
-//    {
-//      if (StringUtils.isBlank(valStr)) continue;
-//      // regex=(?<!\\)<char> Match <char> but not \<char>
-//      String regex = "(?<!" + Pattern.quote("\\") + ")";
-//      for (Character c : SEARCH_VAL_SPECIAL_CHARS)
-//      {
-//        Pattern p = Pattern.compile(regex + Pattern.quote(c.toString()));
-//        if (p.matcher(valStr).find())
-//        {
-//          String errMsg = MsgUtils.getMsg("SEARCH_COND_INVALID_VAL", cond, valStr);
-//          throw new IllegalArgumentException(errMsg);
-//        }
-//      }
-//    }
-//  }
-//
-//  /**
-//   * Unescape characters in value
-//   * @param valStr value to process
-//   * @return value with escape characters removed
-//   */
-//  private static String unescapeValue(String valStr)
-//  {
-//    String retVal=null;
-//    if (StringUtils.isBlank(valStr)) return valStr;
-////    // TODO: Use better regex to make sure we do not replace an escaped backslash, e.g. '\\*' or '\\!'
-//////    SEARCH_REGEX = "(?:\\\\.|[^~\\\\]++)+"
-//////    String regexStr = "(" + // start a match group
-//////                      "?:" + // match either of
-//////                        escape + "." + // any escaped character
-//////                       "|" + // or
-//////                       "[^" + delimiter + escape + "]++" + // match any char except delim or escape, possessive match
-//////                        ")" + // end a match group
-//////                        "+"; // repeat any number of times, ignoring empty results. Use * instead of + to include empty results
-////    val.replaceAll("(?:\\\\.&[^~\\\\]++)+", "%");
-////    String regexStr = "(?:^|[^\\\\])%(([^\\\\%]|\\\\%|\\\\\\\\)*)%";
-////    val = val.replaceAll("\\*", "%");
-////    val = val.replaceAll("!", "_");
-//    retVal = valStr.replaceAll("\\\\", "");
-//    return retVal;
-//  }
+  /**
+   * Unescape most characters
+   * This should be called only after special processing of escaped characters has been done
+   * Most characters currently escaped get replaced by themselves.
+   *   The one exception is for LIKE/NLIKE escaped % and _ must remain
+   * @param valStr string to process
+   * @param op operator
+   * @return string with escaped characters replaced as appropriate
+   */
+  private static String unescapeValueString(String valStr, SearchOperator op)
+  {
+    // TODO/TBD: Still need to deal with escaped escape characters, i.e. \\
+    //            Consider multiple, especially odd number of escapes and single escapes at end of string
+    //   val = val.replaceAll("(?<!\\\\)\\\\", ""); // match \ but not \\
+    String retVal;
+    // Remove all \ except for \% \_
+//    retVal = valStr.replaceAll("\\\\", ""); // Remove all escapes
+    retVal = valStr.replaceAll("\\\\(?![%_\\\\])", ""); // Remove \ except when followed by % or _ or \
+    return retVal;
+  }
 }
