@@ -257,16 +257,19 @@ public class SearchUtils
       val = val.replaceAll("(?<!\\\\)!", "_"); // match ! but not \!
     }
 
+    // TODO/TBD: Do we really need to unescape or just rebuild the list if necessary?
+    //           because SQL will deal with them(?)
     // All special processing of escaped characters should be done by now
     //   so most characters currently escaped get replaced by themselves.
     //   The one exception is for LIKE/NLIKE escaped % and _ must remain
     // If it is an operator that takes a list we will need to re-build the
     // list so we can retain escaped commas
-    if (!isListOperator || valList.isEmpty())
-    {
-      val = unescapeValueString(val, operator);
-    }
-    else
+//    if (!isListOperator || valList.isEmpty())
+//    {
+//      val = unescapeValueString(val, operator);
+//    }
+//    else
+    if (isListOperator)
     {
       // It is a list, re-build it
       // NOTE that at this point each individual value in the list should not have any unescaped commas,
@@ -274,9 +277,10 @@ public class SearchUtils
       StringJoiner sj = new StringJoiner(",");
       for (String v : valList)
       {
-        String v1 = unescapeValueString(v, operator);
-        v1 = v1.replaceAll(",", "\\\\,"); // Escape all commas
-        sj.add(v1);
+//        String v1 = unescapeValueString(v, operator);
+//        v1 = v1.replaceAll(",", "\\\\,"); // Escape all commas
+//        sj.add(v1);
+        sj.add(v);
       }
       val = sj.toString();
     }
@@ -355,7 +359,7 @@ public class SearchUtils
     String regex = "(?<!" + Pattern.quote("\\") + ")";
     for (Character c : SEARCH_VAL_SPECIAL_CHARS)
     {
-      if (isListOp &&  c.equals(',')) continue;
+      if (isListOp &&  c.equals(',')) continue; // Commas allowed for list operators
       Pattern p = Pattern.compile(regex + Pattern.quote(c.toString()));
       if (p.matcher(valStr).find()) return false;
     }
