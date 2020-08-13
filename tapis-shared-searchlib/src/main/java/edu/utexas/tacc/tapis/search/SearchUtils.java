@@ -1,11 +1,17 @@
 package edu.utexas.tacc.tapis.search;
 
+import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.commons.validator.Msg;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.math.BigDecimal;
 import java.sql.Types;
+import java.time.Instant;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -71,7 +77,7 @@ public class SearchUtils
   public static final EnumSet<SearchOperator> listOpSet =
         EnumSet.of(SearchOperator.IN, SearchOperator.NIN, SearchOperator.BETWEEN, SearchOperator.NBETWEEN);
 
-  // Map of jdbc sql type to list of allowed search operators
+  // Map of java sql type to list of allowed search operators
   public static final Map<Integer, EnumSet<SearchOperator>> allowedOpsByTypeMap =
           Map.ofEntries(
                   Map.entry(Types.CHAR, stringOpSet),
@@ -85,9 +91,9 @@ public class SearchUtils
                   Map.entry(Types.REAL, numericOpSet),
                   Map.entry(Types.SMALLINT, numericOpSet),
                   Map.entry(Types.TINYINT, numericOpSet),
+                  Map.entry(Types.BOOLEAN, booleanOpSet),
                   Map.entry(Types.DATE, timestampOpSet),
-                  Map.entry(Types.TIMESTAMP, timestampOpSet),
-                  Map.entry(Types.BOOLEAN, booleanOpSet)
+                  Map.entry(Types.TIMESTAMP, timestampOpSet)
           );
 
   /**
@@ -289,60 +295,260 @@ public class SearchUtils
   }
 
   /**
-   * Check that value given as a string is a valid Tapis numeric
-   * Valid strings are True, true, False, false
-   * @param valStr value to check
-   * @return true if valid, else false
+   * Break up a string containing comma separated values
+   * @param valStr string containing comma separated list of values
+   * @return Resulting list of strings
    */
   public static List<String> getValueList(String valStr)
   {
-    List<String> retList = Collections.emptyList();
-    retList = Arrays.asList(valStr.split("(?<!\\\\),")); // match , but not \,
+    List<String> retList = Arrays.asList(valStr.split("(?<!\\\\),")); // match , but not \,
     return retList;
   }
 
   /**
-   * Check that value given as a string is a valid Tapis numeric
-   * Valid strings are True, true, False, false
-   * @param valStr value to check
+   * Check that value and sqlType are compatible for a value or list of values
+   * sqlTypeName, tableName and colName used only for logging
+   * @param sqlType sql type to check against
+   * @param op search operator, needed to determine if it might be a list of values
+   * @param valStr string containing a single value or CSV list for a list operator
+   * @param sqlTypeName name for sql type - logging only
+   * @param tableName name of table - logging only
+   * @param colName column name - logging only
    * @return true if valid, else false
    */
-  public static boolean isNumeric(String valStr)
+  public static boolean validateTypeAndValueList(int sqlType, SearchOperator op, String valStr,
+                                                 String sqlTypeName, String tableName, String colName)
   {
-    if (StringUtils.isBlank(valStr)) return false;
-    return true; // TODO
-  }
-
-  /**
-   * Check that value given as a string is a valid Tapis Timestamp
-   * Valid strings are True, true, False, false
-   * @param valStr value to check
-   * @return true if valid, else false
-   */
-  public static boolean isTimestamp(String valStr)
-  {
-    if (StringUtils.isBlank(valStr)) return false;
-    return true; // TODO
-  }
-
-  /**
-   * Check that value given as a string is a valid Tapis boolean
-   * Valid strings are True, true, False, false
-   * @param valStr value to check
-   * @return true if valid, else false
-   */
-  public static boolean isBoolean(String valStr)
-  {
-    if (StringUtils.isBlank(valStr)) return false;
-    if (valStr.equals("True") || valStr.equals("true") || valStr.equals("False") || valStr.equals("false"))
-      return true;
+    if (StringUtils.isBlank(valStr)) return true;
+    List<String> valList = Collections.emptyList();
+    // Build list of values to check
+    if (listOpSet.contains(op))
+      valList = getValueList(valStr);
     else
-      return false;
+      valList = new ArrayList<>(Collections.singletonList(valStr));
+    // Check each value
+    for (String val : valList)
+    {
+      if (!validateTypeAndValue(sqlType, val, sqlTypeName))
+      {
+        String msg = MsgUtils.getMsg("SEARCH_DB_INVALID_SEARCH_VALUE", op.name(), sqlTypeName, val, tableName, colName);
+        _log.error(msg);
+        return false;
+      }
+    }
+    return true;
   }
 
   // ************************************************************************
   // **************************  Private Methods  ***************************
   // ************************************************************************
+
+  private static boolean isInteger(String valStr)
+  {
+    try { Integer.parseInt(valStr); } catch(NumberFormatException e) { return false; }
+    return true;
+  }
+
+  private static boolean isLong(String valStr)
+  {
+    try { Long.parseLong(valStr); } catch(NumberFormatException e) { return false; }
+    return true;
+  }
+
+  private static boolean isShort(String valStr)
+  {
+    try { Short.parseShort(valStr); } catch(NumberFormatException e) { return false; }
+    return true;
+  }
+
+  private static boolean isDouble(String valStr)
+  {
+    try { Double.parseDouble(valStr); } catch(NumberFormatException e) { return false; }
+    return true;
+  }
+
+  private static boolean isFloat(String valStr)
+  {
+    try { Float.parseFloat(valStr); } catch(NumberFormatException e) { return false; }
+    return true;
+  }
+
+  /**
+   * Check that value given as a string is a valid Tapis numeric
+   * @param valStr value to check
+   * @return true if valid, else false
+   */
+  private static boolean isNumeric(String valStr)
+  {
+    if (NumberUtils.isCreatable(valStr)) return false;
+    return true; // TODO
+  }
+
+  /** TODO
+   * Check that value given as a string is a valid Tapis Timestamp
+   * Valid strings are True, true, False, false
+   * @param valStr value to check
+   * @return true if valid, else false
+   */
+  private static boolean isTimestamp(String valStr)
+  {
+    try { Instant.parse(valStr); } catch(DateTimeParseException e) { return false; }
+    return true;
+//    boolean cException = false;
+//    try {
+//      // Expecting UTC DateTime format: YYYY-MM-ddTHH:mm:ssZ
+//      // Example: 2020-01-17T04:39:05Z
+//      Instant v = Instant.parse(value);
+//      validFormat.setValid(true);
+//      validFormat.setTimeFormat(TimeFormat.UTC);
+//    } catch(DateTimeParseException e) {
+//      cException = true;
+//      String msg = MsgUtils.getMsg("SEARCH_DATETIME_PARSE_EXCEPTION", value, TimeFormat.UTC);
+//      _log.error(msg);
+//    }
+//    if(cException == true) {
+//      try {
+//        DateTimeFormatter formatter = new DateTimeFormatterBuilder()
+//                .parseCaseInsensitive()
+//                .append(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+//                .optionalStart()
+//                .appendPattern(".SSS")
+//                .optionalEnd()
+//                .toFormatter();
+//        LocalDateTime date = LocalDateTime.parse(value,formatter);
+//        validFormat.setValid(true);
+//        validFormat.setTimeFormat(TimeFormat.LOCAL_DATE);
+//        cException = false;
+//      } catch(DateTimeParseException e) {
+//        cException = true;
+//        _log.debug("LocalDate parsing error ");
+//        String msg = MsgUtils.getMsg("SEARCH_DATETIME_PARSE_EXCEPTION", value, TimeFormat.LOCAL_DATE);
+//        _log.error(msg);
+//      }
+//    }
+//    if(cException == true) {
+//      try {
+//        DateTimeFormatter formatter = new DateTimeFormatterBuilder()
+//                .parseCaseInsensitive()
+//                .appendPattern("yyyy-MM-dd HH:mm:ss")
+//                .optionalStart()
+//                .appendPattern(".SSS")
+//                .optionalEnd()
+//                .toFormatter();
+//
+//
+//        LocalDateTime date = LocalDateTime.parse(value,formatter);
+//        _log.debug("---- "+ date + "--------");
+//        validFormat.setValid(true);
+//        validFormat.setTimeFormat(TimeFormat.LOCAL_DATE_WITH_FORMAT);
+//        cException = false;
+//      } catch( DateTimeParseException e) {
+//        cException = true;
+//        _log.debug("LocalDate_without_time parsing error ");
+//        String msg = MsgUtils.getMsg("SEARCH_DATETIME_PARSE_EXCEPTION", value, TimeFormat.LOCAL_DATE_WITH_FORMAT);
+//        _log.error(msg);
+//      }
+//    }
+//    if(cException == true) {
+//      try {
+//
+//        DateTimeFormatter formatter =  DateTimeFormatter.ISO_DATE;
+//        LocalDate date = LocalDate.parse(value,formatter);
+//        _log.debug("---- "+ date + "--------");
+//        validFormat.setValid(true);
+//        validFormat.setTimeFormat(TimeFormat.LOCAL_DATE_WITHOUT_TIME);
+//        cException = false;
+//      } catch(DateTimeParseException e) {
+//        cException = true;
+//        _log.debug("LocalDate_without_time parsing error ");
+//        String msg = MsgUtils.getMsg("SEARCH_DATETIME_PARSE_EXCEPTION", value, TimeFormat.LOCAL_DATE_WITHOUT_TIME);
+//        _log.error(msg);
+//      }
+//
+//    }
+//    return validFormat;
+//  }
+//
+  }
+
+  /**
+   * Check that value given as a string is a valid Tapis boolean
+   * Do a case insensitive match against "true" and "false"
+   * @param valStr value to check
+   * @return true if valid, else false
+   */
+  private static boolean isBoolean(String valStr)
+  {
+    if (StringUtils.isBlank(valStr)) return false;
+    if (valStr.equalsIgnoreCase("true") || valStr.equalsIgnoreCase("false"))
+      return true;
+    else
+      return false;
+  }
+
+  /**
+   * Check that value and sqlType are compatible.
+   * sqlTypeName is only used for logging.
+   * Mappings based on recommendations from:
+   *   https://www.cis.upenn.edu/~bcpierce/courses/629/jdkdocs/guide/jdbc/getstart/mapping.doc.html
+   * @param valStr value to check
+   * @param sqlType sql type to check against
+   * @param sqlTypeName name for sql type - logging only
+   * @return true if valid, else false
+   */
+  private static boolean validateTypeAndValue(int sqlType, String valStr, String sqlTypeName)
+  {
+    if (StringUtils.isBlank(valStr)) return false; // TODO are blanks valid in some cases ???
+    switch (sqlType)
+    {
+      case Types.CHAR:
+      case Types.VARCHAR:
+        if (StringUtils.isNotBlank(valStr)) return true;
+        break;
+      case Types.INTEGER:
+        if (isInteger(valStr))  return true;
+        break;
+      case Types.BIGINT:
+        if (isLong(valStr))  return true;
+        break;
+      case Types.SMALLINT:
+        if (isShort(valStr))  return true;
+        break;
+      case Types.TINYINT:
+        if (isShort(valStr))  return true;
+        break;
+      case Types.FLOAT:
+        if (isDouble(valStr))  return true;
+        break;
+      case Types.REAL:
+        if (isFloat(valStr))  return true;
+        break;
+      case Types.DOUBLE:
+        if (isDouble(valStr))  return true;
+        break;
+      case Types.BOOLEAN:
+        if (isBoolean(valStr)) return true;
+        break;
+      case Types.NUMERIC:
+        if (isNumeric(valStr))  return true;
+        break;
+      case Types.DECIMAL:
+        if (isNumeric(valStr))  return true;
+        break;
+      case Types.DATE:
+        if (SearchUtils.isTimestamp(valStr))  return true;
+        break;
+      case Types.TIMESTAMP:
+        if (SearchUtils.isTimestamp(valStr))  return true;
+        break;
+      default:
+        // Sql Type not supported, log a warning and return false
+        String msg = MsgUtils.getMsg("SEARCH_DB_UNSUPPORTED_SQLTYPE", sqlType, sqlTypeName);
+        _log.warn(msg);
+        break;
+    }
+    return false;
+  }
 
   /**
    * Check for unescaped special characters in a value
@@ -366,24 +572,24 @@ public class SearchUtils
     return true;
   }
 
-  /**
-   * Unescape most characters
-   * This should be called only after special processing of escaped characters has been done
-   * Most characters currently escaped get replaced by themselves.
-   *   The one exception is for LIKE/NLIKE escaped % and _ must remain
-   * @param valStr string to process
-   * @param op operator
-   * @return string with escaped characters replaced as appropriate
-   */
-  private static String unescapeValueString(String valStr, SearchOperator op)
-  {
-    // TODO/TBD: Still need to deal with escaped escape characters, i.e. \\
-    //            Consider multiple, especially odd number of escapes and single escapes at end of string
-    //   val = val.replaceAll("(?<!\\\\)\\\\", ""); // match \ but not \\
-    String retVal;
-    // Remove all \ except for \% \_
-//    retVal = valStr.replaceAll("\\\\", ""); // Remove all escapes
-    retVal = valStr.replaceAll("\\\\(?![%_\\\\])", ""); // Remove \ except when followed by % or _ or \
-    return retVal;
-  }
+//  /**
+//   * Unescape most characters
+//   * This should be called only after special processing of escaped characters has been done
+//   * Most characters currently escaped get replaced by themselves.
+//   *   The one exception is for LIKE/NLIKE escaped % and _ must remain
+//   * @param valStr string to process
+//   * @param op operator
+//   * @return string with escaped characters replaced as appropriate
+//   */
+//  private static String unescapeValueString(String valStr, SearchOperator op)
+//  {
+//    // TODO/TBD: Still need to deal with escaped escape characters, i.e. \\
+//    //            Consider multiple, especially odd number of escapes and single escapes at end of string
+//    //   val = val.replaceAll("(?<!\\\\)\\\\", ""); // match \ but not \\
+//    String retVal;
+//    // Remove all \ except for \% \_
+////    retVal = valStr.replaceAll("\\\\", ""); // Remove all escapes
+//    retVal = valStr.replaceAll("\\\\(?![%_\\\\])", ""); // Remove \ except when followed by % or _ or \
+//    return retVal;
+//  }
 }
