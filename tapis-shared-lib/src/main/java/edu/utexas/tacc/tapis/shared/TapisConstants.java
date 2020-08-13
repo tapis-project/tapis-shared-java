@@ -7,12 +7,23 @@ package edu.utexas.tacc.tapis.shared;
  */
 public class TapisConstants 
 {
+	// Primary site master tenant.
+	public static final String PRIMARY_SITE_TENANT = "master";
+	
 	// Service names used to identify service code externally.
-	public static final String SERVICE_NAME_JOBS   = "jobs";
-	public static final String SERVICE_NAME_SAMPLE = "sample";
+	public static final String SERVICE_NAME_JOBS     = "jobs";
+	public static final String SERVICE_NAME_SAMPLE   = "sample";
 	public static final String SERVICE_NAME_SECURITY = "security";
-	public static final String SERVICE_NAME_SYSTEMS = "systems";
-	public static final String SERVICE_NAME_UUIDS  = "uuid";
+	public static final String SERVICE_NAME_SYSTEMS  = "systems";
+	public static final String SERVICE_NAME_UUIDS    = "uuid";
+	public static final String SERVICE_NAME_ABACO    = "abaco";
+	public static final String SERVICE_NAME_TENANTS  = "tenants";
+	public static final String SERVICE_NAME_TOKENS   = "tokens";
+	public static final String SERVICE_NAME_AUTHN    = "authenticator";
+	public static final String SERVICE_NAME_STREAMS  = "streams";
+	public static final String SERVICE_NAME_APPS     = "apps";
+	public static final String SERVICE_NAME_FILES    = "files";
+	public static final String SERVICE_NAME_POSTITS  = "postits";
 
 	// Thread local logging identifier.
 	public static final String MDC_ID_KEY = "UNIQUE_ID";
