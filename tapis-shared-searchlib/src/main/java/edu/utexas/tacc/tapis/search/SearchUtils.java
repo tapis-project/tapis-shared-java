@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import java.sql.Types;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -387,7 +388,7 @@ public class SearchUtils
    */
   private static boolean isTimestamp(String valStr)
   {
-    try { Instant.parse(valStr); } catch(DateTimeParseException e) { return false; }
+    try { LocalDateTime.parse(valStr); } catch(DateTimeParseException e) { return false; }
     return true;
   }
 
