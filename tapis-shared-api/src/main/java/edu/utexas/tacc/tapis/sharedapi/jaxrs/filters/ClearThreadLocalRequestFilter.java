@@ -27,6 +27,9 @@ public class ClearThreadLocalRequestFilter
     // Tracing.
     private static final Logger _log = LoggerFactory.getLogger(ClearThreadLocalRequestFilter.class);
     
+    // Limit logging to the first time this filter is called.
+    private static volatile boolean _notLoggedYet = true;
+    
     /* ********************************************************************** */
     /*                            Public Methods                              */
     /* ********************************************************************** */
@@ -36,9 +39,12 @@ public class ClearThreadLocalRequestFilter
     @Override
     public void filter(ContainerRequestContext requestContext) 
     {
-        // Tracing.
-        if (_log.isTraceEnabled())
-            _log.trace("Executing JAX-RX request filter: " + this.getClass().getSimpleName() + ".");
+        // To avoid polluting logs with repetitive information, just log the first
+    	// time this filter gets executed (harmless race condition notwithstanding).
+        if (_notLoggedYet && _log.isTraceEnabled()) {
+            _log.trace("JAX-RX request filter ENABLED: " + this.getClass().getSimpleName() + ".");
+            _notLoggedYet = false;
+        }
         
         // Remove any existing tapis threadlocal information.
         TapisThreadLocal.tapisThreadContext.remove();

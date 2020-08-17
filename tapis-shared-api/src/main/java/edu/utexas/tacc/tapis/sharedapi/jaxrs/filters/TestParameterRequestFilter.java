@@ -61,12 +61,12 @@ public class TestParameterRequestFilter
     @Override
     public void filter(ContainerRequestContext requestContext) 
     {
+        // Determine if we are ignoring or respecting test parameters.
+        if (!TapisEnv.getBoolean(EnvVar.TAPIS_ENVONLY_ALLOW_TEST_HEADER_PARMS)) return;
+        
         // Tracing.
         if (_log.isTraceEnabled())
             _log.trace("Executing JAX-RX request filter: " + this.getClass().getSimpleName() + ".");
-        
-        // Determine if we are ignoring or respecting test parameters.
-        if (!TapisEnv.getBoolean(EnvVar.TAPIS_ENVONLY_ALLOW_TEST_HEADER_PARMS)) return;
         
         // Initialize all test parameter values.
         String tenantId = null;

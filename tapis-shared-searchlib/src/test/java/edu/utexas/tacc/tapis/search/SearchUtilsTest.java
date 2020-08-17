@@ -44,6 +44,7 @@ public class SearchUtilsTest
   public void testValidateAndExtractSearchListValid()
   {
     // Create all input and validation data for tests
+    // Inputs
     var validCaseInputs = new HashMap<Integer,CaseInputData>();
     validCaseInputs.put( 1,new CaseInputData(1, "enabled.eq.true"));
     validCaseInputs.put( 2,new CaseInputData(1, "(port.lt.7)"));
@@ -55,8 +56,8 @@ public class SearchUtilsTest
     validCaseInputs.put( 8,new CaseInputData(1, "name.neq.test\\)\\(name"));
     validCaseInputs.put( 9,new CaseInputData(1, "name.neq.test\\~name"));
     validCaseInputs.put(10,new CaseInputData(1, "name.neq.test\\,name"));
-    validCaseInputs.put(11,new CaseInputData(1, "name.neq.test\\*name"));
-    validCaseInputs.put(12,new CaseInputData(1, "name.neq.test\\!name"));
+    validCaseInputs.put(11,new CaseInputData(1, "name.neq.test*name"));
+    validCaseInputs.put(12,new CaseInputData(1, "name.neq.test!name"));
     validCaseInputs.put(13,new CaseInputData(1, "name.like.testname*"));
     validCaseInputs.put(14,new CaseInputData(1, "name.nlike.testname!"));
     validCaseInputs.put(15,new CaseInputData(1, "name.like.test\\*name"));
@@ -72,7 +73,7 @@ public class SearchUtilsTest
     validCaseInputs.put(25,new CaseInputData(2, "(description.like.my'\\\"system)~(port.lte.7)")); // more potentially problem chars ' "
     validCaseInputs.put(26,new CaseInputData(1, "description.like." + multiEscapeIn1)); // multiple escapes <1> <2> <2>
     validCaseInputs.put(27,new CaseInputData(1, "description.like." + multiEscapeIn2)); // multiple escapes <3> <1> <2> <4>
-// TODO Figure out why this one fails. Final escape at end of line is getting eaten when there are an odd number.
+// TODO Figure out why this one fails. Looks like final escape at end of line is getting eaten when there are an odd number.
 //    validCaseInputs.put(28,new CaseInputData(1, "description.like." + multiEscapeIn3)); // multiple escapes <1> <2> <3> <4> <5>
     validCaseInputs.put(29,new CaseInputData(0, "()~( )~()"));
     validCaseInputs.put(30,new CaseInputData(0, "()~()"));
@@ -85,20 +86,22 @@ public class SearchUtilsTest
     validCaseInputs.put(37,new CaseInputData(0, "~"));
     validCaseInputs.put(38,new CaseInputData(0, ""));
     validCaseInputs.put(39,new CaseInputData(0, null));
+
+    // Outputs
+    // NOTE: For LIKE/NLIKE escaped special chars are retained.
     var validCaseOutputs = new HashMap<Integer,CaseOutputData>();
     validCaseOutputs.put( 1,new CaseOutputData(1, "enabled.eq.true"));
     validCaseOutputs.put( 2,new CaseOutputData(2, "port.lt.7"));
-            // TODO/TBD: Leave escaped chars in val because SQL will deal with them?
-    validCaseOutputs.put( 3,new CaseOutputData(3, "name.neq.test\\)name"));
-    validCaseOutputs.put( 4,new CaseOutputData(4, "name.neq.test\\(name"));
-    validCaseOutputs.put( 5,new CaseOutputData(5, "name.neq.test\\)name"));
-    validCaseOutputs.put( 6,new CaseOutputData(6, "name.neq.test\\(name"));
-    validCaseOutputs.put( 7,new CaseOutputData(7, "name.neq.test\\(\\)name"));
-    validCaseOutputs.put( 8,new CaseOutputData(8, "name.neq.test\\)\\(name"));
-    validCaseOutputs.put( 9,new CaseOutputData(9, "name.neq.test\\~name"));
-    validCaseOutputs.put(10,new CaseOutputData(10, "name.neq.test\\,name"));
-    validCaseOutputs.put(11,new CaseOutputData(11, "name.neq.test\\*name"));
-    validCaseOutputs.put(12,new CaseOutputData(12, "name.neq.test\\!name"));
+    validCaseOutputs.put( 3,new CaseOutputData(3, "name.neq.test)name"));
+    validCaseOutputs.put( 4,new CaseOutputData(4, "name.neq.test(name"));
+    validCaseOutputs.put( 5,new CaseOutputData(5, "name.neq.test)name"));
+    validCaseOutputs.put( 6,new CaseOutputData(6, "name.neq.test(name"));
+    validCaseOutputs.put( 7,new CaseOutputData(7, "name.neq.test()name"));
+    validCaseOutputs.put( 8,new CaseOutputData(8, "name.neq.test)(name"));
+    validCaseOutputs.put( 9,new CaseOutputData(9, "name.neq.test~name"));
+    validCaseOutputs.put(10,new CaseOutputData(10, "name.neq.test,name"));
+    validCaseOutputs.put(11,new CaseOutputData(11, "name.neq.test*name"));
+    validCaseOutputs.put(12,new CaseOutputData(12, "name.neq.test!name"));
     validCaseOutputs.put(13,new CaseOutputData(13, "name.like.testname%"));
     validCaseOutputs.put(14,new CaseOutputData(14, "name.nlike.testname_"));
     validCaseOutputs.put(15,new CaseOutputData(15, "name.like.test\\*name"));
