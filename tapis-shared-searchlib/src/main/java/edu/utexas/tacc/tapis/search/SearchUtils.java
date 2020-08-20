@@ -1,6 +1,7 @@
 package edu.utexas.tacc.tapis.search;
 
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
+import edu.utexas.tacc.tapis.shared.utils.TapisUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.slf4j.Logger;
@@ -8,7 +9,6 @@ import org.slf4j.LoggerFactory;
 
 import java.sql.Types;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -23,6 +23,12 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * Utility methods for search related requirements.
+ * For search using dedicated endpoints and existing endpoints.
+ *
+ * All methods should be static. By design class cannot be instantiated.
+ */
 public class SearchUtils
 {
   // Private constructor to make it non-instantiable
@@ -302,6 +308,28 @@ public class SearchUtils
   }
 
   /**
+   * Convert a string value or list of string values into strings
+   * suitable for sql operators.
+   * The string(s) must have already been checked for validity as a Tapis timestamp
+   * @param op Search operator, indicates if value may be a list
+   * @param valStr string containing comma separated list of values
+   * @return Resulting list of strings
+   */
+  public static String convertValuesToTimestamps(SearchOperator op, String valStr)
+  {
+    List<String> valList = Collections.emptyList();
+    if (listOpSet.contains(op)) valList = getValueList(valStr); else valList = Collections.singletonList(valStr);
+    StringJoiner sj = new StringJoiner(",");
+    // For each value convert string to an Instant and then back into a string suitable for SQL
+    for (String tStr : valList)
+    {
+      Instant i = TapisUtils.getUTCInstantFromString(tStr);
+      sj.add(TapisUtils.getSQLUTCStringFromInstant(i));
+    }
+    return sj.toString();
+  }
+
+  /**
    * Check that value and sqlType are compatible for a value or list of values.
    * sqlTypeName, tableName and colName used only for logging
    * @param sqlType sql type to check against
@@ -382,13 +410,23 @@ public class SearchUtils
 
   /**
    * Check that value given as a string is a valid Tapis Timestamp
-   * Valid strings are True, true, False, false
+   * Use default access instead of private for unit testing.
+   * Examples of valid timestamp formats:
+   * 2020-04-29T20:15:52:123456-06:00
+   * 2020-04-29T20:15:52:126Z
+   * 2020-04-29T20:15:52-06:00
+   * 2020-04-29T20:15-06:00
+   * 2020-04-29T20-06:00
+   * 2020-04-29-06:00
+   * 2020-04Z
+   * 2020
    * @param valStr value to check
    * @return true if valid, else false
    */
-  private static boolean isTimestamp(String valStr)
+  static boolean isTimestamp(String valStr)
   {
-    try { LocalDateTime.parse(valStr); } catch(DateTimeParseException e) { return false; }
+    // Use shared utility method to attempt to convert string to a timestamp
+    try { TapisUtils.getUTCInstantFromString(valStr); } catch(DateTimeParseException e) { return false; }
     return true;
   }
 

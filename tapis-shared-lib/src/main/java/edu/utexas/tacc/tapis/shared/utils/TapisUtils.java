@@ -17,6 +17,11 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE;
+
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
@@ -67,7 +72,28 @@ public class TapisUtils
 
   // Used to generate 3 bytes of randomness that fit into 2^24 - 1.
   private static final int CEILING = 0x1000000;
-  
+
+  // Formatter for converting an Instant into a string for SQL
+  private static final DateTimeFormatter UTC_FORMATTER_OUT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.nnnnnn");
+//  //      "2200-04-29T14:15+01:00",
+  private static final DateTimeFormatter UTC_FORMATTER_IN1 = new DateTimeFormatterBuilder().parseCaseInsensitive()
+        .append(ISO_LOCAL_DATE)
+        .appendLiteral('T').appendPattern("HH").appendLiteral(":").appendPattern("mm")
+        .appendLiteral(":").appendPattern("ss").appendLiteral(".").appendPattern("nnnnnn")
+        .optionalStart().appendOffset("+HH:MM", "Z")
+        .toFormatter();
+  // Following format handles yyyy-MM-ddTHH:mm+HH:MM, e.g. 2200-04-29T14:15+01:00
+  private static final DateTimeFormatter UTC_FORMATTER_IN2 = new DateTimeFormatterBuilder().parseCaseInsensitive()
+        .append(ISO_LOCAL_DATE)
+        .appendLiteral('T').appendPattern("HH").appendLiteral(":").appendPattern("mm")
+        .optionalStart().appendOffset("+HH:MM", "Z")
+        .toFormatter();
+  // Following format handles yyyy-MM-ddTHH+HH:MM, e.g. 2200-04-29T14+01:00
+  private static final DateTimeFormatter UTC_FORMATTER_IN3 = new DateTimeFormatterBuilder().parseCaseInsensitive()
+        .append(ISO_LOCAL_DATE)
+        .appendLiteral('T').appendPattern("HH")
+        .optionalStart().appendOffset("+HH:MM", "Z")
+        .toFormatter();
   /* **************************************************************************** */
   /*                                    Fields                                    */
   /* **************************************************************************** */
@@ -166,18 +192,18 @@ public class TapisUtils
   }
   
   /* ---------------------------------------------------------------------------- */
-  /* getUTCTimestamp:                                                             */
+  /* getUTCTimestampNow:                                                          */
   /* ---------------------------------------------------------------------------- */
   /** Get the current instant's timestamp in UTC.
    *
    * @return a sql UTC timestamp object ready for persisting in the database.
    */
-  public static Timestamp getUTCTimestamp()
+  public static LocalDateTime getUTCTimestampNow()
   {
     // Return the current UTC timestamp for database operations.
     // Maybe there's a simpler way to do this, but just getting the current time
     // in milliseconds causes jvm local time to be saved to the database.
-    return Timestamp.valueOf(LocalDateTime.now(ZoneId.of(ZoneOffset.UTC.getId())));
+    return LocalDateTime.now(ZoneId.of(ZoneOffset.UTC.getId()));
   }
 
   /* ---------------------------------------------------------------------------- */
@@ -192,7 +218,81 @@ public class TapisUtils
   {
     return ts.toLocalDateTime().toInstant(ZoneOffset.UTC);
   }
-  
+
+  /* ---------------------------------------------------------------------------- */
+  /* getUTCInstantFromString:                                                     */
+  /* ---------------------------------------------------------------------------- */
+  /** Convert a string into an Instant, a timestamp in UTC
+   * Rules:
+   *  - If no timezone info is present then it defaults to UTC
+   *  - Missing information defaults to the earliest time,
+   *    e.g. 2020 represents 2020-01-01T00:00:00.000000Z
+   *  - If only date or less is present then timezone is not supported
+   * Examples of valid Tapis timestamp formats:
+   * 2020-04-29T20:15:52:123456-06:00
+   * 2020-04-29T20:15:52:12Z
+   * 2020-04-29T20:15:52-06:00
+   * 2020-04-29T20:15-06:00
+   * 2020-04-29T20-06:00
+   * 2020-04-29
+   * 2020-04
+   * 2020
+   * @param timeStr String representing a valid Tapis timestamp
+   * @return the Instant represented by the string using the above rules
+   * @throws DateTimeParseException if string is not a valid timestamp
+   */
+  public static Instant getUTCInstantFromString(String timeStr) throws DateTimeParseException
+  {
+    if (StringUtils.isBlank(timeStr)) throw new DateTimeParseException("Empty timestamp string", "", 0);
+    // If there is a trailing Z strip it off. In most cases the formatter does not handle it.
+    if (timeStr.endsWith("Z")) timeStr = timeStr.substring(0, timeStr.length()-1);
+    if (timeStr.length() < 4) throw new DateTimeParseException("Less than 4 characters in string", timeStr, 0);
+    // If 10 characters or less assume partial date so convert to earliest time.
+    if (timeStr.length() == 4) timeStr += "-01-01T00:00:00";
+    else if (timeStr.length() == 7) timeStr += "-01T00:00:00";
+    else if (timeStr.length() == 10) timeStr += "T00:00:00";
+    // Attempt to convert the string into a timestamp
+    // First try to parse as an Instant
+    try {
+      return Instant.parse(timeStr);
+    }
+    catch (DateTimeParseException e) { }
+    // Now try general LocalDateTime
+    try {
+      return LocalDateTime.parse(timeStr).toInstant(ZoneOffset.UTC);
+    }
+    catch (DateTimeParseException e) { }
+    // Try various formats using a DateTimeFormatter with LocalDateTime
+    // If there end up being many of these could put in an array
+    try {
+      return LocalDateTime.parse(timeStr, UTC_FORMATTER_IN1).toInstant(ZoneOffset.UTC);
+    }
+    catch (DateTimeParseException e) { }
+    try {
+      return LocalDateTime.parse(timeStr, UTC_FORMATTER_IN2).toInstant(ZoneOffset.UTC);
+    }
+    catch (DateTimeParseException e) { }
+    try {
+      return LocalDateTime.parse(timeStr, UTC_FORMATTER_IN3).toInstant(ZoneOffset.UTC);
+    }
+    catch (DateTimeParseException e) { }
+    throw new DateTimeParseException("Not a valid Tapis Timestamp", timeStr, 0);
+  }
+
+  /* ---------------------------------------------------------------------------- */
+  /* getSQLStringFromInstant:                                                     */
+  /* ---------------------------------------------------------------------------- */
+  /** Convert an Instant to a string representing a timestamp in UTC with
+   *    microsecond precision for use in SQL
+   *
+   * @param timestamp Instant to convert
+   * @return a string representation of a UTC timestamp with microsecond precision
+   */
+  public static String getSQLUTCStringFromInstant(Instant timestamp)
+  {
+    return UTC_FORMATTER_OUT.format(timestamp);
+  }
+
   /* ---------------------------------------------------------------------------- */
   /* getTapisVersion:                                                             */
   /* ---------------------------------------------------------------------------- */
@@ -513,7 +613,7 @@ public class TapisUtils
    * hashing duty where even the full md5 is more than what's needed. 
    * 
    * @param str the string to hash.
-   * @param the hash value prefix expressed as a long
+   * @return the hash value prefix expressed as a long
    */
   public static long getMD5LongHash(String str) throws NoSuchAlgorithmException 
   {     

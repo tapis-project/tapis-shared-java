@@ -1,5 +1,6 @@
 package edu.utexas.tacc.tapis.search;
 
+import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -12,7 +13,10 @@ import java.util.Map;
 
 import static org.testng.Assert.*;
 
-
+/**
+ * Tests for methods in the SearchUtils class.
+ * Tests for timestamp related methods: isTimestamp(), TODO convertValuesToTimestamps()
+ */
 public class SearchUtilsTest
 {
   // multiple escapes in: '\ \\ \\' <1> <2> <2>
@@ -26,6 +30,54 @@ public class SearchUtilsTest
 //  private static final String[] zeroResults = new String[] {};
   private static final String zeroResults = null;
 
+  // Test data
+  // Valid and invalid timestamps in various formats
+  private static final String[] validTimestamps =
+    { "1800-01-01T00:00:00.123456-00:00",
+      "2200-04-29T14:15:52.123456Z",
+      "2200-04-29T14:15:52.123456",
+      "2200-04-29T14:15:52.123-01:00",
+      "2200-04-29T14:15:52.123Z",
+      "2200-04-29T14:15:52.123",
+      "2200-04-29T14:15:52+05:30",
+      "2200-04-29T14:15:52Z",
+      "2200-04-29T14:15:52",
+      "2200-04-29T14:15+01:00",
+      "2200-04-29T14:15Z",
+      "2200-04-29T14:15",
+      "2200-04-29T14-06:00",
+      "2200-04-29T14Z",
+      "2200-04-29T14",
+      "2200-04-29",
+      "2200-04",
+      "2200"
+    };
+  private static final String[] invalidTimestamps =
+    { null,
+      "",
+      "1",
+      "12",
+      "123",
+      "123Z",
+      "2200-04-00T14:15:00",
+      "2200-04-32T14:15:00",
+      "2200-00-29T14:15:00",
+      "2200-13-29T14:15:00",
+      "2200-04-04T14:15:61",
+      "2200-04-04T14:61:00",
+      "2200-04-04T25:15:00",
+      "00-04-04T14:15:00",
+      "22001-04-04T14:15:00",
+      "2200-04-29T14,15:52.123-01:00Z",
+      "2200-04-29T14:15:523.123Z",
+      "2200-04-29T14:156:52.123",
+      "2200-04-29T14:15:52+005:30",
+      "2200-04-29T14:15:52+05:300",
+      "2200-04-29T14:15:52z05:30",
+      "2200-04-29X14:15:52Z",
+      "2200-04-291T14:15:52",
+      "2200-04-29 14:15:52",
+    };
 
   @BeforeMethod
   public void setUp()
@@ -38,7 +90,7 @@ public class SearchUtilsTest
   }
 
   /*
-   * Check valid cases
+   * Check validateAndExtractSearchList - valid cases
    */
   @Test(groups={"unit"})
   public void testValidateAndExtractSearchListValid()
@@ -149,7 +201,7 @@ public class SearchUtilsTest
   }
 
   /*
-   * Check invalid cases
+   * Check validateAndExtractSearchList - invalid cases
    */
   @Test(groups={"unit"})
   public void testValidateAndExtractSearchListInvalid()
@@ -205,6 +257,28 @@ public class SearchUtilsTest
     }
     // TODO: Explicitly check for certain exceptions rather than just that an IllegalArg has been thrown.
     //       E.g., (port.l@t.7) should throw an exception containing SEARCH_COND_INVALID_OP
+  }
+
+  /*
+   * Check isTimestamp - valid cases
+   */
+  @Test(groups={"unit"})
+  public void testIsTimestamp()
+  {
+    // Iterate over valid test cases
+    for (int i = 0; i < validTimestamps.length; i++)
+    {
+      String timestampStr = validTimestamps[i];
+      System.out.println("Checking valid case # "+ i + " Input: " + timestampStr);
+      Assert.assertTrue(SearchUtils.isTimestamp(timestampStr), "Input timestamp string: " + timestampStr);
+    }
+    // Iterate over invalid test cases
+    for (int i = 0; i < invalidTimestamps.length; i++)
+    {
+      String timestampStr = invalidTimestamps[i];
+      System.out.println("Checking invalid case # "+ i + " Input: " + timestampStr);
+      Assert.assertFalse(SearchUtils.isTimestamp(timestampStr), "Input timestamp string: " + timestampStr);
+    }
   }
 
   // Case input data consists of the case number, result count and an input string
