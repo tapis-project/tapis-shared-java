@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.StringJoiner;
 
 import static org.testng.Assert.*;
 
@@ -283,6 +284,28 @@ public class SearchUtilsTest
       String timestampStr = invalidTimestamps[i];
       System.out.println("Checking invalid case # "+ i + " Input: " + timestampStr);
       Assert.assertFalse(SearchUtils.isTimestamp(timestampStr), "Input timestamp string: " + timestampStr);
+    }
+  }
+
+  /*
+   * Check convertValuesToTimestamps - valid cases
+   */
+  @Test(groups={"unit"})
+  public void testConvertValuesToTimestamps()
+  {
+    // Test by iterating over valid test cases and incrementally building a list of values.
+    // Check call after each increment
+    SearchUtils.SearchOperator op = SearchUtils.SearchOperator.IN;
+    StringJoiner sj = new StringJoiner(",");
+    for (int i = 0; i < validTimestamps.length; i++)
+    {
+      String timestampStr = validTimestamps[i];
+      System.out.println("Checking valid case # "+ i + " Input: " + timestampStr);
+      sj.add(timestampStr);
+      String testList = sj.toString();
+      String testResult = SearchUtils.convertValuesToTimestamps(op, testList);
+      System.out.println("   Test result: " + testResult);
+      Assert.assertNotNull(testResult);
     }
   }
 

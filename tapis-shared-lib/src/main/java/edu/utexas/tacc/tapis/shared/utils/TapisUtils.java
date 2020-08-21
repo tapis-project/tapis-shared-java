@@ -47,7 +47,7 @@ public class TapisUtils
   /*                                  Constants                                   */
   /* **************************************************************************** */
   // Local logger.
-  private static Logger _log = LoggerFactory.getLogger(TapisUtils.class);
+  private static final Logger _log = LoggerFactory.getLogger(TapisUtils.class);
   
   // Set the display text for null references.
   public static final String NULL_STRING = "[null]";
@@ -89,15 +89,12 @@ public class TapisUtils
           .optionalStart().appendOffset("+HH:MM", "Z").toFormatter(),
     new DateTimeFormatterBuilder().parseCaseInsensitive().append(ISO_LOCAL_DATE)
           .appendLiteral('T').appendPattern("HH")
-          .optionalStart().appendOffset("+HH:MM", "Z").toFormatter(),
-// TODO: following appears to not work, try hand crafted ofPattern. Still not working.
-//    DateTimeFormatter.ofPattern("yyyy-MM-ddZZZZ"),
-//    new DateTimeFormatterBuilder().parseCaseInsensitive().append(ISO_LOCAL_DATE)
-//          .appendPattern("ZZZZ").toFormatter(),
-//    new DateTimeFormatterBuilder().parseCaseInsensitive().append(ISO_LOCAL_DATE)
-//          .appendOffset("+HH:MM", "+00:00").toFormatter(),
-////???    new DateTimeFormatterBuilder().parseCaseInsensitive().append(ISO_LOCAL_DATE)
-////                  .optionalStart().appendOffset("+HH:MM", "Z").toFormatter()
+          .optionalStart().appendOffset("+HH:MM", "Z").toFormatter()
+    // NOTE: Tried a builder and ofPattern to handle requirement to support timezone when no hour:minute
+    // specified but could not find something that worked. So explicit check is done in getUTCTimeFromString
+    //    DateTimeFormatter.ofPattern("yyyy-MM-ddZZZZ"),
+    //    new DateTimeFormatterBuilder().parseCaseInsensitive().append(ISO_LOCAL_DATE)
+    //          .appendOffset("+HH:MM", "+00:00").toFormatter(),
   };
 
   /* **************************************************************************** */
@@ -198,13 +195,13 @@ public class TapisUtils
   }
   
   /* ---------------------------------------------------------------------------- */
-  /* getUTCTimestampNow:                                                          */
+  /* getUTCTimeNow:                                                          */
   /* ---------------------------------------------------------------------------- */
   /** Get the current instant's timestamp in UTC.
    *
    * @return a sql UTC timestamp object ready for persisting in the database.
    */
-  public static LocalDateTime getUTCTimestampNow()
+  public static LocalDateTime getUTCTimeNow()
   {
     // Return the current UTC timestamp for database operations.
     // Maybe there's a simpler way to do this, but just getting the current time
@@ -226,9 +223,10 @@ public class TapisUtils
   }
 
   /* ---------------------------------------------------------------------------- */
-  /* getUTCInstantFromString:                                                     */
+  /* getUTCTimeFromString:                                                        */
   /* ---------------------------------------------------------------------------- */
-  /** Convert a string into an Instant, a timestamp in UTC
+  /** Convert a string into a LocalDateTime, a timestamp in UTC
+   *  NOTE: LocalDateTime is used for compatibility with DB/SQL, it is not local but UTC.
    * Rules:
    *  - If no timezone info is present then it defaults to UTC
    *  - Missing information defaults to the earliest time,
@@ -244,13 +242,14 @@ public class TapisUtils
    * 2020-04
    * 2020
    * @param timeStr String representing a valid Tapis timestamp
-   * @return the Instant represented by the string using the above rules
+   * @return the time represented by the string using the above rules
    * @throws DateTimeParseException if string is not a valid timestamp
    */
-  public static Instant getUTCInstantFromString(String timeStr) throws DateTimeParseException
+  public static LocalDateTime getUTCTimeFromString(String timeStr) throws DateTimeParseException
   {
     if (StringUtils.isBlank(timeStr)) throw new DateTimeParseException("Empty timestamp string", "", 0);
-    // If there is a trailing Z strip it off. In most cases the formatter does not handle it.
+    // If there is a trailing Z strip
+    // it off. In most cases the formatter does not handle it.
     if (timeStr.endsWith("Z")) timeStr = timeStr.substring(0, timeStr.length()-1);
     if (timeStr.length() < 4) throw new DateTimeParseException("Less than 4 characters in string", timeStr, 0);
     // If 4, 7 or 10 characters convert to earliest time.
@@ -274,8 +273,8 @@ public class TapisUtils
         timeStr = tmpStr;
       }
     }
-    // Cannot get DateTimeFormatter working for a date (no HH:MM) when there is a timezone offset,
-    //   so handle manually here
+    // Cannot get DateTimeFormatter working for a date (no HH:mm) when there is a timezone offset,
+    //   so do explicit checks here.
     else if (timeStr.length() == 13)
     {
       // Check for yyyy-MM+HH:MM
@@ -298,12 +297,12 @@ public class TapisUtils
     // Attempt to convert the string into a timestamp
     // First try to parse as an Instant
     try {
-      return Instant.parse(timeStr);
+      return LocalDateTime.ofInstant(Instant.parse(timeStr),ZoneOffset.UTC);
     }
     catch (DateTimeParseException e) { }
     // Now try general LocalDateTime
     try {
-      return LocalDateTime.parse(timeStr).toInstant(ZoneOffset.UTC);
+      return LocalDateTime.parse(timeStr);
     }
     catch (DateTimeParseException e) { }
     // Try various formats using a DateTimeFormatter with LocalDateTime
@@ -311,7 +310,7 @@ public class TapisUtils
     {
       try
       {
-        return LocalDateTime.parse(timeStr, formatter).toInstant(ZoneOffset.UTC);
+        return LocalDateTime.parse(timeStr, formatter);
       }
       catch (DateTimeParseException e) { }
     }
@@ -321,13 +320,14 @@ public class TapisUtils
   /* ---------------------------------------------------------------------------- */
   /* getSQLStringFromInstant:                                                     */
   /* ---------------------------------------------------------------------------- */
-  /** Convert an Instant to a string representing a timestamp in UTC with
+  /** Convert a LocalDateTime to a string representing a timestamp in UTC with
    *    microsecond precision for use in SQL
+   *  NOTE: LocalDateTime is used for compatibility with DB/SQL, it is not local but UTC.
    *
-   * @param timestamp Instant to convert
+   * @param timestamp Timestamp to convert
    * @return a string representation of a UTC timestamp with microsecond precision
    */
-  public static String getSQLUTCStringFromInstant(Instant timestamp)
+  public static String getSQLStringFromUTCTime(LocalDateTime timestamp)
   {
     return UTC_OUT_FORMATTER.format(timestamp);
   }

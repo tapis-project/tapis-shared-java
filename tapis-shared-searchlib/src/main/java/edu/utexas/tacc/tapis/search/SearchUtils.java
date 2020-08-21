@@ -8,7 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.Types;
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -323,8 +323,8 @@ public class SearchUtils
     // For each value convert string to an Instant and then back into a string suitable for SQL
     for (String tStr : valList)
     {
-      Instant i = TapisUtils.getUTCInstantFromString(tStr);
-      sj.add(TapisUtils.getSQLUTCStringFromInstant(i));
+      LocalDateTime t = TapisUtils.getUTCTimeFromString(tStr);
+      sj.add(TapisUtils.getSQLStringFromUTCTime(t));
     }
     return sj.toString();
   }
@@ -426,7 +426,7 @@ public class SearchUtils
   static boolean isTimestamp(String valStr)
   {
     // Use shared utility method to attempt to convert string to a timestamp
-    try { TapisUtils.getUTCInstantFromString(valStr); } catch(DateTimeParseException e) { return false; }
+    try { TapisUtils.getUTCTimeFromString(valStr); } catch(DateTimeParseException e) { return false; }
     return true;
   }
 
