@@ -74,26 +74,32 @@ public class TapisUtils
   private static final int CEILING = 0x1000000;
 
   // Formatter for converting an Instant into a string for SQL
-  private static final DateTimeFormatter UTC_FORMATTER_OUT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.nnnnnn");
-//  //      "2200-04-29T14:15+01:00",
-  private static final DateTimeFormatter UTC_FORMATTER_IN1 = new DateTimeFormatterBuilder().parseCaseInsensitive()
-        .append(ISO_LOCAL_DATE)
-        .appendLiteral('T').appendPattern("HH").appendLiteral(":").appendPattern("mm")
-        .appendLiteral(":").appendPattern("ss").appendLiteral(".").appendPattern("nnnnnn")
-        .optionalStart().appendOffset("+HH:MM", "Z")
-        .toFormatter();
-  // Following format handles yyyy-MM-ddTHH:mm+HH:MM, e.g. 2200-04-29T14:15+01:00
-  private static final DateTimeFormatter UTC_FORMATTER_IN2 = new DateTimeFormatterBuilder().parseCaseInsensitive()
-        .append(ISO_LOCAL_DATE)
-        .appendLiteral('T').appendPattern("HH").appendLiteral(":").appendPattern("mm")
-        .optionalStart().appendOffset("+HH:MM", "Z")
-        .toFormatter();
-  // Following format handles yyyy-MM-ddTHH+HH:MM, e.g. 2200-04-29T14+01:00
-  private static final DateTimeFormatter UTC_FORMATTER_IN3 = new DateTimeFormatterBuilder().parseCaseInsensitive()
-        .append(ISO_LOCAL_DATE)
-        .appendLiteral('T').appendPattern("HH")
-        .optionalStart().appendOffset("+HH:MM", "Z")
-        .toFormatter();
+  private static final DateTimeFormatter UTC_OUT_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.nnnnnn");
+  // Formatters for converting string to Instant for patterns:
+  //   yyyy-MM-ddTHH:mm:ss.nnnnnn+HH:MM, e.g. 2200-04-29T14:15:00.123456+01:00
+  //   yyyy-MM-ddTHH:mm+HH:MM, e.g. 2200-04-29T14:15+01:00
+  //   yyyy-MM-ddTHH+HH:MM, e.g. 2200-04-29T14+01:00
+  private static final DateTimeFormatter[] UTC_IN_FORMATTERS = {
+    new DateTimeFormatterBuilder().parseCaseInsensitive().append(ISO_LOCAL_DATE)
+            .appendLiteral('T').appendPattern("HH").appendLiteral(":").appendPattern("mm")
+            .appendLiteral(":").appendPattern("ss").appendLiteral(".").appendPattern("nnnnnn")
+            .optionalStart().appendOffset("+HH:MM", "Z").toFormatter(),
+    new DateTimeFormatterBuilder().parseCaseInsensitive().append(ISO_LOCAL_DATE)
+          .appendLiteral('T').appendPattern("HH").appendLiteral(":").appendPattern("mm")
+          .optionalStart().appendOffset("+HH:MM", "Z").toFormatter(),
+    new DateTimeFormatterBuilder().parseCaseInsensitive().append(ISO_LOCAL_DATE)
+          .appendLiteral('T').appendPattern("HH")
+          .optionalStart().appendOffset("+HH:MM", "Z").toFormatter(),
+// TODO: following appears to not work, try hand crafted ofPattern. Still not working.
+//    DateTimeFormatter.ofPattern("yyyy-MM-ddZZZZ"),
+//    new DateTimeFormatterBuilder().parseCaseInsensitive().append(ISO_LOCAL_DATE)
+//          .appendPattern("ZZZZ").toFormatter(),
+//    new DateTimeFormatterBuilder().parseCaseInsensitive().append(ISO_LOCAL_DATE)
+//          .appendOffset("+HH:MM", "+00:00").toFormatter(),
+////???    new DateTimeFormatterBuilder().parseCaseInsensitive().append(ISO_LOCAL_DATE)
+////                  .optionalStart().appendOffset("+HH:MM", "Z").toFormatter()
+  };
+
   /* **************************************************************************** */
   /*                                    Fields                                    */
   /* **************************************************************************** */
@@ -227,13 +233,13 @@ public class TapisUtils
    *  - If no timezone info is present then it defaults to UTC
    *  - Missing information defaults to the earliest time,
    *    e.g. 2020 represents 2020-01-01T00:00:00.000000Z
-   *  - If only date or less is present then timezone is not supported
    * Examples of valid Tapis timestamp formats:
    * 2020-04-29T20:15:52:123456-06:00
    * 2020-04-29T20:15:52:12Z
    * 2020-04-29T20:15:52-06:00
    * 2020-04-29T20:15-06:00
    * 2020-04-29T20-06:00
+   * 2020-04-29-06:00
    * 2020-04-29
    * 2020-04
    * 2020
@@ -247,10 +253,48 @@ public class TapisUtils
     // If there is a trailing Z strip it off. In most cases the formatter does not handle it.
     if (timeStr.endsWith("Z")) timeStr = timeStr.substring(0, timeStr.length()-1);
     if (timeStr.length() < 4) throw new DateTimeParseException("Less than 4 characters in string", timeStr, 0);
-    // If 10 characters or less assume partial date so convert to earliest time.
-    if (timeStr.length() == 4) timeStr += "-01-01T00:00:00";
-    else if (timeStr.length() == 7) timeStr += "-01T00:00:00";
-    else if (timeStr.length() == 10) timeStr += "T00:00:00";
+    // If 4, 7 or 10 characters convert to earliest time.
+    if (timeStr.length() == 4)
+    {
+      // Must be yyyy
+      timeStr += "-01-01T00:00:00";
+    }
+    else if (timeStr.length() == 7)
+    {
+      // Must be yyyy-MM
+      timeStr += "-01T00:00:00";
+    }
+    else if (timeStr.length() == 10)
+    {
+      // Must be yyyy-MM-dd or yyyy+HH:MM
+      if (timeStr.charAt(7) != ':') timeStr += "T00:00:00";
+      else
+      {
+        var tmpStr = timeStr.substring(0,4) + "-01-01T00:00:00" + timeStr.substring(4,10);
+        timeStr = tmpStr;
+      }
+    }
+    // Cannot get DateTimeFormatter working for a date (no HH:MM) when there is a timezone offset,
+    //   so handle manually here
+    else if (timeStr.length() == 13)
+    {
+      // Check for yyyy-MM+HH:MM
+      if (timeStr.charAt(10) == ':' && (timeStr.charAt(7) == '+' || timeStr.charAt(7) == '-'))
+      {
+        var tmpStr = timeStr.substring(0, 7) + "-01T00:00:00" + timeStr.substring(7, 13);
+        timeStr = tmpStr;
+      }
+    }
+    else if (timeStr.length() == 16)
+    {
+      // Check for yyyy-MM-dd+HH:MM
+      if (timeStr.charAt(13) == ':' && (timeStr.charAt(10) == '+' || timeStr.charAt(10) == '-'))
+      {
+        var tmpStr = timeStr.substring(0, 10) + "T00:00:00" + timeStr.substring(10, 16);
+        timeStr = tmpStr;
+      }
+    }
+
     // Attempt to convert the string into a timestamp
     // First try to parse as an Instant
     try {
@@ -263,19 +307,14 @@ public class TapisUtils
     }
     catch (DateTimeParseException e) { }
     // Try various formats using a DateTimeFormatter with LocalDateTime
-    // If there end up being many of these could put in an array
-    try {
-      return LocalDateTime.parse(timeStr, UTC_FORMATTER_IN1).toInstant(ZoneOffset.UTC);
+    for (DateTimeFormatter formatter : UTC_IN_FORMATTERS)
+    {
+      try
+      {
+        return LocalDateTime.parse(timeStr, formatter).toInstant(ZoneOffset.UTC);
+      }
+      catch (DateTimeParseException e) { }
     }
-    catch (DateTimeParseException e) { }
-    try {
-      return LocalDateTime.parse(timeStr, UTC_FORMATTER_IN2).toInstant(ZoneOffset.UTC);
-    }
-    catch (DateTimeParseException e) { }
-    try {
-      return LocalDateTime.parse(timeStr, UTC_FORMATTER_IN3).toInstant(ZoneOffset.UTC);
-    }
-    catch (DateTimeParseException e) { }
     throw new DateTimeParseException("Not a valid Tapis Timestamp", timeStr, 0);
   }
 
@@ -290,7 +329,7 @@ public class TapisUtils
    */
   public static String getSQLUTCStringFromInstant(Instant timestamp)
   {
-    return UTC_FORMATTER_OUT.format(timestamp);
+    return UTC_OUT_FORMATTER.format(timestamp);
   }
 
   /* ---------------------------------------------------------------------------- */

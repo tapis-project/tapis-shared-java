@@ -15,7 +15,6 @@ import static org.testng.Assert.*;
 
 /**
  * Tests for methods in the SearchUtils class.
- * Tests for timestamp related methods: isTimestamp(), TODO convertValuesToTimestamps()
  */
 public class SearchUtilsTest
 {
@@ -48,8 +47,14 @@ public class SearchUtilsTest
       "2200-04-29T14-06:00",
       "2200-04-29T14Z",
       "2200-04-29T14",
+      "2200-04-29-06:00",
+      "2200-04-29Z",
       "2200-04-29",
+      "2200-04+03:00",
+      "2200-04Z",
       "2200-04",
+      "2200-06:00",
+      "2200Z",
       "2200"
     };
   private static final String[] invalidTimestamps =
