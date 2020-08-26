@@ -7,6 +7,8 @@ import org.apache.commons.lang3.math.NumberUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.ws.rs.core.MultivaluedMap;
+
 import java.sql.Types;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
@@ -49,6 +51,10 @@ public class SearchUtils
   // ************************************************************************
   // *********************** Enums ******************************************
   // ************************************************************************
+
+  // Reserved query parameters that cannot be specified when using a dedicated search endpoint
+  public enum ReservedQueryParm {PRETTY, SEARCH, LIMIT, OFFSET}
+  public static final Set<String> RESERVED_QUERY_PARMS = Stream.of(ReservedQueryParm.values()).map(Enum::name).collect(Collectors.toSet());
 
   // Supported operators for search
   public enum SearchOperator {EQ, NEQ, GT, GTE, LT, LTE, IN, NIN, LIKE, NLIKE, BETWEEN, NBETWEEN}
@@ -361,6 +367,33 @@ public class SearchUtils
       }
     }
     return true;
+  }
+
+  /**
+   * Build a search list from query parameters. Query parameters use the format <attr>.<op>=<value>
+   * Reserved query parameters are ignored.
+   * @param queryParms map of query parameters
+   * @return list of search conditions, null if no query parameters
+   * @throws IllegalArgumentException if an invalid condition is encountered
+   */
+  public static List<String> buildListFromQueryParms(MultivaluedMap<String,String> queryParms)
+    throws IllegalArgumentException
+  {
+    if (queryParms == null || queryParms.isEmpty()) return null;
+    var searchList = new ArrayList<String>();
+    // For each query parameter not on the reserved list add a search condition
+    for (Map.Entry<String,List<String>> qParm: queryParms.entrySet())
+    {
+      String qKey = qParm.getKey();
+      if (RESERVED_QUERY_PARMS.contains(qKey.toUpperCase())) continue;
+      // Query parameters may appear more than once so there may be multiple values. Add condition for each one
+      for (String val : qParm.getValue())
+      {
+        String cond = qKey + "." + val;
+        searchList.add(validateAndProcessSearchCondition(cond));
+      }
+    }
+    return searchList;
   }
 
   // ************************************************************************

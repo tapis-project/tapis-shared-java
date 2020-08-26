@@ -29,7 +29,9 @@ After wasting an inordinate amount of time trying to get a single POM file to ge
 source files and then to compile those source files, I decided to go with a 2 step process:
 
     1. Run pom-generate.xml to generate the parser source code.
+       mvn -f pom-generate.xml clean process-sources
     2. Run pom.xml to compile the parser, run tests, and create the JAR.
+       mvn clean install
     
 Executing pom-generate.xml creates source files in src/main/java/org/apache/activemq/selector.
 These files are saved to the repository as if they were handwritten, which means we only have
