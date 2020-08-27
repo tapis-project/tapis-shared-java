@@ -17,7 +17,7 @@
  * limitations under the License.
  */
 
-package edu.utexas.tacc.tapis.search;
+package edu.utexas.tacc.tapis.search.parser;
 
 /**
  * Describes the input token stream.
@@ -146,4 +146,4 @@ public class Token implements java.io.Serializable {
   }
 
 }
-/* JavaCC - OriginalChecksum=bee955d29fdda7e9e5d23d8be4873f57 (do not edit this line) */
+/* JavaCC - OriginalChecksum=7559ed2ba626c388411467da5689ea12 (do not edit this line) */

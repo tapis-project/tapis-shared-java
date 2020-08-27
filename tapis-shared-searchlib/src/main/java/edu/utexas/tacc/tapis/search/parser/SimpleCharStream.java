@@ -17,7 +17,7 @@
  * limitations under the License.
  */
 
-package edu.utexas.tacc.tapis.search;
+package edu.utexas.tacc.tapis.search.parser;
 
 /**
  * An implementation of interface CharStream, where the stream is assumed to
@@ -488,4 +488,4 @@ public class SimpleCharStream
   boolean getTrackLineColumn() { return trackLineColumn; }
   void setTrackLineColumn(boolean tlc) { trackLineColumn = tlc; }
 }
-/* JavaCC - OriginalChecksum=513630059a5854070266a8c64bff7bc4 (do not edit this line) */
+/* JavaCC - OriginalChecksum=25bce45de9beb4c2c9db75cce9868181 (do not edit this line) */

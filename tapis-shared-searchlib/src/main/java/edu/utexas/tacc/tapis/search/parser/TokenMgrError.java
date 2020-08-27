@@ -17,7 +17,7 @@
  * limitations under the License.
  */
 
-package edu.utexas.tacc.tapis.search;
+package edu.utexas.tacc.tapis.search.parser;
 
 /** Token Manager Error. */
 public class TokenMgrError extends Error
@@ -161,4 +161,4 @@ public class TokenMgrError extends Error
     this(LexicalErr(EOFSeen, lexState, errorLine, errorColumn, errorAfter, curChar), reason);
   }
 }
-/* JavaCC - OriginalChecksum=802dc6ef8286e9183f8ed55fa5a4bb50 (do not edit this line) */
+/* JavaCC - OriginalChecksum=80fb02761ada1359fe89cefcbff517ae (do not edit this line) */

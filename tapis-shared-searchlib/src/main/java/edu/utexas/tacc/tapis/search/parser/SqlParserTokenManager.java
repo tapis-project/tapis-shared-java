@@ -17,7 +17,7 @@
  * limitations under the License.
  */
 
-package edu.utexas.tacc.tapis.search;
+package edu.utexas.tacc.tapis.search.parser;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -25,9 +25,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
 import java.lang.UnsupportedOperationException;
+import edu.utexas.tacc.tapis.search.parser.Token;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.activemq.filter.ConstantExpression;
 import org.apache.activemq.util.LRUCache;
+import edu.utexas.tacc.tapis.search.parser.ASTNode;
+import edu.utexas.tacc.tapis.search.parser.ASTBinaryExpression;
+import edu.utexas.tacc.tapis.search.parser.ASTUnaryExpression;
+import edu.utexas.tacc.tapis.search.parser.ASTLeaf;
 
 /** Token Manager. */
 @SuppressWarnings ("unused")

@@ -23,7 +23,7 @@ options {
   UNICODE_INPUT = true;
   ERROR_REPORTING = true;
   SUPPORT_CLASS_VISIBILITY_PUBLIC = true;
-  OUTPUT_DIRECTORY = "src/main/java/edu/utexas/tacc/tapis/search";
+  OUTPUT_DIRECTORY = "src/main/java/edu/utexas/tacc/tapis/search/parser";
 }
 
 // ----------------------------------------------------------------------------
@@ -48,7 +48,7 @@ PARSER_BEGIN(SqlParser)
  * limitations under the License.
  */
 
-package edu.utexas.tacc.tapis.search;
+package edu.utexas.tacc.tapis.search.parser;
 
 import java.io.StringReader;
 import java.util.ArrayList;
@@ -58,9 +58,15 @@ import java.util.Map;
 import java.util.StringJoiner;
 import java.lang.UnsupportedOperationException;
 
+import edu.utexas.tacc.tapis.search.parser.Token;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.activemq.filter.ConstantExpression;
 import org.apache.activemq.util.LRUCache;
+
+import edu.utexas.tacc.tapis.search.parser.ASTNode;
+import edu.utexas.tacc.tapis.search.parser.ASTBinaryExpression;
+import edu.utexas.tacc.tapis.search.parser.ASTUnaryExpression;
+import edu.utexas.tacc.tapis.search.parser.ASTLeaf;
 
 /*
  * DO NOTE EDIT
@@ -96,21 +102,21 @@ public class SqlParser
 {
   private static final Map<String, Object> cache = Collections.synchronizedMap(new LRUCache<>(100));
 
-  public static TNode parse(String sql) throws UnsupportedOperationException
+  public static ASTNode parse(String sql) throws UnsupportedOperationException
   {
     // Look for result in the cache
     Object result = cache.get(sql);
     // If result was an exception we are done
     if (result instanceof UnsupportedOperationException) { throw (UnsupportedOperationException) result; }
     // If we have already resolved the string to a node we are done
-    else if (result instanceof TNode) { return (TNode) result; }
+    else if (result instanceof ASTNode) { return (ASTNode) result; }
     else
     {
-      // Result not in cache, convert sql string to a TNode
+      // Result not in cache, convert sql string to a ASTNode
       try
       {
         // Recursive call to continue processing
-        TNode node = new SqlParser(sql).parse();
+        ASTNode node = new SqlParser(sql).parse();
         // Cache the result
         cache.put(sql, node);
         return node;
@@ -133,7 +139,7 @@ public class SqlParser
     this.sql = sql;
   }
 
-  protected TNode parse() throws UnsupportedOperationException
+  protected ASTNode parse() throws UnsupportedOperationException
   {
     // This kicks off execution of our grammar defined below
     // Variable sql contains the string to be processed
@@ -142,169 +148,132 @@ public class SqlParser
   }
 
   // ---------------------------------------------------------------------
-  // Utility methods used by grammar to build TNode objects
+  // Utility methods used by grammar to build ASTNode objects
   // ---------------------------------------------------------------------
 
   // ============================
   // conjunction / disjunction
   // ============================
-  private BinaryExpr createOR(TNode l, TNode r)
+  private ASTBinaryExpression createOR(ASTNode l, ASTNode r)
   {
-    return new BinaryExpr("OR", l, r);
+    return new ASTBinaryExpression("OR", l, r);
   }
-  private BinaryExpr createAND(TNode l, TNode r)
+  private ASTBinaryExpression createAND(ASTNode l, ASTNode r)
   {
-    return new BinaryExpr("AND", l, r);
+    return new ASTBinaryExpression("AND", l, r);
   }
   // ======================
   // equalityExpression()
   // ======================
-  private BinaryExpr createEqual(TNode l, TNode r)
+  private ASTBinaryExpression createEqual(ASTNode l, ASTNode r)
   {
-    return new BinaryExpr("EQ", l, r);
+    return new ASTBinaryExpression("EQ", l, r);
   }
-  private BinaryExpr createNotEqual(TNode l, TNode r)
+  private ASTBinaryExpression createNotEqual(ASTNode l, ASTNode r)
   {
-    return new BinaryExpr("NEQ", l, r);
+    return new ASTBinaryExpression("NEQ", l, r);
   }
   // TODO/TBD: IS NULL is not the same as = null
   // TODO/TBD: Do not support IS NULL ?
-  private BinaryExpr createIsNull(TNode l)
+  private ASTBinaryExpression createIsNull(ASTNode l)
   {
-    return new BinaryExpr("=", l, new Leaf("NULL"));
+    return new ASTBinaryExpression("=", l, new ASTLeaf("NULL"));
   }
   // TODO/TBD: IS NOT NULL is not the same as <> null
   // TODO/TBD: Do not support IS NOT NULL ?
-  private BinaryExpr createIsNotNull(TNode l)
+  private ASTBinaryExpression createIsNotNull(ASTNode l)
   {
-    return new BinaryExpr("<>", l, new Leaf("NULL"));
+    return new ASTBinaryExpression("<>", l, new ASTLeaf("NULL"));
   }
   // ======================
   // comparisonExpression()
   // ======================
-  private BinaryExpr createGreaterThan(TNode l, TNode r)
+  private ASTBinaryExpression createGreaterThan(ASTNode l, ASTNode r)
   {
-    return new BinaryExpr("GT", l, r);
+    return new ASTBinaryExpression("GT", l, r);
   }
-  private BinaryExpr createGreaterThanEqual(TNode l, TNode r)
+  private ASTBinaryExpression createGreaterThanEqual(ASTNode l, ASTNode r)
   {
-    return new BinaryExpr("GTE", l, r);
+    return new ASTBinaryExpression("GTE", l, r);
   }
-  private BinaryExpr createLessThan(TNode l, TNode r)
+  private ASTBinaryExpression createLessThan(ASTNode l, ASTNode r)
   {
-    return new BinaryExpr("LT", l, r);
+    return new ASTBinaryExpression("LT", l, r);
   }
-  private BinaryExpr createLessThanEqual(TNode l, TNode r)
+  private ASTBinaryExpression createLessThanEqual(ASTNode l, ASTNode r)
   {
-    return new BinaryExpr("LTE", l, r);
+    return new ASTBinaryExpression("LTE", l, r);
   }
-  private BinaryExpr createLike(TNode l, String s)
+  private ASTBinaryExpression createLike(ASTNode l, String s)
   {
-    return new BinaryExpr("LIKE", l, new Leaf(s));
+    return new ASTBinaryExpression("LIKE", l, new ASTLeaf(s));
   }
-  private BinaryExpr createNotLike(TNode l, String s)
+  private ASTBinaryExpression createNotLike(ASTNode l, String s)
   {
-    return new BinaryExpr("NLIKE", l, new Leaf(s));
+    return new ASTBinaryExpression("NLIKE", l, new ASTLeaf(s));
   }
-  private BinaryExpr createBetween(TNode l, String low, String high)
-  {
-    String s = low + "," + high;
-    return new BinaryExpr("BETWEEN", l, new Leaf(s));
-  }
-  private BinaryExpr createNotBetween(TNode l, String low, String high)
+  private ASTBinaryExpression createBetween(ASTNode l, String low, String high)
   {
     String s = low + "," + high;
-    return new BinaryExpr("NBETWEEN", l, new Leaf(s));
+    return new ASTBinaryExpression("BETWEEN", l, new ASTLeaf(s));
   }
-  private BinaryExpr createInList(TNode l, List<String> list)
+  private ASTBinaryExpression createNotBetween(ASTNode l, String low, String high)
+  {
+    String s = low + "," + high;
+    return new ASTBinaryExpression("NBETWEEN", l, new ASTLeaf(s));
+  }
+  private ASTBinaryExpression createInList(ASTNode l, List<String> list)
   {
     StringJoiner sj = new StringJoiner(",");
     for (String s : list) { sj.add(s); }
-    return new BinaryExpr("IN", l, new Leaf(sj.toString()));
+    return new ASTBinaryExpression("IN", l, new ASTLeaf(sj.toString()));
   }
-  private BinaryExpr createNotInList(TNode l, List<String> list)
+  private ASTBinaryExpression createNotInList(ASTNode l, List<String> list)
   {
     StringJoiner sj = new StringJoiner(",");
     for (String s : list) { sj.add(s); }
-    return new BinaryExpr("NIN", l, new Leaf(sj.toString()));
+    return new ASTBinaryExpression("NIN", l, new ASTLeaf(sj.toString()));
   }
   // ======================
   // addExpression()
   // TODO/TBD: Do not support numeric operations?
   // ======================
-  private BinaryExpr createPlus(TNode l, TNode r)
+  private ASTBinaryExpression createPlus(ASTNode l, ASTNode r)
   {
-    return new BinaryExpr("+", l, r);
+    return new ASTBinaryExpression("+", l, r);
   }
-  private BinaryExpr createMinus(TNode l, TNode r)
+  private ASTBinaryExpression createMinus(ASTNode l, ASTNode r)
   {
-    return new BinaryExpr("-", l, r);
+    return new ASTBinaryExpression("-", l, r);
   }
   // ======================
   // multExpression()
   // TODO/TBD: Do not support numeric operations?
   // ======================
-  private BinaryExpr createMultiply(TNode l, TNode r)
+  private ASTBinaryExpression createMultiply(ASTNode l, ASTNode r)
   {
-    return new BinaryExpr("*", l, r);
+    return new ASTBinaryExpression("*", l, r);
   }
-  private BinaryExpr createDivide(TNode l, TNode r)
+  private ASTBinaryExpression createDivide(ASTNode l, ASTNode r)
   {
-    return new BinaryExpr("/", l, r);
+    return new ASTBinaryExpression("/", l, r);
   }
-  private BinaryExpr createMod(TNode l, TNode r)
+  private ASTBinaryExpression createMod(ASTNode l, ASTNode r)
   {
-    return new BinaryExpr("%", l, r);
+    return new ASTBinaryExpression("%", l, r);
   }
   // ======================
   // unaryExpression()
   // TODO/TBD: Do not support unary operations?
   // ======================
-  private UnaryExpr createNegate(TNode n)
+  private ASTUnaryExpression createNegate(ASTNode n)
   {
-    return new UnaryExpr("-", n);
+    return new ASTUnaryExpression("-", n);
   }
-  private UnaryExpr createNOT(TNode n)
+  private ASTUnaryExpression createNOT(ASTNode n)
   {
-    return new UnaryExpr("NOT", n);
+    return new ASTUnaryExpression("NOT", n);
   }
-}
-
-// ========================================
-// Classes representing nodes in the AST
-// ========================================
-abstract class TNode { }
-
-// A binary node contains an operator, a left node and a right node
-class BinaryExpr extends TNode {
-  String op;
-  TNode left, right;
-  BinaryExpr(String o, TNode l, TNode r)
-  {
-    op = o;
-    left = l;
-    right = r;
-  }
-  public String toString() { return "(" + left + "." + op + "." + right + ")"; }
-}
-
-// A unary node contains an operator and a node
-class UnaryExpr extends TNode {
-  String op;
-  TNode node;
-  UnaryExpr(String o, TNode n) {op = o; node = n;}
-  public String toString()
-  {
-    if (StringUtils.isBlank(op)) return node.toString();
-    else return "." + op + "." + node.toString();
-  }
-}
-
-// A leaf node contains a value as a string
-class Leaf extends TNode {
-  String value;
-  Leaf(String v) {value = v;}
-  public String toString() {return value;}
 }
 
 PARSER_END(SqlParser)
@@ -368,9 +337,9 @@ TOKEN [IGNORE_CASE] :
 // ----------------------------------------------------------------------------
 // Grammar
 // ----------------------------------------------------------------------------
-TNode GetNode() :
+ASTNode GetNode() :
 {
-    TNode left=null;
+    ASTNode left=null;
 }
 {
     left = orExpression() <EOF>
@@ -379,10 +348,10 @@ TNode GetNode() :
     }
 }
 
-TNode orExpression() :
+ASTNode orExpression() :
 {
-    TNode left;
-    TNode right;
+    ASTNode left;
+    ASTNode right;
 }
 {
     left = andExpression()
@@ -398,10 +367,10 @@ TNode orExpression() :
 
 }
 
-TNode andExpression() :
+ASTNode andExpression() :
 {
-    TNode left;
-    TNode right;
+    ASTNode left;
+    ASTNode right;
 }
 {
     left = equalityExpression()
@@ -416,10 +385,10 @@ TNode andExpression() :
     }
 }
 
-TNode equalityExpression() :
+ASTNode equalityExpression() :
 {
-    TNode left;
-    TNode right;
+    ASTNode left;
+    ASTNode right;
 }
 {
     left = comparisonExpression()
@@ -451,9 +420,9 @@ TNode equalityExpression() :
     }
 }
 
-TNode comparisonExpression() :
+ASTNode comparisonExpression() :
 {
-    TNode left, right;
+    ASTNode left, right;
     String low, high, t;
     boolean not;
     ArrayList<String> list;
@@ -551,10 +520,10 @@ TNode comparisonExpression() :
     }
 }
 
-TNode addExpression() :
+ASTNode addExpression() :
 {
-    TNode left;
-    TNode right;
+    ASTNode left;
+    ASTNode right;
 }
 {
     left = multExpr()
@@ -578,10 +547,10 @@ TNode addExpression() :
     }
 }
 
-TNode multExpr() :
+ASTNode multExpr() :
 {
-    TNode left;
-    TNode right;
+    ASTNode left;
+    ASTNode right;
 }
 {
     left = unaryExpr()
@@ -607,10 +576,10 @@ TNode multExpr() :
     }
 }
 
-TNode unaryExpr() :
+ASTNode unaryExpr() :
 {
     String s=null;
-    TNode left=null;
+    ASTNode left=null;
 }
 {
     (
@@ -637,9 +606,9 @@ TNode unaryExpr() :
 
 // For literals and <ID> this is the bottom for recursion
 // A single sql of "a = 'b'" ends up here and calls idAsUnary
-TNode primaryExpr() :
+ASTNode primaryExpr() :
 {
-    TNode left=null;
+    ASTNode left=null;
 }
 {
     (
@@ -654,67 +623,67 @@ TNode primaryExpr() :
     }
 }
 
-Leaf literal() :
+ASTLeaf literal() :
 {
     Token t;
     String s;
-    Leaf left=null;
+    ASTLeaf left=null;
 }
 {
     (
         (
             s = stringLiteral()
             {
-                left = new Leaf(s);
+                left = new ASTLeaf(s);
             }
         )
         |
         (
             t = <DECIMAL_LITERAL>
             {
-                left = new Leaf(ConstantExpression.createFromDecimal(t.image).toString());
+                left = new ASTLeaf(ConstantExpression.createFromDecimal(t.image).toString());
             }
         )
         |
         (
             t = <HEX_LITERAL>
             {
-                left = new Leaf(ConstantExpression.createFromHex(t.image).toString());
+                left = new ASTLeaf(ConstantExpression.createFromHex(t.image).toString());
             }
         )
         |
         (
             t = <OCTAL_LITERAL>
             {
-                left = new Leaf(ConstantExpression.createFromOctal(t.image).toString());
+                left = new ASTLeaf(ConstantExpression.createFromOctal(t.image).toString());
             }
         )
         |
         (
             t = <FLOATING_POINT_LITERAL>
             {
-                left = new Leaf(ConstantExpression.createFloat(t.image).toString());
+                left = new ASTLeaf(ConstantExpression.createFloat(t.image).toString());
             }
         )
         |
         (
             <TRUE>
             {
-                left = new Leaf("TRUE");
+                left = new ASTLeaf("TRUE");
             }
         )
         |
         (
             <FALSE>
             {
-                left = new Leaf("FALSE");
+                left = new ASTLeaf("FALSE");
             }
         )
         |
         (
             <NULL>
             {
-                left = new Leaf("NULL");
+                left = new ASTLeaf("NULL");
             }
         )
     )
@@ -744,13 +713,13 @@ String stringLiteral() :
     }
 }
 
-UnaryExpr idAsUnary() :
+ASTUnaryExpression idAsUnary() :
 {
     Token t;
 }
 {
     t = <ID>
     {
-      return new UnaryExpr("", new Leaf(t.image));
+      return new ASTUnaryExpression("", new ASTLeaf(t.image));
     }
 }

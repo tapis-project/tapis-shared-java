@@ -17,7 +17,7 @@
  * limitations under the License.
  */
 
-package edu.utexas.tacc.tapis.search;
+package edu.utexas.tacc.tapis.search.parser;
 
 import java.io.StringReader;
 import java.util.ArrayList;
@@ -27,9 +27,15 @@ import java.util.Map;
 import java.util.StringJoiner;
 import java.lang.UnsupportedOperationException;
 
+import edu.utexas.tacc.tapis.search.parser.Token;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.activemq.filter.ConstantExpression;
 import org.apache.activemq.util.LRUCache;
+
+import edu.utexas.tacc.tapis.search.parser.ASTNode;
+import edu.utexas.tacc.tapis.search.parser.ASTBinaryExpression;
+import edu.utexas.tacc.tapis.search.parser.ASTUnaryExpression;
+import edu.utexas.tacc.tapis.search.parser.ASTLeaf;
 
 /*
  * DO NOTE EDIT
@@ -39,12 +45,12 @@ import org.apache.activemq.util.LRUCache;
  * Based on JMS Selector Parser from ActiveMQ
  *
  * Map of Sql operators to Tapis operators
- *   =  -> EQ
- *   <> -> NEQ
- *   <  -> LT
- *   <= -> LTE
- *   >  -> GT
- *   >= -> GTE
+ *   =           -> EQ
+ *   <>          -> NEQ
+ *   <           -> LT
+ *   <=          -> LTE
+ *   >           -> GT
+ *   >=          -> GTE
  *   LIKE        -> LIKE
  *   NOT LIKE    -> NLIKE
  *   BETWEEN     -> BETWEEN
@@ -64,21 +70,21 @@ import org.apache.activemq.util.LRUCache;
 public class SqlParser implements SqlParserConstants {
   private static final Map<String, Object> cache = Collections.synchronizedMap(new LRUCache<>(100));
 
-  public static TNode parse(String sql) throws UnsupportedOperationException
+  public static ASTNode parse(String sql) throws UnsupportedOperationException
   {
     // Look for result in the cache
     Object result = cache.get(sql);
     // If result was an exception we are done
     if (result instanceof UnsupportedOperationException) { throw (UnsupportedOperationException) result; }
     // If we have already resolved the string to a node we are done
-    else if (result instanceof TNode) { return (TNode) result; }
+    else if (result instanceof ASTNode) { return (ASTNode) result; }
     else
     {
-      // Result not in cache, convert sql string to a TNode
+      // Result not in cache, convert sql string to a ASTNode
       try
       {
         // Recursive call to continue processing
-        TNode node = new SqlParser(sql).parse();
+        ASTNode node = new SqlParser(sql).parse();
         // Cache the result
         cache.put(sql, node);
         return node;
@@ -101,7 +107,7 @@ public class SqlParser implements SqlParserConstants {
     this.sql = sql;
   }
 
-  protected TNode parse() throws UnsupportedOperationException
+  protected ASTNode parse() throws UnsupportedOperationException
   {
     // This kicks off execution of our grammar defined below
     // Variable sql contains the string to be processed
@@ -110,145 +116,145 @@ public class SqlParser implements SqlParserConstants {
   }
 
   // ---------------------------------------------------------------------
-  // Utility methods used by grammar to build TNode objects
+  // Utility methods used by grammar to build ASTNode objects
   // ---------------------------------------------------------------------
 
   // ============================
   // conjunction / disjunction
   // ============================
-  private BinaryExpr createOR(TNode l, TNode r)
+  private ASTBinaryExpression createOR(ASTNode l, ASTNode r)
   {
-    return new BinaryExpr("OR", l, r);
+    return new ASTBinaryExpression("OR", l, r);
   }
-  private BinaryExpr createAND(TNode l, TNode r)
+  private ASTBinaryExpression createAND(ASTNode l, ASTNode r)
   {
-    return new BinaryExpr("AND", l, r);
+    return new ASTBinaryExpression("AND", l, r);
   }
   // ======================
   // equalityExpression()
   // ======================
-  private BinaryExpr createEqual(TNode l, TNode r)
+  private ASTBinaryExpression createEqual(ASTNode l, ASTNode r)
   {
-    return new BinaryExpr("EQ", l, r);
+    return new ASTBinaryExpression("EQ", l, r);
   }
-  private BinaryExpr createNotEqual(TNode l, TNode r)
+  private ASTBinaryExpression createNotEqual(ASTNode l, ASTNode r)
   {
-    return new BinaryExpr("NEQ", l, r);
+    return new ASTBinaryExpression("NEQ", l, r);
   }
   // TODO/TBD: IS NULL is not the same as = null
   // TODO/TBD: Do not support IS NULL ?
-  private BinaryExpr createIsNull(TNode l)
+  private ASTBinaryExpression createIsNull(ASTNode l)
   {
-    return new BinaryExpr("=", l, new Leaf("NULL"));
+    return new ASTBinaryExpression("=", l, new ASTLeaf("NULL"));
   }
   // TODO/TBD: IS NOT NULL is not the same as <> null
   // TODO/TBD: Do not support IS NOT NULL ?
-  private BinaryExpr createIsNotNull(TNode l)
+  private ASTBinaryExpression createIsNotNull(ASTNode l)
   {
-    return new BinaryExpr("<>", l, new Leaf("NULL"));
+    return new ASTBinaryExpression("<>", l, new ASTLeaf("NULL"));
   }
   // ======================
   // comparisonExpression()
   // ======================
-  private BinaryExpr createGreaterThan(TNode l, TNode r)
+  private ASTBinaryExpression createGreaterThan(ASTNode l, ASTNode r)
   {
-    return new BinaryExpr("GT", l, r);
+    return new ASTBinaryExpression("GT", l, r);
   }
-  private BinaryExpr createGreaterThanEqual(TNode l, TNode r)
+  private ASTBinaryExpression createGreaterThanEqual(ASTNode l, ASTNode r)
   {
-    return new BinaryExpr("GTE", l, r);
+    return new ASTBinaryExpression("GTE", l, r);
   }
-  private BinaryExpr createLessThan(TNode l, TNode r)
+  private ASTBinaryExpression createLessThan(ASTNode l, ASTNode r)
   {
-    return new BinaryExpr("LT", l, r);
+    return new ASTBinaryExpression("LT", l, r);
   }
-  private BinaryExpr createLessThanEqual(TNode l, TNode r)
+  private ASTBinaryExpression createLessThanEqual(ASTNode l, ASTNode r)
   {
-    return new BinaryExpr("LTE", l, r);
+    return new ASTBinaryExpression("LTE", l, r);
   }
-  private BinaryExpr createLike(TNode l, String s)
+  private ASTBinaryExpression createLike(ASTNode l, String s)
   {
-    return new BinaryExpr("LIKE", l, new Leaf(s));
+    return new ASTBinaryExpression("LIKE", l, new ASTLeaf(s));
   }
-  private BinaryExpr createNotLike(TNode l, String s)
+  private ASTBinaryExpression createNotLike(ASTNode l, String s)
   {
-    return new BinaryExpr("NLIKE", l, new Leaf(s));
+    return new ASTBinaryExpression("NLIKE", l, new ASTLeaf(s));
   }
-  private BinaryExpr createBetween(TNode l, String low, String high)
-  {
-    String s = low + "," + high;
-    return new BinaryExpr("BETWEEN", l, new Leaf(s));
-  }
-  private BinaryExpr createNotBetween(TNode l, String low, String high)
+  private ASTBinaryExpression createBetween(ASTNode l, String low, String high)
   {
     String s = low + "," + high;
-    return new BinaryExpr("NBETWEEN", l, new Leaf(s));
+    return new ASTBinaryExpression("BETWEEN", l, new ASTLeaf(s));
   }
-  private BinaryExpr createInList(TNode l, List<String> list)
+  private ASTBinaryExpression createNotBetween(ASTNode l, String low, String high)
+  {
+    String s = low + "," + high;
+    return new ASTBinaryExpression("NBETWEEN", l, new ASTLeaf(s));
+  }
+  private ASTBinaryExpression createInList(ASTNode l, List<String> list)
   {
     StringJoiner sj = new StringJoiner(",");
     for (String s : list) { sj.add(s); }
-    return new BinaryExpr("IN", l, new Leaf(sj.toString()));
+    return new ASTBinaryExpression("IN", l, new ASTLeaf(sj.toString()));
   }
-  private BinaryExpr createNotInList(TNode l, List<String> list)
+  private ASTBinaryExpression createNotInList(ASTNode l, List<String> list)
   {
     StringJoiner sj = new StringJoiner(",");
     for (String s : list) { sj.add(s); }
-    return new BinaryExpr("NIN", l, new Leaf(sj.toString()));
+    return new ASTBinaryExpression("NIN", l, new ASTLeaf(sj.toString()));
   }
   // ======================
   // addExpression()
   // TODO/TBD: Do not support numeric operations?
   // ======================
-  private BinaryExpr createPlus(TNode l, TNode r)
+  private ASTBinaryExpression createPlus(ASTNode l, ASTNode r)
   {
-    return new BinaryExpr("+", l, r);
+    return new ASTBinaryExpression("+", l, r);
   }
-  private BinaryExpr createMinus(TNode l, TNode r)
+  private ASTBinaryExpression createMinus(ASTNode l, ASTNode r)
   {
-    return new BinaryExpr("-", l, r);
+    return new ASTBinaryExpression("-", l, r);
   }
   // ======================
   // multExpression()
   // TODO/TBD: Do not support numeric operations?
   // ======================
-  private BinaryExpr createMultiply(TNode l, TNode r)
+  private ASTBinaryExpression createMultiply(ASTNode l, ASTNode r)
   {
-    return new BinaryExpr("*", l, r);
+    return new ASTBinaryExpression("*", l, r);
   }
-  private BinaryExpr createDivide(TNode l, TNode r)
+  private ASTBinaryExpression createDivide(ASTNode l, ASTNode r)
   {
-    return new BinaryExpr("/", l, r);
+    return new ASTBinaryExpression("/", l, r);
   }
-  private BinaryExpr createMod(TNode l, TNode r)
+  private ASTBinaryExpression createMod(ASTNode l, ASTNode r)
   {
-    return new BinaryExpr("%", l, r);
+    return new ASTBinaryExpression("%", l, r);
   }
   // ======================
   // unaryExpression()
   // TODO/TBD: Do not support unary operations?
   // ======================
-  private UnaryExpr createNegate(TNode n)
+  private ASTUnaryExpression createNegate(ASTNode n)
   {
-    return new UnaryExpr("-", n);
+    return new ASTUnaryExpression("-", n);
   }
-  private UnaryExpr createNOT(TNode n)
+  private ASTUnaryExpression createNOT(ASTNode n)
   {
-    return new UnaryExpr("NOT", n);
+    return new ASTUnaryExpression("NOT", n);
   }
 
 // ----------------------------------------------------------------------------
 // Grammar
 // ----------------------------------------------------------------------------
-  final public TNode GetNode() throws ParseException {TNode left=null;
+  final public ASTNode GetNode() throws ParseException {ASTNode left=null;
     left = orExpression();
     jj_consume_token(0);
 {if ("" != null) return left;}
     throw new Error("Missing return statement in function");
 }
 
-  final public TNode orExpression() throws ParseException {TNode left;
-    TNode right;
+  final public ASTNode orExpression() throws ParseException {ASTNode left;
+    ASTNode right;
     left = andExpression();
     label_1:
     while (true) {
@@ -269,8 +275,8 @@ left = createOR(left, right);
     throw new Error("Missing return statement in function");
 }
 
-  final public TNode andExpression() throws ParseException {TNode left;
-    TNode right;
+  final public ASTNode andExpression() throws ParseException {ASTNode left;
+    ASTNode right;
     left = equalityExpression();
     label_2:
     while (true) {
@@ -291,8 +297,8 @@ left = createAND(left, right);
     throw new Error("Missing return statement in function");
 }
 
-  final public TNode equalityExpression() throws ParseException {TNode left;
-    TNode right;
+  final public ASTNode equalityExpression() throws ParseException {ASTNode left;
+    ASTNode right;
     left = comparisonExpression();
     label_3:
     while (true) {
@@ -347,7 +353,7 @@ left = createIsNotNull(left);
     throw new Error("Missing return statement in function");
 }
 
-  final public TNode comparisonExpression() throws ParseException {TNode left, right;
+  final public ASTNode comparisonExpression() throws ParseException {ASTNode left, right;
     String low, high, t;
     boolean not;
     ArrayList<String> list;
@@ -494,8 +500,8 @@ left = createNotInList(left, list);
     throw new Error("Missing return statement in function");
 }
 
-  final public TNode addExpression() throws ParseException {TNode left;
-    TNode right;
+  final public ASTNode addExpression() throws ParseException {ASTNode left;
+    ASTNode right;
     left = multExpr();
     label_7:
     while (true) {
@@ -527,8 +533,8 @@ left = createMinus(left, right);
     throw new Error("Missing return statement in function");
 }
 
-  final public TNode multExpr() throws ParseException {TNode left;
-    TNode right;
+  final public ASTNode multExpr() throws ParseException {ASTNode left;
+    ASTNode right;
     left = unaryExpr();
     label_8:
     while (true) {
@@ -572,8 +578,8 @@ left = createMod(left, right);
     throw new Error("Missing return statement in function");
 }
 
-  final public TNode unaryExpr() throws ParseException {String s=null;
-    TNode left=null;
+  final public ASTNode unaryExpr() throws ParseException {String s=null;
+    ASTNode left=null;
     if (jj_2_6(2147483647)) {
       jj_consume_token(35);
       left = unaryExpr();
@@ -616,7 +622,7 @@ left = createNOT(left);
 
 // For literals and <ID> this is the bottom for recursion
 // A single sql of "a = 'b'" ends up here and calls idAsUnary
-  final public TNode primaryExpr() throws ParseException {TNode left=null;
+  final public ASTNode primaryExpr() throws ParseException {ASTNode left=null;
     switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
     case TRUE:
     case FALSE:
@@ -648,48 +654,48 @@ left = createNOT(left);
     throw new Error("Missing return statement in function");
 }
 
-  final public Leaf literal() throws ParseException {Token t;
+  final public ASTLeaf literal() throws ParseException {Token t;
     String s;
-    Leaf left=null;
+    ASTLeaf left=null;
     switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
     case STRING_LITERAL:{
       s = stringLiteral();
-left = new Leaf(s);
+left = new ASTLeaf(s);
       break;
       }
     case DECIMAL_LITERAL:{
       t = jj_consume_token(DECIMAL_LITERAL);
-left = new Leaf(ConstantExpression.createFromDecimal(t.image).toString());
+left = new ASTLeaf(ConstantExpression.createFromDecimal(t.image).toString());
       break;
       }
     case HEX_LITERAL:{
       t = jj_consume_token(HEX_LITERAL);
-left = new Leaf(ConstantExpression.createFromHex(t.image).toString());
+left = new ASTLeaf(ConstantExpression.createFromHex(t.image).toString());
       break;
       }
     case OCTAL_LITERAL:{
       t = jj_consume_token(OCTAL_LITERAL);
-left = new Leaf(ConstantExpression.createFromOctal(t.image).toString());
+left = new ASTLeaf(ConstantExpression.createFromOctal(t.image).toString());
       break;
       }
     case FLOATING_POINT_LITERAL:{
       t = jj_consume_token(FLOATING_POINT_LITERAL);
-left = new Leaf(ConstantExpression.createFloat(t.image).toString());
+left = new ASTLeaf(ConstantExpression.createFloat(t.image).toString());
       break;
       }
     case TRUE:{
       jj_consume_token(TRUE);
-left = new Leaf("TRUE");
+left = new ASTLeaf("TRUE");
       break;
       }
     case FALSE:{
       jj_consume_token(FALSE);
-left = new Leaf("FALSE");
+left = new ASTLeaf("FALSE");
       break;
       }
     case NULL:{
       jj_consume_token(NULL);
-left = new Leaf("NULL");
+left = new ASTLeaf("NULL");
       break;
       }
     default:
@@ -717,9 +723,9 @@ left = new Leaf("NULL");
     throw new Error("Missing return statement in function");
 }
 
-  final public UnaryExpr idAsUnary() throws ParseException {Token t;
+  final public ASTUnaryExpression idAsUnary() throws ParseException {Token t;
     t = jj_consume_token(ID);
-{if ("" != null) return new UnaryExpr("", new Leaf(t.image));}
+{if ("" != null) return new ASTUnaryExpression("", new ASTLeaf(t.image));}
     throw new Error("Missing return statement in function");
 }
 
@@ -771,74 +777,272 @@ left = new Leaf("NULL");
     finally { jj_save(5, xla); }
   }
 
-  private boolean jj_3R_idAsUnary_752_5_24()
+  private boolean jj_3R_literal_655_9_29()
+ {
+    if (jj_scan_token(OCTAL_LITERAL)) return true;
+    return false;
+  }
+
+  private boolean jj_3_2()
+ {
+    if (jj_scan_token(NOT)) return true;
+    if (jj_scan_token(LIKE)) return true;
+    if (jj_3R_stringLiteral_702_5_36()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_multExpr_558_9_16()
+ {
+    if (jj_scan_token(37)) return true;
+    if (jj_3R_unaryExpr_585_5_10()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_multExpr_558_9_11()
+ {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (!jj_3R_multExpr_558_9_16()) return false;
+    jj_scanpos = xsp;
+    if (!jj_3R_multExpr_563_9_17()) return false;
+    jj_scanpos = xsp;
+    if (jj_3R_multExpr_568_9_18()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_comparisonExpression_454_13_51()
+ {
+    if (jj_scan_token(LIKE)) return true;
+    if (jj_3R_stringLiteral_702_5_36()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_literal_648_9_28()
+ {
+    if (jj_scan_token(HEX_LITERAL)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_multExpr_556_5_9()
+ {
+    if (jj_3R_unaryExpr_585_5_10()) return true;
+    Token xsp;
+    while (true) {
+      xsp = jj_scanpos;
+      if (jj_3R_multExpr_558_9_11()) { jj_scanpos = xsp; break; }
+    }
+    return false;
+  }
+
+  private boolean jj_3R_orExpression_359_9_35()
+ {
+    if (jj_scan_token(OR)) return true;
+    if (jj_3R_andExpression_376_5_34()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_comparisonExpression_449_13_50()
+ {
+    if (jj_scan_token(31)) return true;
+    if (jj_3R_addExpression_529_5_41()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_literal_641_9_27()
+ {
+    if (jj_scan_token(DECIMAL_LITERAL)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_comparisonExpression_444_13_49()
+ {
+    if (jj_scan_token(30)) return true;
+    if (jj_3R_addExpression_529_5_41()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_orExpression_357_5_25()
+ {
+    if (jj_3R_andExpression_376_5_34()) return true;
+    Token xsp;
+    while (true) {
+      xsp = jj_scanpos;
+      if (jj_3R_orExpression_359_9_35()) { jj_scanpos = xsp; break; }
+    }
+    return false;
+  }
+
+  private boolean jj_3R_addExpression_538_13_55()
+ {
+    if (jj_scan_token(36)) return true;
+    if (jj_3R_multExpr_556_5_9()) return true;
+    return false;
+  }
+
+  private boolean jj_3_5()
+ {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (!jj_scan_token(35)) return false;
+    jj_scanpos = xsp;
+    if (jj_scan_token(36)) return true;
+    if (jj_3R_multExpr_556_5_9()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_literal_634_9_26()
+ {
+    if (jj_3R_stringLiteral_702_5_36()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_comparisonExpression_439_13_48()
+ {
+    if (jj_scan_token(29)) return true;
+    if (jj_3R_addExpression_529_5_41()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_addExpression_533_13_54()
+ {
+    if (jj_scan_token(35)) return true;
+    if (jj_3R_multExpr_556_5_9()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_literal_633_5_23()
+ {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (!jj_3R_literal_634_9_26()) return false;
+    jj_scanpos = xsp;
+    if (!jj_3R_literal_641_9_27()) return false;
+    jj_scanpos = xsp;
+    if (!jj_3R_literal_648_9_28()) return false;
+    jj_scanpos = xsp;
+    if (!jj_3R_literal_655_9_29()) return false;
+    jj_scanpos = xsp;
+    if (!jj_3R_literal_662_9_30()) return false;
+    jj_scanpos = xsp;
+    if (!jj_3R_literal_669_9_31()) return false;
+    jj_scanpos = xsp;
+    if (!jj_3R_literal_676_9_32()) return false;
+    jj_scanpos = xsp;
+    if (jj_3R_literal_683_9_33()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_comparisonExpression_434_13_47()
+ {
+    if (jj_scan_token(28)) return true;
+    if (jj_3R_addExpression_529_5_41()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_comparisonExpression_434_13_42()
+ {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (!jj_3R_comparisonExpression_434_13_47()) return false;
+    jj_scanpos = xsp;
+    if (!jj_3R_comparisonExpression_439_13_48()) return false;
+    jj_scanpos = xsp;
+    if (!jj_3R_comparisonExpression_444_13_49()) return false;
+    jj_scanpos = xsp;
+    if (!jj_3R_comparisonExpression_449_13_50()) return false;
+    jj_scanpos = xsp;
+    if (!jj_3R_comparisonExpression_454_13_51()) return false;
+    jj_scanpos = xsp;
+    if (!jj_3_2()) return false;
+    jj_scanpos = xsp;
+    if (!jj_3R_comparisonExpression_465_13_52()) return false;
+    jj_scanpos = xsp;
+    if (!jj_3_3()) return false;
+    jj_scanpos = xsp;
+    if (!jj_3R_comparisonExpression_476_13_53()) return false;
+    jj_scanpos = xsp;
+    if (jj_3_4()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_addExpression_531_9_46()
+ {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (!jj_3R_addExpression_533_13_54()) return false;
+    jj_scanpos = xsp;
+    if (jj_3R_addExpression_538_13_55()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_idAsUnary_721_5_24()
  {
     if (jj_scan_token(ID)) return true;
     return false;
   }
 
-  private boolean jj_3R_addExpression_560_5_41()
+  private boolean jj_3R_addExpression_529_5_41()
  {
-    if (jj_3R_multExpr_587_5_9()) return true;
+    if (jj_3R_multExpr_556_5_9()) return true;
     Token xsp;
     while (true) {
       xsp = jj_scanpos;
-      if (jj_3R_addExpression_562_9_46()) { jj_scanpos = xsp; break; }
+      if (jj_3R_addExpression_531_9_46()) { jj_scanpos = xsp; break; }
     }
     return false;
   }
 
-  private boolean jj_3R_primaryExpr_650_9_22()
+  private boolean jj_3R_primaryExpr_619_9_22()
  {
     if (jj_scan_token(32)) return true;
-    if (jj_3R_orExpression_388_5_25()) return true;
+    if (jj_3R_orExpression_357_5_25()) return true;
     if (jj_scan_token(34)) return true;
     return false;
   }
 
-  private boolean jj_3R_comparisonExpression_462_5_39()
+  private boolean jj_3R_comparisonExpression_431_5_39()
  {
-    if (jj_3R_addExpression_560_5_41()) return true;
+    if (jj_3R_addExpression_529_5_41()) return true;
     Token xsp;
     while (true) {
       xsp = jj_scanpos;
-      if (jj_3R_comparisonExpression_465_13_42()) { jj_scanpos = xsp; break; }
+      if (jj_3R_comparisonExpression_434_13_42()) { jj_scanpos = xsp; break; }
     }
     return false;
   }
 
-  private boolean jj_3R_primaryExpr_648_9_21()
+  private boolean jj_3R_primaryExpr_617_9_21()
  {
-    if (jj_3R_idAsUnary_752_5_24()) return true;
+    if (jj_3R_idAsUnary_721_5_24()) return true;
     return false;
   }
 
-  private boolean jj_3R_primaryExpr_646_9_20()
+  private boolean jj_3R_primaryExpr_615_9_20()
  {
-    if (jj_3R_literal_664_5_23()) return true;
+    if (jj_3R_literal_633_5_23()) return true;
     return false;
   }
 
-  private boolean jj_3R_comparisonExpression_536_21_57()
+  private boolean jj_3R_comparisonExpression_505_21_57()
  {
     if (jj_scan_token(33)) return true;
-    if (jj_3R_stringLiteral_733_5_36()) return true;
+    if (jj_3R_stringLiteral_702_5_36()) return true;
     return false;
   }
 
-  private boolean jj_3R_primaryExpr_645_5_19()
+  private boolean jj_3R_primaryExpr_614_5_19()
  {
     Token xsp;
     xsp = jj_scanpos;
-    if (!jj_3R_primaryExpr_646_9_20()) return false;
+    if (!jj_3R_primaryExpr_615_9_20()) return false;
     jj_scanpos = xsp;
-    if (!jj_3R_primaryExpr_648_9_21()) return false;
+    if (!jj_3R_primaryExpr_617_9_21()) return false;
     jj_scanpos = xsp;
-    if (jj_3R_primaryExpr_650_9_22()) return true;
+    if (jj_3R_primaryExpr_619_9_22()) return true;
     return false;
   }
 
-  private boolean jj_3R_equalityExpression_444_9_45()
+  private boolean jj_3R_equalityExpression_413_9_45()
  {
     if (jj_scan_token(IS)) return true;
     if (jj_scan_token(NOT)) return true;
@@ -846,15 +1050,15 @@ left = new Leaf("NULL");
     return false;
   }
 
-  private boolean jj_3R_stringLiteral_733_5_36()
+  private boolean jj_3R_stringLiteral_702_5_36()
  {
     if (jj_scan_token(STRING_LITERAL)) return true;
     return false;
   }
 
-  private boolean jj_3R_unaryExpr_630_9_15()
+  private boolean jj_3R_unaryExpr_599_9_15()
  {
-    if (jj_3R_primaryExpr_645_5_19()) return true;
+    if (jj_3R_primaryExpr_614_5_19()) return true;
     return false;
   }
 
@@ -868,7 +1072,7 @@ left = new Leaf("NULL");
   private boolean jj_3_6()
  {
     if (jj_scan_token(35)) return true;
-    if (jj_3R_unaryExpr_616_5_10()) return true;
+    if (jj_3R_unaryExpr_585_5_10()) return true;
     return false;
   }
 
@@ -877,124 +1081,124 @@ left = new Leaf("NULL");
     if (jj_scan_token(NOT)) return true;
     if (jj_scan_token(IN)) return true;
     if (jj_scan_token(32)) return true;
-    if (jj_3R_stringLiteral_733_5_36()) return true;
+    if (jj_3R_stringLiteral_702_5_36()) return true;
     Token xsp;
     while (true) {
       xsp = jj_scanpos;
-      if (jj_3R_comparisonExpression_536_21_57()) { jj_scanpos = xsp; break; }
+      if (jj_3R_comparisonExpression_505_21_57()) { jj_scanpos = xsp; break; }
     }
     if (jj_scan_token(34)) return true;
     return false;
   }
 
-  private boolean jj_3R_unaryExpr_625_9_14()
+  private boolean jj_3R_unaryExpr_594_9_14()
  {
     if (jj_scan_token(NOT)) return true;
-    if (jj_3R_unaryExpr_616_5_10()) return true;
+    if (jj_3R_unaryExpr_585_5_10()) return true;
     return false;
   }
 
-  private boolean jj_3R_equalityExpression_433_9_44()
+  private boolean jj_3R_equalityExpression_402_9_44()
  {
     if (jj_scan_token(27)) return true;
-    if (jj_3R_comparisonExpression_462_5_39()) return true;
+    if (jj_3R_comparisonExpression_431_5_39()) return true;
     return false;
   }
 
-  private boolean jj_3R_comparisonExpression_515_21_56()
+  private boolean jj_3R_comparisonExpression_484_21_56()
  {
     if (jj_scan_token(33)) return true;
-    if (jj_3R_stringLiteral_733_5_36()) return true;
+    if (jj_3R_stringLiteral_702_5_36()) return true;
     return false;
   }
 
-  private boolean jj_3R_unaryExpr_620_9_13()
+  private boolean jj_3R_unaryExpr_589_9_13()
  {
     if (jj_scan_token(36)) return true;
-    if (jj_3R_unaryExpr_616_5_10()) return true;
+    if (jj_3R_unaryExpr_585_5_10()) return true;
     return false;
   }
 
-  private boolean jj_3R_literal_714_9_33()
+  private boolean jj_3R_literal_683_9_33()
  {
     if (jj_scan_token(NULL)) return true;
     return false;
   }
 
-  private boolean jj_3R_equalityExpression_428_9_43()
+  private boolean jj_3R_equalityExpression_397_9_43()
  {
     if (jj_scan_token(26)) return true;
-    if (jj_3R_comparisonExpression_462_5_39()) return true;
+    if (jj_3R_comparisonExpression_431_5_39()) return true;
     return false;
   }
 
-  private boolean jj_3R_equalityExpression_428_9_40()
+  private boolean jj_3R_equalityExpression_397_9_40()
  {
     Token xsp;
     xsp = jj_scanpos;
-    if (!jj_3R_equalityExpression_428_9_43()) return false;
+    if (!jj_3R_equalityExpression_397_9_43()) return false;
     jj_scanpos = xsp;
-    if (!jj_3R_equalityExpression_433_9_44()) return false;
+    if (!jj_3R_equalityExpression_402_9_44()) return false;
     jj_scanpos = xsp;
     if (!jj_3_1()) return false;
     jj_scanpos = xsp;
-    if (jj_3R_equalityExpression_444_9_45()) return true;
+    if (jj_3R_equalityExpression_413_9_45()) return true;
     return false;
   }
 
-  private boolean jj_3R_unaryExpr_617_9_12()
+  private boolean jj_3R_unaryExpr_586_9_12()
  {
     if (jj_scan_token(35)) return true;
-    if (jj_3R_unaryExpr_616_5_10()) return true;
+    if (jj_3R_unaryExpr_585_5_10()) return true;
     return false;
   }
 
-  private boolean jj_3R_unaryExpr_616_5_10()
+  private boolean jj_3R_unaryExpr_585_5_10()
  {
     Token xsp;
     xsp = jj_scanpos;
-    if (!jj_3R_unaryExpr_617_9_12()) return false;
+    if (!jj_3R_unaryExpr_586_9_12()) return false;
     jj_scanpos = xsp;
-    if (!jj_3R_unaryExpr_620_9_13()) return false;
+    if (!jj_3R_unaryExpr_589_9_13()) return false;
     jj_scanpos = xsp;
-    if (!jj_3R_unaryExpr_625_9_14()) return false;
+    if (!jj_3R_unaryExpr_594_9_14()) return false;
     jj_scanpos = xsp;
-    if (jj_3R_unaryExpr_630_9_15()) return true;
+    if (jj_3R_unaryExpr_599_9_15()) return true;
     return false;
   }
 
-  private boolean jj_3R_literal_707_9_32()
+  private boolean jj_3R_literal_676_9_32()
  {
     if (jj_scan_token(FALSE)) return true;
     return false;
   }
 
-  private boolean jj_3R_equalityExpression_425_5_37()
+  private boolean jj_3R_equalityExpression_394_5_37()
  {
-    if (jj_3R_comparisonExpression_462_5_39()) return true;
+    if (jj_3R_comparisonExpression_431_5_39()) return true;
     Token xsp;
     while (true) {
       xsp = jj_scanpos;
-      if (jj_3R_equalityExpression_428_9_40()) { jj_scanpos = xsp; break; }
+      if (jj_3R_equalityExpression_397_9_40()) { jj_scanpos = xsp; break; }
     }
     return false;
   }
 
-  private boolean jj_3R_comparisonExpression_507_13_53()
+  private boolean jj_3R_comparisonExpression_476_13_53()
  {
     if (jj_scan_token(IN)) return true;
     if (jj_scan_token(32)) return true;
-    if (jj_3R_stringLiteral_733_5_36()) return true;
+    if (jj_3R_stringLiteral_702_5_36()) return true;
     Token xsp;
     while (true) {
       xsp = jj_scanpos;
-      if (jj_3R_comparisonExpression_515_21_56()) { jj_scanpos = xsp; break; }
+      if (jj_3R_comparisonExpression_484_21_56()) { jj_scanpos = xsp; break; }
     }
     if (jj_scan_token(34)) return true;
     return false;
   }
 
-  private boolean jj_3R_literal_700_9_31()
+  private boolean jj_3R_literal_669_9_31()
  {
     if (jj_scan_token(TRUE)) return true;
     return false;
@@ -1004,254 +1208,56 @@ left = new Leaf("NULL");
  {
     if (jj_scan_token(NOT)) return true;
     if (jj_scan_token(BETWEEN)) return true;
-    if (jj_3R_stringLiteral_733_5_36()) return true;
+    if (jj_3R_stringLiteral_702_5_36()) return true;
     if (jj_scan_token(AND)) return true;
-    if (jj_3R_stringLiteral_733_5_36()) return true;
+    if (jj_3R_stringLiteral_702_5_36()) return true;
     return false;
   }
 
-  private boolean jj_3R_andExpression_409_9_38()
+  private boolean jj_3R_andExpression_378_9_38()
  {
     if (jj_scan_token(AND)) return true;
-    if (jj_3R_equalityExpression_425_5_37()) return true;
+    if (jj_3R_equalityExpression_394_5_37()) return true;
     return false;
   }
 
-  private boolean jj_3R_multExpr_599_9_18()
+  private boolean jj_3R_multExpr_568_9_18()
  {
     if (jj_scan_token(39)) return true;
-    if (jj_3R_unaryExpr_616_5_10()) return true;
+    if (jj_3R_unaryExpr_585_5_10()) return true;
     return false;
   }
 
-  private boolean jj_3R_literal_693_9_30()
+  private boolean jj_3R_literal_662_9_30()
  {
     if (jj_scan_token(FLOATING_POINT_LITERAL)) return true;
     return false;
   }
 
-  private boolean jj_3R_comparisonExpression_496_13_52()
+  private boolean jj_3R_comparisonExpression_465_13_52()
  {
     if (jj_scan_token(BETWEEN)) return true;
-    if (jj_3R_stringLiteral_733_5_36()) return true;
+    if (jj_3R_stringLiteral_702_5_36()) return true;
     if (jj_scan_token(AND)) return true;
-    if (jj_3R_stringLiteral_733_5_36()) return true;
+    if (jj_3R_stringLiteral_702_5_36()) return true;
     return false;
   }
 
-  private boolean jj_3R_multExpr_594_9_17()
+  private boolean jj_3R_multExpr_563_9_17()
  {
     if (jj_scan_token(38)) return true;
-    if (jj_3R_unaryExpr_616_5_10()) return true;
+    if (jj_3R_unaryExpr_585_5_10()) return true;
     return false;
   }
 
-  private boolean jj_3R_andExpression_407_5_34()
+  private boolean jj_3R_andExpression_376_5_34()
  {
-    if (jj_3R_equalityExpression_425_5_37()) return true;
+    if (jj_3R_equalityExpression_394_5_37()) return true;
     Token xsp;
     while (true) {
       xsp = jj_scanpos;
-      if (jj_3R_andExpression_409_9_38()) { jj_scanpos = xsp; break; }
+      if (jj_3R_andExpression_378_9_38()) { jj_scanpos = xsp; break; }
     }
-    return false;
-  }
-
-  private boolean jj_3R_literal_686_9_29()
- {
-    if (jj_scan_token(OCTAL_LITERAL)) return true;
-    return false;
-  }
-
-  private boolean jj_3_2()
- {
-    if (jj_scan_token(NOT)) return true;
-    if (jj_scan_token(LIKE)) return true;
-    if (jj_3R_stringLiteral_733_5_36()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_multExpr_589_9_16()
- {
-    if (jj_scan_token(37)) return true;
-    if (jj_3R_unaryExpr_616_5_10()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_multExpr_589_9_11()
- {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (!jj_3R_multExpr_589_9_16()) return false;
-    jj_scanpos = xsp;
-    if (!jj_3R_multExpr_594_9_17()) return false;
-    jj_scanpos = xsp;
-    if (jj_3R_multExpr_599_9_18()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_comparisonExpression_485_13_51()
- {
-    if (jj_scan_token(LIKE)) return true;
-    if (jj_3R_stringLiteral_733_5_36()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_literal_679_9_28()
- {
-    if (jj_scan_token(HEX_LITERAL)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_multExpr_587_5_9()
- {
-    if (jj_3R_unaryExpr_616_5_10()) return true;
-    Token xsp;
-    while (true) {
-      xsp = jj_scanpos;
-      if (jj_3R_multExpr_589_9_11()) { jj_scanpos = xsp; break; }
-    }
-    return false;
-  }
-
-  private boolean jj_3R_orExpression_390_9_35()
- {
-    if (jj_scan_token(OR)) return true;
-    if (jj_3R_andExpression_407_5_34()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_comparisonExpression_480_13_50()
- {
-    if (jj_scan_token(31)) return true;
-    if (jj_3R_addExpression_560_5_41()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_literal_672_9_27()
- {
-    if (jj_scan_token(DECIMAL_LITERAL)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_comparisonExpression_475_13_49()
- {
-    if (jj_scan_token(30)) return true;
-    if (jj_3R_addExpression_560_5_41()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_orExpression_388_5_25()
- {
-    if (jj_3R_andExpression_407_5_34()) return true;
-    Token xsp;
-    while (true) {
-      xsp = jj_scanpos;
-      if (jj_3R_orExpression_390_9_35()) { jj_scanpos = xsp; break; }
-    }
-    return false;
-  }
-
-  private boolean jj_3R_addExpression_569_13_55()
- {
-    if (jj_scan_token(36)) return true;
-    if (jj_3R_multExpr_587_5_9()) return true;
-    return false;
-  }
-
-  private boolean jj_3_5()
- {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (!jj_scan_token(35)) return false;
-    jj_scanpos = xsp;
-    if (jj_scan_token(36)) return true;
-    if (jj_3R_multExpr_587_5_9()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_literal_665_9_26()
- {
-    if (jj_3R_stringLiteral_733_5_36()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_comparisonExpression_470_13_48()
- {
-    if (jj_scan_token(29)) return true;
-    if (jj_3R_addExpression_560_5_41()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_addExpression_564_13_54()
- {
-    if (jj_scan_token(35)) return true;
-    if (jj_3R_multExpr_587_5_9()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_literal_664_5_23()
- {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (!jj_3R_literal_665_9_26()) return false;
-    jj_scanpos = xsp;
-    if (!jj_3R_literal_672_9_27()) return false;
-    jj_scanpos = xsp;
-    if (!jj_3R_literal_679_9_28()) return false;
-    jj_scanpos = xsp;
-    if (!jj_3R_literal_686_9_29()) return false;
-    jj_scanpos = xsp;
-    if (!jj_3R_literal_693_9_30()) return false;
-    jj_scanpos = xsp;
-    if (!jj_3R_literal_700_9_31()) return false;
-    jj_scanpos = xsp;
-    if (!jj_3R_literal_707_9_32()) return false;
-    jj_scanpos = xsp;
-    if (jj_3R_literal_714_9_33()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_comparisonExpression_465_13_47()
- {
-    if (jj_scan_token(28)) return true;
-    if (jj_3R_addExpression_560_5_41()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_comparisonExpression_465_13_42()
- {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (!jj_3R_comparisonExpression_465_13_47()) return false;
-    jj_scanpos = xsp;
-    if (!jj_3R_comparisonExpression_470_13_48()) return false;
-    jj_scanpos = xsp;
-    if (!jj_3R_comparisonExpression_475_13_49()) return false;
-    jj_scanpos = xsp;
-    if (!jj_3R_comparisonExpression_480_13_50()) return false;
-    jj_scanpos = xsp;
-    if (!jj_3R_comparisonExpression_485_13_51()) return false;
-    jj_scanpos = xsp;
-    if (!jj_3_2()) return false;
-    jj_scanpos = xsp;
-    if (!jj_3R_comparisonExpression_496_13_52()) return false;
-    jj_scanpos = xsp;
-    if (!jj_3_3()) return false;
-    jj_scanpos = xsp;
-    if (!jj_3R_comparisonExpression_507_13_53()) return false;
-    jj_scanpos = xsp;
-    if (jj_3_4()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_addExpression_562_9_46()
- {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (!jj_3R_addExpression_564_13_54()) return false;
-    jj_scanpos = xsp;
-    if (jj_3R_addExpression_569_13_55()) return true;
     return false;
   }
 
@@ -1584,41 +1590,4 @@ left = new Leaf("NULL");
 	 JJCalls next;
   }
 
-}
-
-// ========================================
-// Classes representing nodes in the AST
-// ========================================
-abstract class TNode { }
-
-// A binary node contains an operator, a left node and a right node
-class BinaryExpr extends TNode {
-  String op;
-  TNode left, right;
-  BinaryExpr(String o, TNode l, TNode r)
-  {
-    op = o;
-    left = l;
-    right = r;
-  }
-  public String toString() { return "(" + left + "." + op + "." + right + ")"; }
-}
-
-// A unary node contains an operator and a node
-class UnaryExpr extends TNode {
-  String op;
-  TNode node;
-  UnaryExpr(String o, TNode n) {op = o; node = n;}
-  public String toString()
-  {
-    if (StringUtils.isBlank(op)) return node.toString();
-    else return "." + op + "." + node.toString();
-  }
-}
-
-// A leaf node contains a value as a string
-class Leaf extends TNode {
-  String value;
-  Leaf(String v) {value = v;}
-  public String toString() {return value;}
 }

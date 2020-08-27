@@ -17,7 +17,7 @@
  * limitations under the License.
  */
 
-package edu.utexas.tacc.tapis.search;
+package edu.utexas.tacc.tapis.search.parser;
 
 /**
  * This exception is thrown when parse errors are encountered.
@@ -207,4 +207,4 @@ public class ParseException extends Exception {
    }
 
 }
-/* JavaCC - OriginalChecksum=64631039f63c31da58008493adc2f2da (do not edit this line) */
+/* JavaCC - OriginalChecksum=b2b0c917f67b118b87bbb3f1308610db (do not edit this line) */
