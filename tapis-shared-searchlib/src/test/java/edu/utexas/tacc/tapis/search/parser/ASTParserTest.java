@@ -52,10 +52,10 @@ public class ASTParserTest
      ")";
 
   /*
-   * Check SqlParser.parse() - valid cases
+   * Check ASTParser.parse() - valid cases
    */
   @Test(groups = {"unit"})
-  public void testSqlParseValid()
+  public void testASTParseValid()
   {
     // Create all input and validation data for tests
     String sys1Name = sysNamePrefix + "_" + testSuiteNameKey + "_" + String.format("%03d", 1);
