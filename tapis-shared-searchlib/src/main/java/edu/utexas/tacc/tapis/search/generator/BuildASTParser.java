@@ -9,10 +9,10 @@ package edu.utexas.tacc.tapis.search.generator;
  * 
  * @author rcardone
  */
-public class BuildSqlParser
+public class BuildASTParser
 {
     // Grammar file pathname relative to project directory.
-    public static final String DEFAULT_GRAMMAR_FILE = "src/main/resources/edu/utexas/tacc/tapis/SqlParser.jj";
+    public static final String DEFAULT_GRAMMAR_FILE = "src/main/resources/edu/utexas/tacc/tapis/ASTParser.jj";
     
     // Run the javacc parser generator to create the sql expression language.
     public static void main(String[] args) throws Exception 

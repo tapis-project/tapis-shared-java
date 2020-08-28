@@ -72,7 +72,7 @@
                     </goals>
                     <phase>process-sources</phase>
                     <configuration>
-                        <mainClass>edu.utexas.tacc.tapis.search.generator.BuildSelectorParser</mainClass>
+                        <mainClass>edu.utexas.tacc.tapis.search.generator.BuildASTParser</mainClass>
                     </configuration>
                 </execution>
             </executions>

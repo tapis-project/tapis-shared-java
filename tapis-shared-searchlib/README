@@ -56,3 +56,19 @@ INLIST, MAKELIST, REPLACE and SPLIT.
 
 These capabilities have been removed from the Tapis grammar to maintain strict SQL '92 compliance.
 If we decided to add them back in the future, the initial commit contains the code.
+
+=====================
+AST Parser
+=====================
+An alternate parser that provides access to the abstract syntax tree is also available. It is based on the parser
+discussed above. Not all SQL constructs are supported. Please see ASTParser.jj for more information.
+To generate source code files (which are tracked in git) from the grammar file:
+    mvn -f pom-generate-ast.xml clean process-sources
+To build and run tests:
+    mvn clean install
+
+The JavaCC grammar file is at src/main/resources/edu/utexas/tacc/tapis/ASTParser.jj and the generated source
+code files (which are tracked in git) are in: src/main/java/edu/utexas/tacc/tapis/search/parser
+
+This parser translates the SQL operators into Tapis operators, for example <> becomes NEQ. Please see ASTParser.jj for
+the full mapping and for other caveats related to SQL support.

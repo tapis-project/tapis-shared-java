@@ -7,12 +7,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- *  Basic tests of the generated SqlParser.
+ *  Basic tests of the generated ASTParser.
  * 
  * @author scblack
  */
 @Test(groups= {"unit"})
-public class SqlParserTest
+public class ASTParserTest
 {
 
   public static final String sysNamePrefix = "TestSys";
@@ -91,7 +91,7 @@ public class SqlParserTest
       int caseNum = item.getKey();
       System.out.println("Checking case # " + caseNum + " Input: " + ci.sqlStr);
 //      BooleanExpression ast = SelectorParser.parse(ci.sqlStr);
-      ASTNode ast = SqlParser.parse(ci.sqlStr);
+      ASTNode ast = ASTParser.parse(ci.sqlStr);
       Assert.assertNotNull(ast);
       int leafCount = ast.countLeaves();
       System.out.println("  ******* AST = " + ast.toString());
