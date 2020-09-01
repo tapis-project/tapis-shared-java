@@ -194,14 +194,21 @@ public class SearchUtilsTest
       CaseInputData ci = item.getValue();
       int caseNum = item.getKey();
       System.out.println("Checking case # "+ caseNum + " Input: " + ci.searchListStr);
-      List<String> validSearchList = SearchUtils.validateAndExtractSearchList(ci.searchListStr);
-      System.out.println("  Result size: " + validSearchList.size());
+      // Extract the search list and validate that each condition has the correct form as done on the front end.
+      List<String> validSearchList = SearchUtils.extractAndValidateSearchList(ci.searchListStr);
+      var processedSearchList = new ArrayList<String>();
+      // Validate and process each search condition as done on the back end.
+      for (String condStr : validSearchList)
+      {
+        processedSearchList.add(SearchUtils.validateAndProcessSearchCondition(condStr));
+      }
+      System.out.println("  Result size: " + processedSearchList.size());
       assertEquals(validSearchList.size(), ci.count);
       for (int j = 0; j < ci.count; j++)
       {
-        System.out.println("  Result string # " + j + " = " + validSearchList.get(j));
+        System.out.println("  Result string # " + j + " = " + processedSearchList.get(j));
         String coStr = validCaseOutputs.get(caseNum).strList.get(j);
-        assertEquals(validSearchList.get(j), coStr);
+        assertEquals(processedSearchList.get(j), coStr);
       }
     }
   }
@@ -252,8 +259,11 @@ public class SearchUtilsTest
       System.out.println("Checking case # "+ i + " Input: " + searchListStr);
       try
       {
-        List<String> searchResults = SearchUtils.validateAndExtractSearchList(searchListStr);
-        System.out.println("  Result size: " + searchResults.size());
+        // Extract the search list and validate that each condition has the correct form as done on the front end.
+        List<String> searchList = SearchUtils.extractAndValidateSearchList(searchListStr);
+        // Validate and process each search condition as done on the back end.
+        for (String condStr : searchList) {SearchUtils.validateAndProcessSearchCondition(condStr);}
+        System.out.println("  Result size: " + searchList.size());
         fail("Expected IllegalArgumentException");
       }
       catch (IllegalArgumentException e)

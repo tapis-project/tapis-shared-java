@@ -116,15 +116,17 @@ public class SearchUtils
   }
 
   /**
-   * Validate a list of search conditions and extract the conditions
-   * Search list must have the form  (<cond>)~(<cond>)~ ...
+   * Extract a list of search conditions provided as a single string
+   * Search list string must have the form  (<cond>)~(<cond>)~ ...
    *    where <cond> = <attr>.<op>.<value>
    * If there is only one condition the surrounding parentheses are optional
+   * This method is intended for use by the front end api. The back end translates the Tapis LIKE wildcard
+   *   characters (* and !) and deals with Tapis special characters.
    * @param searchListStr - String containing all search conditions
    * @return the list of extracted search conditions
    * @throws IllegalArgumentException if error encountered while parsing.
    */
-  public static List<String> validateAndExtractSearchList(String searchListStr) throws IllegalArgumentException
+  public static List<String> extractAndValidateSearchList(String searchListStr) throws IllegalArgumentException
   {
     var searchList = new ArrayList<String>();
     if (StringUtils.isBlank(searchListStr)) return searchList;
@@ -148,7 +150,7 @@ public class SearchUtils
     {
       String cond = searchList.get(0);
       // Add parentheses if not present, check start and end
-      // Check for unbalanced parentheses in validateAndExtractSearchCondition
+      // Check for unbalanced parentheses in below loop over the search list
       if (!cond.startsWith("(") && !cond.endsWith(")")) cond = "(" + cond + ")";
       searchList.set(0, cond);
     }
@@ -157,7 +159,18 @@ public class SearchUtils
     // Validate and process each condition. IllegalArg thrown if invalid
     for (String cond : searchList)
     {
-      String bareCond = validateAndProcessSearchCondition(cond);
+      // Check for unbalanced parens. At this point the condition should not be blank and should be surrounded
+      //   by parentheses
+      if (StringUtils.isBlank(cond) || !cond.startsWith("(") || !cond.endsWith(")"))
+      {
+        String errMsg = MsgUtils.getMsg("SEARCH_COND_UNBALANCED", cond);
+        throw new IllegalArgumentException(errMsg);
+      }
+
+      // At this point the condition must have surrounding parentheses. Strip them off.
+      String bareCond = cond.substring(1, cond.length() - 1);
+      // Validate the form of the condition
+      validateSearchConditionForm(bareCond);
       retList.add(bareCond);
     }
     // Remove any empty matches, e.g. () might have been included one or more times
@@ -166,7 +179,91 @@ public class SearchUtils
   }
 
   /**
-   * Validate and extract a search condition that must have the form (<attr>.<op>.<value>)
+   * Validate a search condition that must have the form <attr>.<op>.<value>
+   * For operators that take a list (IN, NIN, BETWEEN, NBETWEEN) the value is processed as a CSV list
+   * For the value(s):
+   *   Check for any of the Tapis special chars that are unescaped
+   *   Check that for BETWEEN/NBETWEEN it is a 2 element list
+   * @param cond the condition to process
+   * @throws IllegalArgumentException if condition is invalid
+   */
+  public static void validateSearchConditionForm(String cond) throws IllegalArgumentException
+  {
+    _log.trace("Validating form for search condition: " + cond);
+    // A blank string is OK at this point and means we are done
+    if (StringUtils.isBlank(cond)) return;
+
+    // Validate that condition is of the form <attr>.<op>.<value> where
+    //       <attr> and <op> may contain only certain characters.
+    // Validate and extract <attr>, <op> and <value>
+    // <value> is everything passed the second . and <value> may be a CSV list
+    int dot1 = cond.indexOf('.');
+    if (dot1 < 0)
+    {
+      String errMsg = MsgUtils.getMsg("SEARCH_COND_INVALID", cond);
+      throw new IllegalArgumentException(errMsg);
+    }
+    int dot2 = cond.indexOf('.', dot1 + 1);
+    if (dot2 < 0)
+    {
+      String errMsg = MsgUtils.getMsg("SEARCH_COND_INVALID", cond);
+      throw new IllegalArgumentException(errMsg);
+    }
+    String attr = cond.substring(0, dot1);
+    String op = cond.substring(dot1 + 1, dot2);
+    String fullValueStr = cond.substring(dot2 + 1);
+    // <attr>, <op> and <val> must not be empty
+    if (StringUtils.isBlank(attr) || StringUtils.isBlank(op) || StringUtils.isBlank(fullValueStr))
+    {
+      String errMsg = MsgUtils.getMsg("SEARCH_COND_INVALID", cond);
+      throw new IllegalArgumentException(errMsg);
+    }
+
+    // Validate <attr>
+    // <attr> must start with [a-zA-Z] and contain only [a-zA-Z0-9_]
+    Matcher m = (Pattern.compile("^[a-zA-Z][a-zA-Z0-9_]*$")).matcher(attr);
+    if (!m.find())
+    {
+      String errMsg = MsgUtils.getMsg("SEARCH_COND_INVALID_ATTR", cond);
+      throw new IllegalArgumentException(errMsg);
+    }
+    // Validate <op>
+    // Verify <op> is supported.
+    if (!SEARCH_OP_SET.contains(op.toUpperCase()))
+    {
+      String errMsg = MsgUtils.getMsg("SEARCH_COND_INVALID_OP", op, cond);
+      throw new IllegalArgumentException(errMsg);
+    }
+    SearchOperator operator = SearchOperator.valueOf(op.toUpperCase());
+
+    // Validate <value>
+    // <value> may be a list so always build a list to simplify the logic below
+    // If the operator takes a list set a flag since it will require special processing
+    List<String> valList = Collections.emptyList();
+    boolean isListOperator = listOpSet.contains(operator);
+    if (isListOperator) valList = getValueList(fullValueStr); else valList = Collections.singletonList(fullValueStr);
+
+    // Make sure each value does not have any of our special characters that are unescaped.
+    for (String val : valList)
+    {
+      if (!validateValueSpecialChars(val))
+      {
+        String errMsg = MsgUtils.getMsg("SEARCH_COND_INVALID_VAL", cond);
+        throw new IllegalArgumentException(errMsg);
+      }
+    }
+
+    // For BETWEEN/NBETWEEN the value must be a 2 element list
+    if ((operator.equals(SearchOperator.BETWEEN) || operator.equals(SearchOperator.NBETWEEN))
+            && valList.size() != 2)
+    {
+      String errMsg = MsgUtils.getMsg("SEARCH_COND_INVALID_OP2", operator.name(), cond);
+      throw new IllegalArgumentException(errMsg);
+    }
+  }
+
+  /**
+   * Validate and process a search condition that must have the form <attr>.<op>.<value>
    * For operators that take a list (IN, NIN, BETWEEN, NBETWEEN) the value is processed as a CSV list
    * For the value(s):
    *   Check for any of our special chars that are unescaped
@@ -179,17 +276,8 @@ public class SearchUtils
    */
   public static String validateAndProcessSearchCondition(String cond) throws IllegalArgumentException
   {
-    if (StringUtils.isBlank(cond) || !cond.startsWith("(") || !cond.endsWith(")"))
-    {
-      String errMsg = MsgUtils.getMsg("SEARCH_COND_UNBALANCED", cond);
-      throw new IllegalArgumentException(errMsg);
-    }
     _log.trace("Validate and process search condition: " + cond);
-
-    // Validate/process everything inside ()
-    // At this point the condition must have surrounding parentheses. Strip them off.
-    String retCond = cond.substring(1, cond.length() - 1);
-
+    String retCond = cond;
     // A blank string is OK at this point and means we are done
     if (StringUtils.isBlank(retCond)) return retCond;
 
@@ -197,6 +285,9 @@ public class SearchUtils
     //       <attr> and <op> may contain only certain characters.
     // Validate and extract <attr>, <op> and <value>
     // <value> is everything passed the second . and <value> may be a CSV list
+
+// TODO following 63 lines are duplicated. Refactor
+//     validateSearchConditionForm(retCond);
     int dot1 = retCond.indexOf('.');
     if (dot1 < 0)
     {
@@ -255,7 +346,7 @@ public class SearchUtils
 
     // For BETWEEN/NBETWEEN the value must be a 2 element list
     if ((operator.equals(SearchOperator.BETWEEN) || operator.equals(SearchOperator.NBETWEEN))
-        && valList.size() != 2)
+            && valList.size() != 2)
     {
       String errMsg = MsgUtils.getMsg("SEARCH_COND_INVALID_OP2", operator.name(), cond);
       throw new IllegalArgumentException(errMsg);
@@ -372,6 +463,8 @@ public class SearchUtils
   /**
    * Build a search list from query parameters. Query parameters use the format <attr>.<op>=<value>
    * Reserved query parameters are ignored.
+   * This method is intended for use by the front end api. The back end translates the Tapis LIKE wildcard
+   *    *   characters (* and !) and deals with Tapis special characters.
    * @param queryParms map of query parameters
    * @return list of search conditions, null if no query parameters
    * @throws IllegalArgumentException if an invalid condition is encountered
@@ -390,7 +483,9 @@ public class SearchUtils
       for (String val : qParm.getValue())
       {
         String cond = qKey + "." + val;
-        searchList.add(validateAndProcessSearchCondition(cond));
+        // Validate the search condition form
+        validateSearchConditionForm(cond);
+        searchList.add(cond);
       }
     }
     return searchList;
