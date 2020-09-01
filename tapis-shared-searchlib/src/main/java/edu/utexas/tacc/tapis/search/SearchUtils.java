@@ -193,73 +193,10 @@ public class SearchUtils
     // A blank string is OK at this point and means we are done
     if (StringUtils.isBlank(cond)) return;
 
-    // Validate that condition is of the form <attr>.<op>.<value> where
-    //       <attr> and <op> may contain only certain characters.
-    // Validate and extract <attr>, <op> and <value>
-    // <value> is everything passed the second . and <value> may be a CSV list
-    int dot1 = cond.indexOf('.');
-    if (dot1 < 0)
-    {
-      String errMsg = MsgUtils.getMsg("SEARCH_COND_INVALID", cond);
-      throw new IllegalArgumentException(errMsg);
-    }
-    int dot2 = cond.indexOf('.', dot1 + 1);
-    if (dot2 < 0)
-    {
-      String errMsg = MsgUtils.getMsg("SEARCH_COND_INVALID", cond);
-      throw new IllegalArgumentException(errMsg);
-    }
-    String attr = cond.substring(0, dot1);
-    String op = cond.substring(dot1 + 1, dot2);
-    String fullValueStr = cond.substring(dot2 + 1);
-    // <attr>, <op> and <val> must not be empty
-    if (StringUtils.isBlank(attr) || StringUtils.isBlank(op) || StringUtils.isBlank(fullValueStr))
-    {
-      String errMsg = MsgUtils.getMsg("SEARCH_COND_INVALID", cond);
-      throw new IllegalArgumentException(errMsg);
-    }
-
-    // Validate <attr>
-    // <attr> must start with [a-zA-Z] and contain only [a-zA-Z0-9_]
-    Matcher m = (Pattern.compile("^[a-zA-Z][a-zA-Z0-9_]*$")).matcher(attr);
-    if (!m.find())
-    {
-      String errMsg = MsgUtils.getMsg("SEARCH_COND_INVALID_ATTR", cond);
-      throw new IllegalArgumentException(errMsg);
-    }
-    // Validate <op>
-    // Verify <op> is supported.
-    if (!SEARCH_OP_SET.contains(op.toUpperCase()))
-    {
-      String errMsg = MsgUtils.getMsg("SEARCH_COND_INVALID_OP", op, cond);
-      throw new IllegalArgumentException(errMsg);
-    }
-    SearchOperator operator = SearchOperator.valueOf(op.toUpperCase());
-
-    // Validate <value>
-    // <value> may be a list so always build a list to simplify the logic below
-    // If the operator takes a list set a flag since it will require special processing
-    List<String> valList = Collections.emptyList();
-    boolean isListOperator = listOpSet.contains(operator);
-    if (isListOperator) valList = getValueList(fullValueStr); else valList = Collections.singletonList(fullValueStr);
-
-    // Make sure each value does not have any of our special characters that are unescaped.
-    for (String val : valList)
-    {
-      if (!validateValueSpecialChars(val))
-      {
-        String errMsg = MsgUtils.getMsg("SEARCH_COND_INVALID_VAL", cond);
-        throw new IllegalArgumentException(errMsg);
-      }
-    }
-
-    // For BETWEEN/NBETWEEN the value must be a 2 element list
-    if ((operator.equals(SearchOperator.BETWEEN) || operator.equals(SearchOperator.NBETWEEN))
-            && valList.size() != 2)
-    {
-      String errMsg = MsgUtils.getMsg("SEARCH_COND_INVALID_OP2", operator.name(), cond);
-      throw new IllegalArgumentException(errMsg);
-    }
+    // Validate the 3 components of a condition
+    extractAttribute(cond);
+    SearchOperator operator = extractOperator(cond);
+    extractFullValueStr(cond, operator);
   }
 
   /**
@@ -281,76 +218,16 @@ public class SearchUtils
     // A blank string is OK at this point and means we are done
     if (StringUtils.isBlank(retCond)) return retCond;
 
-    // Validate that condition is of the form <attr>.<op>.<value> where
-    //       <attr> and <op> may contain only certain characters.
-    // Validate and extract <attr>, <op> and <value>
-    // <value> is everything passed the second . and <value> may be a CSV list
+    // Validate and extract the 3 components of a condition
+    String attr = extractAttribute(retCond);
+    SearchOperator operator = extractOperator(retCond);
+    String fullValueStr = extractFullValueStr(retCond, operator);
 
-// TODO following 63 lines are duplicated. Refactor
-//     validateSearchConditionForm(retCond);
-    int dot1 = retCond.indexOf('.');
-    if (dot1 < 0)
-    {
-      String errMsg = MsgUtils.getMsg("SEARCH_COND_INVALID", cond);
-      throw new IllegalArgumentException(errMsg);
-    }
-    int dot2 = retCond.indexOf('.', dot1 + 1);
-    if (dot2 < 0)
-    {
-      String errMsg = MsgUtils.getMsg("SEARCH_COND_INVALID", cond);
-      throw new IllegalArgumentException(errMsg);
-    }
-    String attr = retCond.substring(0, dot1);
-    String op = retCond.substring(dot1 + 1, dot2);
-    String fullValueStr = retCond.substring(dot2 + 1);
-    // <attr>, <op> and <val> must not be empty
-    if (StringUtils.isBlank(attr) || StringUtils.isBlank(op) || StringUtils.isBlank(fullValueStr))
-    {
-      String errMsg = MsgUtils.getMsg("SEARCH_COND_INVALID", cond);
-      throw new IllegalArgumentException(errMsg);
-    }
-
-    // Validate <attr>
-    // <attr> must start with [a-zA-Z] and contain only [a-zA-Z0-9_]
-    Matcher m = (Pattern.compile("^[a-zA-Z][a-zA-Z0-9_]*$")).matcher(attr);
-    if (!m.find())
-    {
-      String errMsg = MsgUtils.getMsg("SEARCH_COND_INVALID_ATTR", cond);
-      throw new IllegalArgumentException(errMsg);
-    }
-    // Validate <op>
-    // Verify <op> is supported.
-    if (!SEARCH_OP_SET.contains(op.toUpperCase()))
-    {
-      String errMsg = MsgUtils.getMsg("SEARCH_COND_INVALID_OP", op, cond);
-      throw new IllegalArgumentException(errMsg);
-    }
-    SearchOperator operator = SearchOperator.valueOf(op.toUpperCase());
-
-    // Validate and process <value>
     // <value> may be a list so always build a list to simplify the logic below
     // If the operator takes a list set a flag since it will require special processing
-    List<String> valList = Collections.emptyList();
+    List<String> valList;
     boolean isListOperator = listOpSet.contains(operator);
     if (isListOperator) valList = getValueList(fullValueStr); else valList = Collections.singletonList(fullValueStr);
-
-    // Make sure each value does not have any of our special characters that are unescaped.
-    for (String val : valList)
-    {
-      if (!validateValueSpecialChars(val))
-      {
-        String errMsg = MsgUtils.getMsg("SEARCH_COND_INVALID_VAL", cond);
-        throw new IllegalArgumentException(errMsg);
-      }
-    }
-
-    // For BETWEEN/NBETWEEN the value must be a 2 element list
-    if ((operator.equals(SearchOperator.BETWEEN) || operator.equals(SearchOperator.NBETWEEN))
-            && valList.size() != 2)
-    {
-      String errMsg = MsgUtils.getMsg("SEARCH_COND_INVALID_OP2", operator.name(), cond);
-      throw new IllegalArgumentException(errMsg);
-    }
 
     // For all operators except LIKE/NLIKE we can now unescape our special characters
     // LIKE/NLIKE deal with escaped characters (as opposed to EQ for example) but require special
@@ -389,7 +266,7 @@ public class SearchUtils
     StringJoiner sj = new StringJoiner(",");
     for (String v : valList) { sj.add(v); }
     fullValueStr = sj.toString();
-    retCond = attr + "." + op + "." + fullValueStr;
+    retCond = attr + "." + operator.name() + "." + fullValueStr;
     return retCond;
   }
 
@@ -400,8 +277,7 @@ public class SearchUtils
    */
   public static List<String> getValueList(String valStr)
   {
-    List<String> retList = Arrays.asList(valStr.split("(?<!\\\\),")); // match , but not \,
-    return retList;
+    return Arrays.asList(valStr.split("(?<!\\\\),"));
   }
 
   /**
@@ -414,7 +290,7 @@ public class SearchUtils
    */
   public static String convertValuesToTimestamps(SearchOperator op, String valStr)
   {
-    List<String> valList = Collections.emptyList();
+    List<String> valList;
     if (listOpSet.contains(op)) valList = getValueList(valStr); else valList = Collections.singletonList(valStr);
     StringJoiner sj = new StringJoiner(",");
     // For each value convert string to an Instant and then back into a string suitable for SQL
@@ -441,7 +317,7 @@ public class SearchUtils
                                                  String sqlTypeName, String tableName, String colName)
   {
     if (StringUtils.isBlank(valStr)) return true;
-    List<String> valList = Collections.emptyList();
+    List<String> valList;
     // Build list of values to check
     if (listOpSet.contains(op))
       valList = getValueList(valStr);
@@ -532,8 +408,7 @@ public class SearchUtils
    */
   private static boolean isNumeric(String valStr)
   {
-    if (NumberUtils.isCreatable(valStr)) return false;
-    return true;
+    return NumberUtils.isCreatable(valStr);
   }
 
   /**
@@ -599,32 +474,24 @@ public class SearchUtils
         if (isLong(valStr)) return true;
         break;
       case Types.SMALLINT:
-        if (isShort(valStr)) return true;
-        break;
       case Types.TINYINT:
         if (isShort(valStr)) return true;
         break;
       case Types.FLOAT:
+      case Types.DOUBLE:
         if (isDouble(valStr)) return true;
         break;
       case Types.REAL:
         if (isFloat(valStr)) return true;
         break;
-      case Types.DOUBLE:
-        if (isDouble(valStr)) return true;
-        break;
       case Types.BOOLEAN:
         if (isBoolean(valStr)) return true;
         break;
       case Types.NUMERIC:
-        if (isNumeric(valStr)) return true;
-        break;
       case Types.DECIMAL:
         if (isNumeric(valStr)) return true;
         break;
       case Types.DATE:
-        if (SearchUtils.isTimestamp(valStr)) return true;
-        break;
       case Types.TIMESTAMP:
         if (SearchUtils.isTimestamp(valStr)) return true;
         break;
@@ -674,5 +541,126 @@ public class SearchUtils
       retVal = retVal.replaceAll(regex, c.toString()); // Replace \<char> with <char>
     }
     return retVal;
+  }
+
+  /**
+   * Extract and validate attribute name in a condition having the form attr.op.value
+   * @param condStr condition string
+   * @return attribute name
+   */
+  private static String extractAttribute(String condStr)
+  {
+    int dot1 = condStr.indexOf('.');
+    if (dot1 < 0)
+    {
+      String errMsg = MsgUtils.getMsg("SEARCH_COND_INVALID_NOATTR", condStr);
+      throw new IllegalArgumentException(errMsg);
+    }
+    String attr = condStr.substring(0, dot1);
+    // <attr> must not be empty
+    if (StringUtils.isBlank(attr))
+    {
+      String errMsg = MsgUtils.getMsg("SEARCH_COND_INVALID_NOATTR", condStr);
+      throw new IllegalArgumentException(errMsg);
+    }
+
+    // Validate <attr>
+    // <attr> must start with [a-zA-Z] and contain only [a-zA-Z0-9_]
+    Matcher m = (Pattern.compile("^[a-zA-Z][a-zA-Z0-9_]*$")).matcher(attr);
+    if (!m.find())
+    {
+      String errMsg = MsgUtils.getMsg("SEARCH_COND_INVALID_ATTR", condStr);
+      throw new IllegalArgumentException(errMsg);
+    }
+    return attr;
+  }
+
+  /**
+   * Extract and validate operator in a condition having the form attr.op.value
+   * @param condStr condition string
+   * @return search operator from condition
+   */
+  private static SearchOperator extractOperator(String condStr)
+  {
+    int dot1 = condStr.indexOf('.');
+    if (dot1 < 0)
+    {
+      String errMsg = MsgUtils.getMsg("SEARCH_COND_INVALID_NOOPER", condStr);
+      throw new IllegalArgumentException(errMsg);
+    }
+    int dot2 = condStr.indexOf('.', dot1 + 1);
+    if (dot2 < 0)
+    {
+      String errMsg = MsgUtils.getMsg("SEARCH_COND_INVALID_NOOPER", condStr);
+      throw new IllegalArgumentException(errMsg);
+    }
+    String op = condStr.substring(dot1 + 1, dot2);
+    // <op> must not be empty
+    if (StringUtils.isBlank(op))
+    {
+      String errMsg = MsgUtils.getMsg("SEARCH_COND_INVALID_NOOPER", condStr);
+      throw new IllegalArgumentException(errMsg);
+    }
+
+    // Validate <op>
+    // Verify <op> is supported.
+    if (!SEARCH_OP_SET.contains(op.toUpperCase()))
+    {
+      String errMsg = MsgUtils.getMsg("SEARCH_COND_INVALID_OP", op, condStr);
+      throw new IllegalArgumentException(errMsg);
+    }
+    return SearchOperator.valueOf(op.toUpperCase());
+  }
+
+  /**
+   * Extract and validate value in a condition having the form attr.op.value
+   * @param condStr condition string
+   * @return full value string which may be a list
+   */
+  private static String extractFullValueStr(String condStr, SearchOperator operator)
+  {
+    int dot1 = condStr.indexOf('.');
+    if (dot1 < 0)
+    {
+      String errMsg = MsgUtils.getMsg("SEARCH_COND_INVALID_NOVAL", condStr);
+      throw new IllegalArgumentException(errMsg);
+    }
+    int dot2 = condStr.indexOf('.', dot1 + 1);
+    if (dot2 < 0)
+    {
+      String errMsg = MsgUtils.getMsg("SEARCH_COND_INVALID_NOVAL", condStr);
+      throw new IllegalArgumentException(errMsg);
+    }
+    String fullValueStr = condStr.substring(dot2 + 1);
+    // <val> must not be empty
+    if (StringUtils.isBlank(fullValueStr))
+    {
+      String errMsg = MsgUtils.getMsg("SEARCH_COND_INVALID_NOVAL", condStr);
+      throw new IllegalArgumentException(errMsg);
+    }
+
+    // Validate and process <value>
+    // <value> may be a list so always build a list to simplify the logic below
+    List<String> valList;
+    if (listOpSet.contains(operator)) valList = getValueList(fullValueStr); else valList = Collections.singletonList(fullValueStr);
+
+    // Make sure each value does not have any of our special characters that are unescaped.
+    for (String val : valList)
+    {
+      if (!validateValueSpecialChars(val))
+      {
+        String errMsg = MsgUtils.getMsg("SEARCH_COND_INVALID_VAL", condStr);
+        throw new IllegalArgumentException(errMsg);
+      }
+    }
+
+    // For BETWEEN/NBETWEEN the value must be a 2 element list
+    if ((operator.equals(SearchOperator.BETWEEN) || operator.equals(SearchOperator.NBETWEEN))
+            && valList.size() != 2)
+    {
+      String errMsg = MsgUtils.getMsg("SEARCH_COND_INVALID_OP2", operator.name(), condStr);
+      throw new IllegalArgumentException(errMsg);
+    }
+    return fullValueStr;
   }
 }

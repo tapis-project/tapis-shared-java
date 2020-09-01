@@ -90,7 +90,6 @@ public class ASTParserTest
       CaseData ci = item.getValue();
       int caseNum = item.getKey();
       System.out.println("Checking case # " + caseNum + " Input: " + ci.sqlStr);
-//      BooleanExpression ast = SelectorParser.parse(ci.sqlStr);
       ASTNode ast = ASTParser.parse(ci.sqlStr);
       Assert.assertNotNull(ast);
       int leafCount = ast.countLeaves();

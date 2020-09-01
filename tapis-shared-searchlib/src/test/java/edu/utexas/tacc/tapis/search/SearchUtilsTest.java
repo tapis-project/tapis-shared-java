@@ -148,34 +148,34 @@ public class SearchUtilsTest
     // Outputs
     // NOTE: For LIKE/NLIKE escaped special chars are retained.
     var validCaseOutputs = new HashMap<Integer,CaseOutputData>();
-    validCaseOutputs.put( 1,new CaseOutputData(1, "enabled.eq.true"));
-    validCaseOutputs.put( 2,new CaseOutputData(2, "port.lt.7"));
-    validCaseOutputs.put( 3,new CaseOutputData(3, "name.neq.test)name"));
-    validCaseOutputs.put( 4,new CaseOutputData(4, "name.neq.test(name"));
-    validCaseOutputs.put( 5,new CaseOutputData(5, "name.neq.test)name"));
-    validCaseOutputs.put( 6,new CaseOutputData(6, "name.neq.test(name"));
-    validCaseOutputs.put( 7,new CaseOutputData(7, "name.neq.test()name"));
-    validCaseOutputs.put( 8,new CaseOutputData(8, "name.neq.test)(name"));
-    validCaseOutputs.put( 9,new CaseOutputData(9, "name.neq.test~name"));
-    validCaseOutputs.put(10,new CaseOutputData(10, "name.neq.test,name"));
-    validCaseOutputs.put(11,new CaseOutputData(11, "name.neq.test*name"));
-    validCaseOutputs.put(12,new CaseOutputData(12, "name.neq.test!name"));
-    validCaseOutputs.put(13,new CaseOutputData(13, "name.like.testname%"));
-    validCaseOutputs.put(14,new CaseOutputData(14, "name.nlike.testname_"));
-    validCaseOutputs.put(15,new CaseOutputData(15, "name.like.test\\*name"));
-    validCaseOutputs.put(16,new CaseOutputData(16, "name.nlike.test\\!name"));
-    validCaseOutputs.put(17,new CaseOutputData(17, "port.between.0,1024"));
-    validCaseOutputs.put(18,new CaseOutputData(18, "port.nbetween.0,1024"));
-    validCaseOutputs.put(19,new CaseOutputData(19, "description.in.MyTest\\,yes,YourTest\\,ok."));
-    validCaseOutputs.put(20,new CaseOutputData(20, "host.eq.stampede2.tacc.utexas.edu", "default_access_method.in.PKI_KEYS,ACCESS_KEY"));
-    validCaseOutputs.put(21,new CaseOutputData(21, "enabled.eq.true", "owner.eq.jdoe", "proxy_port.lt.7", "system_type.in.OBJECT_STORE,LINUX"));
-    validCaseOutputs.put(22,new CaseOutputData(22, "enabled.eq.true", "port.lt.7", "system_type.in.OBJECT_STORE,LINUX", "description.like.my\\~system"));
-    validCaseOutputs.put(23,new CaseOutputData(23, "enabled.eq.true", "port.gte.7", "description.like.my\\ system", "system_type.in.OBJECT_STORE,LINUX"));
-    validCaseOutputs.put(24,new CaseOutputData(24, "description.like.my\\,\\(\\)\\~\\*\\!\\\\system", "port.lte.7", "system_type.in.OBJECT_STORE"));
-    validCaseOutputs.put(25,new CaseOutputData(25, "description.like.my'\\\"system", "port.lte.7"));
-    validCaseOutputs.put(26,new CaseOutputData(26, "description.like." + multiEscapeIn1));
-    validCaseOutputs.put(27,new CaseOutputData(27, "description.like." + multiEscapeIn2));
-    validCaseOutputs.put(28,new CaseOutputData(28, "description.like." + multiEscapeIn3));
+    validCaseOutputs.put( 1,new CaseOutputData(1, "enabled.EQ.true"));
+    validCaseOutputs.put( 2,new CaseOutputData(2, "port.LT.7"));
+    validCaseOutputs.put( 3,new CaseOutputData(3, "name.NEQ.test)name"));
+    validCaseOutputs.put( 4,new CaseOutputData(4, "name.NEQ.test(name"));
+    validCaseOutputs.put( 5,new CaseOutputData(5, "name.NEQ.test)name"));
+    validCaseOutputs.put( 6,new CaseOutputData(6, "name.NEQ.test(name"));
+    validCaseOutputs.put( 7,new CaseOutputData(7, "name.NEQ.test()name"));
+    validCaseOutputs.put( 8,new CaseOutputData(8, "name.NEQ.test)(name"));
+    validCaseOutputs.put( 9,new CaseOutputData(9, "name.NEQ.test~name"));
+    validCaseOutputs.put(10,new CaseOutputData(10, "name.NEQ.test,name"));
+    validCaseOutputs.put(11,new CaseOutputData(11, "name.NEQ.test*name"));
+    validCaseOutputs.put(12,new CaseOutputData(12, "name.NEQ.test!name"));
+    validCaseOutputs.put(13,new CaseOutputData(13, "name.LIKE.testname%"));
+    validCaseOutputs.put(14,new CaseOutputData(14, "name.NLIKE.testname_"));
+    validCaseOutputs.put(15,new CaseOutputData(15, "name.LIKE.test\\*name"));
+    validCaseOutputs.put(16,new CaseOutputData(16, "name.NLIKE.test\\!name"));
+    validCaseOutputs.put(17,new CaseOutputData(17, "port.BETWEEN.0,1024"));
+    validCaseOutputs.put(18,new CaseOutputData(18, "port.NBETWEEN.0,1024"));
+    validCaseOutputs.put(19,new CaseOutputData(19, "description.IN.MyTest\\,yes,YourTest\\,ok."));
+    validCaseOutputs.put(20,new CaseOutputData(20, "host.EQ.stampede2.tacc.utexas.edu", "default_access_method.IN.PKI_KEYS,ACCESS_KEY"));
+    validCaseOutputs.put(21,new CaseOutputData(21, "enabled.EQ.true", "owner.EQ.jdoe", "proxy_port.LT.7", "system_type.IN.OBJECT_STORE,LINUX"));
+    validCaseOutputs.put(22,new CaseOutputData(22, "enabled.EQ.true", "port.LT.7", "system_type.IN.OBJECT_STORE,LINUX", "description.LIKE.my\\~system"));
+    validCaseOutputs.put(23,new CaseOutputData(23, "enabled.EQ.true", "port.GTE.7", "description.LIKE.my\\ system", "system_type.IN.OBJECT_STORE,LINUX"));
+    validCaseOutputs.put(24,new CaseOutputData(24, "description.LIKE.my\\,\\(\\)\\~\\*\\!\\\\system", "port.LTE.7", "system_type.IN.OBJECT_STORE"));
+    validCaseOutputs.put(25,new CaseOutputData(25, "description.LIKE.my'\\\"system", "port.LTE.7"));
+    validCaseOutputs.put(26,new CaseOutputData(26, "description.LIKE." + multiEscapeIn1));
+    validCaseOutputs.put(27,new CaseOutputData(27, "description.LIKE." + multiEscapeIn2));
+    validCaseOutputs.put(28,new CaseOutputData(28, "description.LIKE." + multiEscapeIn3));
     validCaseOutputs.put(29,new CaseOutputData(29, zeroResults)); // "()~( )~()",
     validCaseOutputs.put(30,new CaseOutputData(30, zeroResults)); // "()~()",
     validCaseOutputs.put(31,new CaseOutputData(31, zeroResults)); // "~()~",
