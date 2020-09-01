@@ -545,10 +545,11 @@ public class SearchUtils
 
   /**
    * Extract and validate attribute name in a condition having the form attr.op.value
+   * NOTE: Make package-private for use in test code
    * @param condStr condition string
    * @return attribute name
    */
-  private static String extractAttribute(String condStr)
+  static String extractAttribute(String condStr)
   {
     int dot1 = condStr.indexOf('.');
     if (dot1 < 0)
@@ -577,10 +578,11 @@ public class SearchUtils
 
   /**
    * Extract and validate operator in a condition having the form attr.op.value
+   * NOTE: Make package-private for use in test code
    * @param condStr condition string
    * @return search operator from condition
    */
-  private static SearchOperator extractOperator(String condStr)
+  static SearchOperator extractOperator(String condStr)
   {
     int dot1 = condStr.indexOf('.');
     if (dot1 < 0)
@@ -614,10 +616,11 @@ public class SearchUtils
 
   /**
    * Extract and validate value in a condition having the form attr.op.value
+   * NOTE: Make package-private for use in test code
    * @param condStr condition string
    * @return full value string which may be a list
    */
-  private static String extractFullValueStr(String condStr, SearchOperator operator)
+  static String extractFullValueStr(String condStr, SearchOperator operator)
   {
     int dot1 = condStr.indexOf('.');
     if (dot1 < 0)
