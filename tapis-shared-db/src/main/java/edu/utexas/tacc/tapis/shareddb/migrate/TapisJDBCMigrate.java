@@ -74,7 +74,7 @@ public class TapisJDBCMigrate
   protected TapisJDBCMigrate(String dbName) throws TapisJDBCException
   {
       // Make sure we have a reasonable database name.
-      if (StringUtils.isBlank(ADMIN_DB_NAME)) {
+      if (StringUtils.isBlank(dbName)) {
           String msg = MsgUtils.getMsg("TAPIS_NULL_PARAMETER", "TapisJDBCMigrate", "dbName");
           _log.error(msg);
           throw new TapisJDBCException(msg);

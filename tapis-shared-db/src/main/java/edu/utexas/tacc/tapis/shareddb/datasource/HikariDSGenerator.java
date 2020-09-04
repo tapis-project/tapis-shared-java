@@ -46,7 +46,6 @@ public class HikariDSGenerator
     
   // The Tapis database names and schemas.
   public static final String  TAPIS_DB_NAME = "tapisdb";
-  public static final String  TAPIS_SEC_DB_NAME = "tapissecdb";
   public static final String  TAPIS_SCHEMA_NAME = "public";
   public static final String  TAPIS_SEC_SCHEMA_NAME = "public";
   public static final String  TAPIS_SYS_DB_NAME = "tapissysdb";
