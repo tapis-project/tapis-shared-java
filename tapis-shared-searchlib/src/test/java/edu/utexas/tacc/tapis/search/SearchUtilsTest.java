@@ -392,6 +392,23 @@ public class SearchUtilsTest
     }
   }
 
+  /*
+   * Test camelCaseToSnakeCase
+   */
+  @Test(groups={"unit"})
+  public void testCamelCaseToSnakeCase()
+  {
+    assertEquals(SearchUtils.camelCaseToSnakeCase("a"), "a");
+    assertEquals(SearchUtils.camelCaseToSnakeCase("A"), "a");
+    assertEquals(SearchUtils.camelCaseToSnakeCase("ThisColumn"), "this_column");
+    assertEquals(SearchUtils.camelCaseToSnakeCase("thisColumn"), "this_column");
+    assertEquals(SearchUtils.camelCaseToSnakeCase("ThisIsAColumn"), "this_is_a_column");
+    assertEquals(SearchUtils.camelCaseToSnakeCase("systemType"), "system_type");
+    assertEquals(SearchUtils.camelCaseToSnakeCase("id"), "id");
+    assertEquals(SearchUtils.camelCaseToSnakeCase("effectiveUserId"), "effective_user_id");
+    assertEquals(SearchUtils.camelCaseToSnakeCase("jobRemoteArchiveSystem"), "job_remote_archive_system");
+  }
+
   // ************************************************************************
   // **************************  Private Methods  ***************************
   // ************************************************************************

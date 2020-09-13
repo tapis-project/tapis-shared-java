@@ -53,7 +53,7 @@ public class SearchUtils
   // ************************************************************************
 
   // Reserved query parameters that cannot be specified when using a dedicated search endpoint
-  public enum ReservedQueryParm {PRETTY, SEARCH, LIMIT, OFFSET}
+  public enum ReservedQueryParm {PRETTY, SELECT, SEARCH, LIMIT, OFFSET}
   public static final Set<String> RESERVED_QUERY_PARMS = Stream.of(ReservedQueryParm.values()).map(Enum::name).collect(Collectors.toSet());
 
   // Supported operators for search
@@ -281,8 +281,7 @@ public class SearchUtils
   }
 
   /**
-   * Convert a string value or list of string values into strings
-   * suitable for sql operators.
+   * Convert a string value or list of string values into strings suitable for sql operators.
    * The string(s) must have already been checked for validity as a Tapis timestamp
    * @param op Search operator, indicates if value may be a list
    * @param valStr string containing comma separated list of values
@@ -340,7 +339,7 @@ public class SearchUtils
    * Build a search list from query parameters. Query parameters use the format <attr>.<op>=<value>
    * Reserved query parameters are ignored.
    * This method is intended for use by the front end api. The back end translates the Tapis LIKE wildcard
-   *    *   characters (* and !) and deals with Tapis special characters.
+   *   characters (* and !) and deals with Tapis special characters.
    * @param queryParms map of query parameters
    * @return list of search conditions, null if no query parameters
    * @throws IllegalArgumentException if an invalid condition is encountered
@@ -366,6 +365,22 @@ public class SearchUtils
     }
     return searchList;
   }
+
+  /**
+   * Convert a string from camelcase to snakecase.
+   * If input string is null or empty then input string is returned
+   * @param str string to convert
+   * @return resulting string converted to snakecase
+   */
+  public static String camelCaseToSnakeCase(String str)
+  {
+    if (StringUtils.isBlank(str)) return str;
+    String regex1 = "([A-Z]+)([A-Z][a-z])";
+    String regex2 = "([a-z])([A-Z])";
+    String retStr = str.replaceAll(regex1, "$1_$2").replaceAll(regex2,"$1_$2");
+    return retStr.toLowerCase();
+  }
+
 
   // ************************************************************************
   // **************************  Private Methods  ***************************
@@ -524,7 +539,7 @@ public class SearchUtils
   }
 
   /**
-   * Unescape our special characters in a value
+   * Unescape Tapis special characters in a value
    * Some operators take a list and for those commas must remain escaped
    * @param valStr value to process
    * @param isListOp indicates operator takes a list
