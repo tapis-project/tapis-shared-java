@@ -90,8 +90,9 @@ public class TapisEnv
 	  // requirement is absolute.
 	  TAPIS_INSTANCE_NAME("tapis.instance.name"),
 	  
-	  // Logging level of the Maverick Library code (3rd party code) during service startup
-	  TAPIS_MAVERICK_LOG_LEVEL("tapis.maverick.log.level"),
+	  // This is the site identifier required when any service starts.  The site id
+	  // is used by services to perform site-sensitive JWT authorization. 
+	  TAPIS_SITE_ID("tapis.site.id"),
 	  
 	  // The slf4j target directory for logs for web applications and programs.
 	  // See the various logback.xml configuration files for usage details.

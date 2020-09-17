@@ -113,6 +113,12 @@ public class JWTValidateRequestFilter
     // All access to this map must be limited to one thread at a time.
     private static final HashMap<String,PublicKey> _keyCache = new HashMap<>();
     
+    // These fields must be filled in before the first request arrives so
+    // that proper JWT authorization can be performed.  Once set these fields
+    // cannot be changed.
+    private static String _siteId;
+    private static String _service;
+    
     // A real or mocked tenant manager object.
     private ITenantManager _tenantManager;
     
@@ -162,6 +168,17 @@ public class JWTValidateRequestFilter
         if (_log.isTraceEnabled())
             _log.trace("Executing JAX-RX request filter: " + this.getClass().getSimpleName() + ".");
 
+        // Reject all authentication required requests if our static information has
+        // not been properly initialized.
+        if (!initialized()) {
+            // We abort the request because of improper static initialization.
+            String msg = MsgUtils.getMsg("TAPIS_SECURITY_UNINITIALIZED_FILTER", 
+            		                     requestContext.getMethod(), "siteId, service");
+            _log.error(msg);
+            requestContext.abortWith(Response.status(Status.INTERNAL_SERVER_ERROR).entity(msg).build());
+            return;
+        }
+
         // OPTIONS requests should not have any authentication
         if (requestContext.getMethod().equals(HttpMethod.OPTIONS)) return;
 
@@ -171,7 +188,7 @@ public class JWTValidateRequestFilter
 
         // Skip JWT processing for non-authenticated requests.
         if (isNoAuthRequest(requestContext)) return;
-
+        
         // ------------------------ Extract Encoded JWT ------------------------
         // Assign the default tenant manager instance that is a singleton expected 
         // to already exist.  This field is not null when a mock object is provided
@@ -386,6 +403,20 @@ public class JWTValidateRequestFilter
         requestContext.setSecurityContext(new TapisSecurityContext(requestUser));
     }
 
+    /* ---------------------------------------------------------------------- */
+    /* setSiteId:                                                             */
+    /* ---------------------------------------------------------------------- */
+    /** This field must be set before any request can be processed. */
+    public static void setSiteId(String siteId) 
+    {if (_siteId == null) _siteId = siteId;}
+
+    /* ---------------------------------------------------------------------- */
+    /* setService:                                                            */
+    /* ---------------------------------------------------------------------- */
+    /** This field must be set before any request can be processed. */
+    public static void setService(String service) 
+    {if (_service == null) _service = service;}
+    
     /* ********************************************************************** */
     /*                            Private Methods                             */
     /* ********************************************************************** */
@@ -635,4 +666,16 @@ public class JWTValidateRequestFilter
         return true;
     }
     
+    /* ---------------------------------------------------------------------- */
+    /* initialized:                                                           */
+    /* ---------------------------------------------------------------------- */
+    /** Make sure the static fields that specify the service and its site are set. 
+     * 
+     * @return true if all required fields are set, false otherwise
+     */
+    private static boolean initialized()
+    {
+    	if (_siteId == null || _service == null) return false;
+    	return true;
+    }
 }

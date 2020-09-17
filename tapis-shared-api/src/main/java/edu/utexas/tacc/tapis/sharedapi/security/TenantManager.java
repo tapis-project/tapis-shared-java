@@ -241,9 +241,11 @@ public class TenantManager
      throws TapisException
     {
         var tenant = getTenant(jwtTenantId);
-        List<String> allowable = tenant.getAllowableXTenantIds();
-        if (allowable != null && allowable.contains(hdrTenantId)) return true;
-          else return false;
+//        List<String> allowable = tenant.getAllowableXTenantIds();
+//        if (allowable != null && allowable.contains(hdrTenantId)) return true;
+//          else return false;
+        
+        return false;
     }
     
     /* ---------------------------------------------------------------------------- */

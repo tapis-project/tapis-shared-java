@@ -148,8 +148,9 @@ public class TapisRestUtils
     {
         // This method will return a non-null tenant or throw an exception.
         var jwtTenant = TenantManager.getInstance().getTenant(jwtTenantId);
-        var allowableTenantIds = jwtTenant.getAllowableXTenantIds();
-        if (allowableTenantIds == null) return false;
-        return allowableTenantIds.contains(newTenantId);
+//        var allowableTenantIds = jwtTenant.getAllowableXTenantIds();
+//        if (allowableTenantIds == null) return false;
+//        return allowableTenantIds.contains(newTenantId);
+        return false;
     }
 }
