@@ -2,7 +2,6 @@ package edu.utexas.tacc.tapis.sharedapi.security;
 
 import java.time.Instant;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
@@ -13,8 +12,11 @@ import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
 import edu.utexas.tacc.tapis.shared.exceptions.runtime.TapisRuntimeException;
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
 import edu.utexas.tacc.tapis.shared.utils.CallSiteToggle;
+import edu.utexas.tacc.tapis.tenants.client.SitesClient;
 import edu.utexas.tacc.tapis.tenants.client.TenantsClient;
+import edu.utexas.tacc.tapis.tenants.client.gen.model.Site;
 import edu.utexas.tacc.tapis.tenants.client.gen.model.Tenant;
+
 
 public class TenantManager
  implements ITenantManager 
@@ -42,6 +44,9 @@ public class TenantManager
     
     // The map tenant ids to tenants retrieved from the tenant's service.
     private Map<String,Tenant>    _tenants;
+    
+    // The map site ids to sites retrieved from the tenant's service.
+    private Map<String,Site>    _sites;
     
     // Time of the last update.
     private Instant               _lastUpdateTime;
@@ -131,12 +136,21 @@ public class TenantManager
                 if (_tenants == null) {
                     try {
                         // Get the tenant list from the tenant service.
-                        var client = new TenantsClient(_tenantServiceBaseUrl);
-                        var tenantList = client.getTenants();
+                        var tenantsClient = new TenantsClient(_tenantServiceBaseUrl);
+                        var tenantList = tenantsClient.getTenants();
                         
-                        // Create the hashmap.
+                        // Get the sites list from the tenant service.
+                        var sitesClient = new SitesClient(_tenantServiceBaseUrl);
+                        var siteList = sitesClient.getSites();
+                        
+                        // Create the tenants hashmap.
                         _tenants = new LinkedHashMap<String,Tenant>(1+tenantList.size()*2);
                         for (Tenant t : tenantList) _tenants.put(t.getTenantId(), t); 
+                        
+                        // Create the sites hashmap.
+                        _sites = new LinkedHashMap<String,Site>(1+siteList.size()*2);
+                        for (Site s : siteList) _sites.put(s.getSiteId(), s); 
+                                                
                     } catch (Exception e) {
                         String msg = MsgUtils.getMsg("TAPIS_TENANT_LIST_ERROR",
                                                      getTenantsPath());
