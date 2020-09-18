@@ -133,9 +133,6 @@ public class TapisRestUtils
      * X-Tapis-Tenant header or the delegation_sub claim.  Neither parameter 
      * can be null.
      * 
-     * If the number of allowable tenants becomes too great we may have to 
-     * arrange for a constant time search rather than the current linear search.
-     * 
      * @param jwtTenantId the tenant assigned in the jwt tapis/tenant_id claim
      * @param newTenantId the tenant assigned in the X-Tapis-Tenant header
      * @return true if the jwt tenant can execute on behalf of the new tenant,
@@ -147,10 +144,6 @@ public class TapisRestUtils
      throws TapisRuntimeException, TapisException
     {
         // This method will return a non-null tenant or throw an exception.
-        var jwtTenant = TenantManager.getInstance().getTenant(jwtTenantId);
-//        var allowableTenantIds = jwtTenant.getAllowableXTenantIds();
-//        if (allowableTenantIds == null) return false;
-//        return allowableTenantIds.contains(newTenantId);
-        return false;
+        return  TenantManager.getInstance().allowTenantId(jwtTenantId, newTenantId);
     }
 }

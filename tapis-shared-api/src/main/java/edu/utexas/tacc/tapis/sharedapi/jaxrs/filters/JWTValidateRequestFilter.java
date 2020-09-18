@@ -247,7 +247,7 @@ public class JWTValidateRequestFilter
             return;
         }
         
-        // Retrieve the user name from the claims section.
+        // Retrieve the tenant id from the claims section.
         String jwtTenant = (String)claims.get(CLAIM_TENANT);
         if (StringUtils.isBlank(jwtTenant)) {
             String msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_CLAIM_NOT_FOUND", unverifiedJwt, 

@@ -1,7 +1,10 @@
 package edu.utexas.tacc.tapis.sharedapi.security;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
@@ -12,7 +15,6 @@ import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
 import edu.utexas.tacc.tapis.shared.exceptions.runtime.TapisRuntimeException;
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
 import edu.utexas.tacc.tapis.shared.utils.CallSiteToggle;
-import edu.utexas.tacc.tapis.tenants.client.SitesClient;
 import edu.utexas.tacc.tapis.tenants.client.TenantsClient;
 import edu.utexas.tacc.tapis.tenants.client.gen.model.Site;
 import edu.utexas.tacc.tapis.tenants.client.gen.model.Tenant;
@@ -37,19 +39,23 @@ public class TenantManager
     /*                                    Fields                                    */
     /* **************************************************************************** */
     // Singleton instance.
-    private static TenantManager _instance;
+    private static TenantManager     _instance;
     
     // Base url for the tenant's service.
-    private final String          _tenantServiceBaseUrl;
+    private final String             _tenantServiceBaseUrl;
     
     // The map tenant ids to tenants retrieved from the tenant's service.
-    private Map<String,Tenant>    _tenants;
+    private Map<String,Tenant>       _tenants;
     
     // The map site ids to sites retrieved from the tenant's service.
-    private Map<String,Site>    _sites;
+    private Map<String,Site>         _sites;
+    
+    // The map of site master tenant keys to list of tenant values that the site
+    // master tenant is allowed to act on behalf of.  
+    private Map<String,List<String>> _allowableTenants;
     
     // Time of the last update.
-    private Instant               _lastUpdateTime;
+    private Instant                  _lastUpdateTime;
     
     // Toggle switch that limits log output.
     private static final CallSiteToggle _lastGetTenantsSucceeded = new CallSiteToggle();
@@ -135,13 +141,10 @@ public class TenantManager
                 // Avoid race condition.
                 if (_tenants == null) {
                     try {
-                        // Get the tenant list from the tenant service.
+                        // Get the tenant and site lists from the tenant service.
                         var tenantsClient = new TenantsClient(_tenantServiceBaseUrl);
                         var tenantList = tenantsClient.getTenants();
-                        
-                        // Get the sites list from the tenant service.
-                        var sitesClient = new SitesClient(_tenantServiceBaseUrl);
-                        var siteList = sitesClient.getSites();
+                        var siteList   = tenantsClient.getSites();
                         
                         // Create the tenants hashmap.
                         _tenants = new LinkedHashMap<String,Tenant>(1+tenantList.size()*2);
@@ -150,6 +153,9 @@ public class TenantManager
                         // Create the sites hashmap.
                         _sites = new LinkedHashMap<String,Site>(1+siteList.size()*2);
                         for (Site s : siteList) _sites.put(s.getSiteId(), s); 
+                        
+                        // Calculate allowable tenants map.
+                        _allowableTenants = calculateAllowableTenants(_tenants, _sites);
                                                 
                     } catch (Exception e) {
                         String msg = MsgUtils.getMsg("TAPIS_TENANT_LIST_ERROR",
@@ -238,27 +244,32 @@ public class TenantManager
     /* allowTenantId:                                                               */
     /* ---------------------------------------------------------------------------- */
     /** Is the tenant specified in the JWT, jwtTenantId, allowed to specify the 
-     * hdrTenantId in the X-Tapis-Tenant header?  This method calculates whether a
-     * service or user in one tenant can make a request on behalf of a servie or user 
-     * in another tenant. 
+     * newTenantId in the X-Tapis-Tenant header or as a delegated tenant?  This method 
+     * calculates whether a service or user in one tenant can make a request on behalf 
+     * of a servie or user in another tenant. 
      * 
      * If the number of allowable tenants become large (in the 100s), it may be
-     * desirable to cache a hash of the list to improve look up time. 
+     * desirable to use hashes rather than lists to improve look up time. 
      * 
      * @param jwtTenantId the tenant contained in a JWT's tapis/tenant_id claim
-     * @param hdrTenantId the tenant on behalf of whom a request is being made
+     * @param newTenantId the tenant on behalf of whom a request is being made
      * @return true if the tenant substitution is allowed, false otherwise
      * @throws TapisException if the jwt tenant object cannot be retrieved 
      */
     @Override
-    public boolean allowTenantId(String jwtTenantId, String hdrTenantId)
+    public boolean allowTenantId(String jwtTenantId, String newTenantId)
      throws TapisException
     {
-        var tenant = getTenant(jwtTenantId);
-//        List<String> allowable = tenant.getAllowableXTenantIds();
-//        if (allowable != null && allowable.contains(hdrTenantId)) return true;
-//          else return false;
-        
+    	// Easy case.
+    	if (jwtTenantId.equals(newTenantId)) return true;
+    	
+    	// Use the precalculated mapping of site master tenants to their
+    	// allowable tenants.
+    	var allowableTenantList = _allowableTenants.get(jwtTenantId);
+    	if (allowableTenantList != null && allowableTenantList.contains(newTenantId))
+    		return true;
+
+    	// The jwt tenant cannot act on behalf of the specified new tenant.
         return false;
     }
     
@@ -296,5 +307,46 @@ public class TenantManager
         if (Instant.now().isAfter(_lastUpdateTime.plusSeconds(MIN_REFRESH_SECONDS)))
             return true;
         return false;
+    }
+    
+    /* ---------------------------------------------------------------------------- */
+    /* calculateAllowableTenants:                                                   */
+    /* ---------------------------------------------------------------------------- */
+    /** Create the mapping of site master tenant to the list of tenants they may act
+     * on behalf of.
+     * 
+     * @param tenants the tenants map
+     * @param sites the sites map
+     * @return the map of site master tenants to their allowable tenants
+     */
+    private Map<String,List<String>> calculateAllowableTenants(Map<String,Tenant> tenants, 
+    		                                                   Map<String,Site> sites)
+    {
+    	// Create a map with sufficient capacity.
+    	var allowMap = new HashMap<String,List<String>>(1+sites.size()*2);
+    	
+    	// Create a site to site master tenant mapping.
+    	var siteToSiteMasterTenant = new HashMap<String,String>(1+sites.size()*2);
+    	
+    	// Initialize the map with site master tenants as keys.
+    	for (var entry : sites.entrySet()) {
+    		String siteMasterTenant = entry.getValue().getSiteMasterTenantId();
+    		allowMap.put(siteMasterTenant, new ArrayList<String>());
+    		siteToSiteMasterTenant.put(entry.getKey(), siteMasterTenant);
+    	}
+    	
+    	// Populate the allowMap's site master entries. Inconsistent data 
+    	// errors are ignored and must be fixed in the Tenants service database.
+    	for (var entry : tenants.entrySet()) {
+    		var siteId = entry.getValue().getSiteId();
+    		if (siteId == null) continue;           // should never happen.
+    		var siteMasterTenant = siteToSiteMasterTenant.get(siteId);
+    		if (siteMasterTenant == null) continue; // should never happen
+    		var list = allowMap.get(siteMasterTenant);
+    		if (list == null) continue;             // should never happen.
+    		list.add(entry.getKey());
+    	}
+    	
+    	return allowMap;
     }
 }
