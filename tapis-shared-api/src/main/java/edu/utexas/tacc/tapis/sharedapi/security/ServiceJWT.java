@@ -13,9 +13,9 @@ import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
 import edu.utexas.tacc.tapis.shared.utils.TapisGsonUtils;
 import edu.utexas.tacc.tapis.tokens.client.TokensClient;
-import edu.utexas.tacc.tapis.tokens.client.gen.model.InlineObject1.AccountTypeEnum;
-import edu.utexas.tacc.tapis.tokens.client.model.CreateTokenParms;
-import edu.utexas.tacc.tapis.tokens.client.model.RefreshTokenParms;
+import edu.utexas.tacc.tapis.tokens.client.gen.model.NewTokenRequest.AccountTypeEnum;
+import edu.utexas.tacc.tapis.tokens.client.gen.model.NewTokenRequest;
+import edu.utexas.tacc.tapis.tokens.client.gen.model.RefreshTokenRequest;
 import edu.utexas.tacc.tapis.tokens.client.model.TokenResponsePackage;
 
 /** This class fetches a single service token and will refresh that token indefinitely.
@@ -228,7 +228,7 @@ public class ServiceJWT
         }
         
         // Create and populate the client parameter object.
-        var createParms = new CreateTokenParms();
+        var createParms = new NewTokenRequest();
         createParms.setTokenTenantId(_tenant);
         createParms.setTokenUsername(_serviceName);
         createParms.setAccountType(AccountTypeEnum.SERVICE);
@@ -282,7 +282,7 @@ public class ServiceJWT
      throws TapisException, TapisClientException
     {
         // Create and populate the client parameter object.
-        var refreshParms = new RefreshTokenParms();
+        var refreshParms = new RefreshTokenRequest();
         refreshParms.setRefreshToken(getRefreshJWT());
         
         // Get the client.
