@@ -3,11 +3,11 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <modelVersion>4.0.0</modelVersion>
   <groupId>edu.utexas.tacc.tapis</groupId>
-  <artifactId>tapis-shared-db-tst</artifactId>
-  <version>1.11.7</version>
+  <artifactId>tapis-shared-db</artifactId>
+  <version>1.11.1</version>
   <name>Tapis Shared Database Library</name>
   <description>Library for shared database code</description>
-  <url>https://github.com/tapis-project/tapis-shared-java-tst/tapis-shared-db-tst</url>
+  <url>https://github.com/tapis-project/tapis-shared-java/tapis-shared-db</url>
   <organization>
     <name>TACC</name>
     <url>http://tacc.utexas.edu</url>
@@ -127,8 +127,8 @@
     </developer>
   </developers>
   <scm>
-    <connection>scm:git:git@github.com:tapis-project/tapis-shared-java-tst.git/tapis-shared-db-tst</connection>
-    <url>https://github.com/tapis-project/tapis-shared-java-tst/tapis-shared-db-tst</url>
+    <connection>scm:git:git@github.com:tapis-project/tapis-shared-java.git/tapis-shared-db</connection>
+    <url>https://github.com/tapis-project/tapis-shared-java/tapis-shared-db</url>
   </scm>
   <distributionManagement>
     <repository>
@@ -203,7 +203,7 @@
     <javax.xml.bind.jaxb-core.version>2.3.0.1</javax.xml.bind.jaxb-core.version>
     <maven-shade-plugin.version>3.2.1</maven-shade-plugin.version>
     <mockito-core.version>3.0.0</mockito-core.version>
-    <build.timestamp>2020-09-20T23:29:51Z</build.timestamp>
+    <build.timestamp>2020-09-21T19:48:37Z</build.timestamp>
     <statefulj.version>3.0</statefulj.version>
     <java-source.version>1.13</java-source.version>
     <google-maven-replacer-plugin.version>1.5.3</google-maven-replacer-plugin.version>
@@ -359,8 +359,8 @@
     </dependency>
     <dependency>
       <groupId>edu.utexas.tacc.tapis</groupId>
-      <artifactId>tapis-shared-lib-tst</artifactId>
-      <version>1.11.7</version>
+      <artifactId>tapis-shared-lib</artifactId>
+      <version>1.11.1</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
@@ -491,7 +491,7 @@
   </pluginRepositories>
   <build>
     <sourceDirectory>src/main/java</sourceDirectory>
-    <scriptSourceDirectory>/var/lib/jenkins/jobs/Tapis/jobs/DEV/jobs/release-shared-java-tst/workspace/tapis-shared-db-tst/src/main/scripts</scriptSourceDirectory>
+    <scriptSourceDirectory>/home/scblack/src_git/github/main/tapis-shared-java/tapis-shared-db/src/main/scripts</scriptSourceDirectory>
     <testSourceDirectory>src/test/java</testSourceDirectory>
     <outputDirectory>target/classes</outputDirectory>
     <testOutputDirectory>target/test-classes</testOutputDirectory>
@@ -506,7 +506,7 @@
       </testResource>
     </testResources>
     <directory>target</directory>
-    <finalName>db-tst</finalName>
+    <finalName>db</finalName>
   </build>
   <reporting>
     <outputDirectory>target/site</outputDirectory>
