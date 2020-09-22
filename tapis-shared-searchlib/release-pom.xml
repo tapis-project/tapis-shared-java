@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>edu.utexas.tacc.tapis</groupId>
   <artifactId>tapis-shared-searchlib</artifactId>
-  <version>1.11.28</version>
+  <version>1.11.29</version>
   <name>Tapis Search Facility</name>
   <description>Tapis search library</description>
   <url>https://github.com/tapis-project/tapis-shared-java/tapis-shared-searchlib</url>
@@ -171,7 +171,7 @@
     <commons-dbutils.version>1.7</commons-dbutils.version>
     <commons-io.version>2.6</commons-io.version>
     <amqp-client.version>5.7.3</amqp-client.version>
-    <timestamp>1600740703591</timestamp>
+    <timestamp>1600741351356</timestamp>
     <metrics-core.version>3.2.3</metrics-core.version>
     <threetenbp.version>1.3.5</threetenbp.version>
     <snakeyaml.version>1.26</snakeyaml.version>
@@ -179,7 +179,7 @@
     <jetty-server.version>9.4.0.M1</jetty-server.version>
     <swagger-jaxrs2.version>2.0.10</swagger-jaxrs2.version>
     <commons-math3.version>3.6.1</commons-math3.version>
-    <buildNumber>f3ebfeea</buildNumber>
+    <buildNumber>c7a8d758</buildNumber>
     <software.amazon.awssdk.version>2.13.11</software.amazon.awssdk.version>
     <testng.version>6.14.3</testng.version>
     <commons-lang3.version>3.9</commons-lang3.version>
@@ -206,7 +206,7 @@
     <javax.xml.bind.jaxb-core.version>2.3.0.1</javax.xml.bind.jaxb-core.version>
     <maven-shade-plugin.version>3.2.1</maven-shade-plugin.version>
     <mockito-core.version>3.0.0</mockito-core.version>
-    <build.timestamp>2020-09-22T02:11:20Z</build.timestamp>
+    <build.timestamp>2020-09-22T02:22:06Z</build.timestamp>
     <statefulj.version>3.0</statefulj.version>
     <java-source.version>1.13</java-source.version>
     <google-maven-replacer-plugin.version>1.5.3</google-maven-replacer-plugin.version>
@@ -364,7 +364,7 @@
     <dependency>
       <groupId>edu.utexas.tacc.tapis</groupId>
       <artifactId>tapis-shared-lib</artifactId>
-      <version>1.11.28</version>
+      <version>1.11.29</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
