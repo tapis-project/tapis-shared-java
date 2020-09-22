@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>edu.utexas.tacc.tapis</groupId>
   <artifactId>tapis-shared-db</artifactId>
-  <version>1.11.1</version>
+  <version>1.11.4</version>
   <name>Tapis Shared Database Library</name>
   <description>Library for shared database code</description>
   <url>https://github.com/tapis-project/tapis-shared-java/tapis-shared-db</url>
@@ -203,7 +203,7 @@
     <javax.xml.bind.jaxb-core.version>2.3.0.1</javax.xml.bind.jaxb-core.version>
     <maven-shade-plugin.version>3.2.1</maven-shade-plugin.version>
     <mockito-core.version>3.0.0</mockito-core.version>
-    <build.timestamp>2020-09-21T19:48:37Z</build.timestamp>
+    <build.timestamp>2020-09-22T01:59:47Z</build.timestamp>
     <statefulj.version>3.0</statefulj.version>
     <java-source.version>1.13</java-source.version>
     <google-maven-replacer-plugin.version>1.5.3</google-maven-replacer-plugin.version>
@@ -360,7 +360,7 @@
     <dependency>
       <groupId>edu.utexas.tacc.tapis</groupId>
       <artifactId>tapis-shared-lib</artifactId>
-      <version>1.11.1</version>
+      <version>1.11.4</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
@@ -455,17 +455,8 @@
       <url>http://oss.sonatype.org/content/repositories/snapshots</url>
     </repository>
     <repository>
-      <id>oss.sonatype.org-releases</id>
-      <url>https://oss.sonatype.org/content/repositories/releases/</url>
-    </repository>
-    <repository>
       <id>jitpack.io</id>
       <url>https://jitpack.io</url>
-    </repository>
-    <repository>
-      <id>tacc-snapshot</id>
-      <name>TACC ACI Maven repository</name>
-      <url>https://maven.tacc.utexas.edu/nexus/content/repositories/snapshots</url>
     </repository>
     <repository>
       <snapshots>
@@ -491,7 +482,7 @@
   </pluginRepositories>
   <build>
     <sourceDirectory>src/main/java</sourceDirectory>
-    <scriptSourceDirectory>/home/scblack/src_git/github/main/tapis-shared-java/tapis-shared-db/src/main/scripts</scriptSourceDirectory>
+    <scriptSourceDirectory>/var/lib/jenkins/jobs/Tapis/jobs/DEV/jobs/release-shared-java/workspace/tapis-shared-db/src/main/scripts</scriptSourceDirectory>
     <testSourceDirectory>src/test/java</testSourceDirectory>
     <outputDirectory>target/classes</outputDirectory>
     <testOutputDirectory>target/test-classes</testOutputDirectory>

@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>edu.utexas.tacc.tapis</groupId>
   <artifactId>tapis-shared-java</artifactId>
-  <version>1.11.1</version>
+  <version>1.11.4</version>
   <packaging>pom</packaging>
   <name>Tapis shared</name>
   <description>TAPIS shared Java code</description>
@@ -211,7 +211,7 @@
     <javax.xml.bind.jaxb-core.version>2.3.0.1</javax.xml.bind.jaxb-core.version>
     <maven-shade-plugin.version>3.2.1</maven-shade-plugin.version>
     <mockito-core.version>3.0.0</mockito-core.version>
-    <build.timestamp>2020-09-21T19:48:37Z</build.timestamp>
+    <build.timestamp>2020-09-22T01:59:47Z</build.timestamp>
     <statefulj.version>3.0</statefulj.version>
     <java-source.version>1.13</java-source.version>
     <google-maven-replacer-plugin.version>1.5.3</google-maven-replacer-plugin.version>
@@ -271,17 +271,8 @@
       <url>http://oss.sonatype.org/content/repositories/snapshots</url>
     </repository>
     <repository>
-      <id>oss.sonatype.org-releases</id>
-      <url>https://oss.sonatype.org/content/repositories/releases/</url>
-    </repository>
-    <repository>
       <id>jitpack.io</id>
       <url>https://jitpack.io</url>
-    </repository>
-    <repository>
-      <id>tacc-snapshot</id>
-      <name>TACC ACI Maven repository</name>
-      <url>https://maven.tacc.utexas.edu/nexus/content/repositories/snapshots</url>
     </repository>
     <repository>
       <snapshots>
@@ -307,7 +298,7 @@
   </pluginRepositories>
   <build>
     <sourceDirectory>src/main/java</sourceDirectory>
-    <scriptSourceDirectory>/home/scblack/src_git/github/main/tapis-shared-java/src/main/scripts</scriptSourceDirectory>
+    <scriptSourceDirectory>/var/lib/jenkins/jobs/Tapis/jobs/DEV/jobs/release-shared-java/workspace/src/main/scripts</scriptSourceDirectory>
     <testSourceDirectory>src/test/java</testSourceDirectory>
     <outputDirectory>target/classes</outputDirectory>
     <testOutputDirectory>target/test-classes</testOutputDirectory>
@@ -322,7 +313,7 @@
       </testResource>
     </testResources>
     <directory>target</directory>
-    <finalName>tapis-shared-java-1.11.1</finalName>
+    <finalName>tapis-shared-java-1.11.4</finalName>
   </build>
   <reporting>
     <outputDirectory>target/site</outputDirectory>
