@@ -23,7 +23,7 @@
     <scm>
         <connection>scm:git:git@github.com:tapis-project/tapis-shared-java.git</connection>
         <url>https://github.com/tapis-project/tapis-shared-java</url>
-        <tag>tapis-shared-java-1.11.4</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <properties>
