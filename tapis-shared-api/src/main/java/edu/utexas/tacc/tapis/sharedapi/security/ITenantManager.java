@@ -5,6 +5,7 @@ import java.util.Map;
 
 import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
 import edu.utexas.tacc.tapis.shared.exceptions.runtime.TapisRuntimeException;
+import edu.utexas.tacc.tapis.tenants.client.gen.model.Site;
 import edu.utexas.tacc.tapis.tenants.client.gen.model.Tenant;
 
 public interface ITenantManager {
@@ -70,6 +71,16 @@ public interface ITenantManager {
     boolean allowTenantId(String jwtTenantId, String hdrTenantId) throws TapisException;
 
     /* ---------------------------------------------------------------------------- */
+    /* getSites:                                                                    */
+    /* ---------------------------------------------------------------------------- */
+    Map<String,Site> getSites();
+    
+    /* ---------------------------------------------------------------------------- */
+    /* getSite:                                                                    */
+    /* ---------------------------------------------------------------------------- */
+    Site getSite(String siteId);
+        
+    /* ---------------------------------------------------------------------------- */
     /* getTenantServiceBaseUrl:                                                     */
     /* ---------------------------------------------------------------------------- */
     String getTenantServiceBaseUrl();
@@ -78,4 +89,9 @@ public interface ITenantManager {
     /* getLastUpdateTime:                                                           */
     /* ---------------------------------------------------------------------------- */
     Instant getLastUpdateTime();
+    
+    /* ---------------------------------------------------------------------------- */
+    /* getPrimarySite:                                                              */
+    /* ---------------------------------------------------------------------------- */
+    String getPrimarySite();  
 }

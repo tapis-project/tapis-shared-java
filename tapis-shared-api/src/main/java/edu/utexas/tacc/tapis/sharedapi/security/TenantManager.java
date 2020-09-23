@@ -50,6 +50,9 @@ public class TenantManager
     // The map site ids to sites retrieved from the tenant's service.
     private Map<String,Site>         _sites;
     
+    // The primary site for this Tapis instance.
+    private String                   _primarySite;
+    
     // The map of site master tenant keys to list of tenant values that the site
     // master tenant is allowed to act on behalf of.  
     private Map<String,List<String>> _allowableTenants;
@@ -154,7 +157,7 @@ public class TenantManager
                         _sites = new LinkedHashMap<String,Site>(1+siteList.size()*2);
                         for (Site s : siteList) _sites.put(s.getSiteId(), s); 
                         
-                        // Calculate allowable tenants map.
+                        // Calculate allowable tenants map and set primary site.
                         _allowableTenants = calculateAllowableTenants(_tenants, _sites);
                                                 
                     } catch (Exception e) {
@@ -196,15 +199,16 @@ public class TenantManager
     @Override
     public Map<String,Tenant> refreshTenants() throws TapisRuntimeException
     {
-        // Maybe we are not initialized.
-        if (_tenants == null) return getTenants();
+    	// Synchronize on this class object just like in getTenants().
+    	synchronized (TenantManager.class) {
+    		// Maybe we are not initialized.
+    		if (_tenants == null) return getTenants();
         
-        // Guard against denial of service attacks.
-        if (!allowRefresh()) return getTenants();
+    		// Guard against denial of service attacks.
+    		if (!allowRefresh()) return getTenants();
         
-        // Clear and repopulate the stale list.
-        synchronized (TenantManager.class) {
-            _tenants = null;
+    		// Clear and repopulate the stale list.
+            clear();
             return getTenants();
         }
     }
@@ -274,6 +278,18 @@ public class TenantManager
     }
     
     /* ---------------------------------------------------------------------------- */
+    /* getSites:                                                                    */
+    /* ---------------------------------------------------------------------------- */
+    @Override
+    public Map<String,Site> getSites(){return _sites;}
+    
+    /* ---------------------------------------------------------------------------- */
+    /* getSite:                                                                    */
+    /* ---------------------------------------------------------------------------- */
+    @Override
+    public Site getSite(String siteId){return _sites.get(siteId);}
+        
+    /* ---------------------------------------------------------------------------- */
     /* getTenantServiceBaseUrl:                                                     */
     /* ---------------------------------------------------------------------------- */
     @Override
@@ -284,6 +300,12 @@ public class TenantManager
     /* ---------------------------------------------------------------------------- */
     @Override
     public Instant getLastUpdateTime() {return _lastUpdateTime;}
+
+    /* ---------------------------------------------------------------------------- */
+    /* getTenantServiceBaseUrl:                                                     */
+    /* ---------------------------------------------------------------------------- */
+    @Override
+    public String getPrimarySite() {return _primarySite;}
 
     /* **************************************************************************** */
     /*                               Private Methods                                */
@@ -310,9 +332,21 @@ public class TenantManager
     }
     
     /* ---------------------------------------------------------------------------- */
+    /* clear:                                                                       */
+    /* ---------------------------------------------------------------------------- */
+    /** Reset most fields to their initial null value. */
+    private void clear()
+    {
+    	_tenants = null;
+    	_sites = null;
+    	_allowableTenants = null;
+    	_primarySite = null;
+    }
+    
+    /* ---------------------------------------------------------------------------- */
     /* calculateAllowableTenants:                                                   */
     /* ---------------------------------------------------------------------------- */
-    /** Create the mapping of site master tenant to the list of tenants they may act
+    /** Create the mapping of site master tenants to the list of tenants they may act
      * on behalf of.
      * 
      * @param tenants the tenants map
@@ -322,17 +356,22 @@ public class TenantManager
     private Map<String,List<String>> calculateAllowableTenants(Map<String,Tenant> tenants, 
     		                                                   Map<String,Site> sites)
     {
-    	// Create a map with sufficient capacity.
+    	// Create a map with sufficient capacity. The key is a site master tenant
+    	// and the value is the list of tenant ids owned by the site master.
     	var allowMap = new HashMap<String,List<String>>(1+sites.size()*2);
     	
-    	// Create a site to site master tenant mapping.
+    	// Create a temporary site to site master tenant mapping.
     	var siteToSiteMasterTenant = new HashMap<String,String>(1+sites.size()*2);
     	
-    	// Initialize the map with site master tenants as keys.
+    	// Initialize allowMap with the site master tenants as keys and an empty 
+    	// tenants list as values.  Initialize the temporary map with sites as 
+    	// keys and their master tenants as values.  There better be only 1 
+    	// primary site.
     	for (var entry : sites.entrySet()) {
     		String siteMasterTenant = entry.getValue().getSiteMasterTenantId();
     		allowMap.put(siteMasterTenant, new ArrayList<String>());
     		siteToSiteMasterTenant.put(entry.getKey(), siteMasterTenant);
+    		if (entry.getValue().getPrimary()) _primarySite = entry.getKey();
     	}
     	
     	// Populate the allowMap's site master entries. Inconsistent data 
