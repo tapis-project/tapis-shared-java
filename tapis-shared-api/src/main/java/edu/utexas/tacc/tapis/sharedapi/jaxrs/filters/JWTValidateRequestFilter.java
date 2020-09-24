@@ -726,6 +726,7 @@ public class JWTValidateRequestFilter
             return false;
     	}
     	
+    	// ----------------------- Cross-site checks -----------------------
     	// Get the source site.
     	String sourceSiteId = getSiteId(jwtTenant);
     	if (StringUtils.isBlank(sourceSiteId)) {
@@ -735,7 +736,7 @@ public class JWTValidateRequestFilter
             return false;
     	}
     	
-    	// ----------------------- Cross-site checks -----------------------
+    	// Checks on inter-site requests only. 
     	var primarySiteId = _tenantManager.getPrimarySiteId();
     	if (!sourceSiteId.equals(_siteId)) {
     		// Make sure SK and Tokens are only referenced from the local site.
