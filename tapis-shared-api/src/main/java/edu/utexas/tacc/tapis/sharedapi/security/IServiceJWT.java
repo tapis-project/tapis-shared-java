@@ -40,4 +40,8 @@ public interface IServiceJWT
     int getRefreshCount();
 
     Instant getLastRefreshTime();
+    
+    int getRefreshJwtCount();
+    
+    int getRefreshJwtFailedCount();
 }

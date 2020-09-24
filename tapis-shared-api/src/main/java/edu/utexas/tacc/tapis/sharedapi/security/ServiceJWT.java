@@ -80,9 +80,13 @@ public class ServiceJWT
     // the JVM guarantees that the field reference is atomically assigned.
     private volatile HashMap<String,TokenResponsePackage> _tokPkgMap;
     
-    // Fields that get updated on each successful refresh.
+    // Fields that get updated on each successful refresh cycle.
     private int     _refreshCount;
     private Instant _lastRefreshTime;
+    
+    // Number of individual JWT refresh operation outcomes.
+    private int     _refreshJwtCount;
+    private int     _refreshJwtFailedCount;
     
     // The thread in charge of automatic refresh operations.
     private TokenRefreshThread _refreshThread;
@@ -219,6 +223,19 @@ public class ServiceJWT
     @Override
     public Instant getLastRefreshTime() {return _lastRefreshTime;}
 
+
+    /* ---------------------------------------------------------------------------- */
+    /* getRefreshJwtCount:                                                          */
+    /* ---------------------------------------------------------------------------- */
+    @Override
+	public int getRefreshJwtCount() {return _refreshJwtCount;}
+
+    /* ---------------------------------------------------------------------------- */
+    /* getRefreshJwtFailedCount:                                                    */
+    /* ---------------------------------------------------------------------------- */
+    @Override
+	public int getRefreshJwtFailedCount() {return _refreshJwtFailedCount;}
+	
     /* **************************************************************************** */
     /*                                Private Methods                               */
     /* **************************************************************************** */
@@ -589,15 +606,17 @@ public class ServiceJWT
                     return false;
                 }
                 
-            	// Create the local map to avoid multithread access.
-            	var localTokPkgMap = new HashMap<String,TokenResponsePackage>(_tokPkgMap);
+            	// Create an empty local private map to avoid multithread access.
+            	var localTokPkgMap = new HashMap<String,TokenResponsePackage>(1+_tokPkgMap.size()*2);
             	
-                // Refresh the access token.
+                // Refresh the access token.  We iterate through the real map to avoid
+            	// iterator concurrency errors as we update the local map.
                 boolean refreshFailed = false;
-                for (var entry : localTokPkgMap.entrySet()) {
+                for (String siteId : _tokPkgMap.keySet()) {
                 	try {
                 		// Refresh the current site's token.
-                		localTokPkgMap.put(entry.getKey(), refreshServiceJWT(entry.getKey()));
+                		localTokPkgMap.put(siteId, refreshServiceJWT(siteId));
+                		_refreshJwtCount++;
                 	}
                     catch (Exception e) {
                    		// Log the exception.
@@ -607,10 +626,12 @@ public class ServiceJWT
                                                     	sleepMillis);
                    		_log.error(msg, e);
                        	refreshFailed = true;
+                       	_refreshJwtFailedCount++;
                     }
                 }
                 
-                // We try to recover in this invocation.
+                // We try to recover in this invocation. Note that we
+                // throw away any JWTs that had been refreshed.
                 if (refreshFailed) {
             		// Let's try to schedule a retry?
             		sleepMillis = calculateRetryMillis();
@@ -624,9 +645,9 @@ public class ServiceJWT
                 // of three assignments is not an atomic transaction.
                 // We should be fine--there's nothing critical going 
                 // on here.
-                _tokPkgMap = localTokPkgMap;
                 _refreshCount++;
-                _lastRefreshTime = Instant.now();
+                _lastRefreshTime = Instant.now(); 
+                _tokPkgMap = localTokPkgMap; // volatile forcing operation
                 return true;
             }
         }
