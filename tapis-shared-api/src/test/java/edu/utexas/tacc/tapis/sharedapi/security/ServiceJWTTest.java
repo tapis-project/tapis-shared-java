@@ -1,10 +1,11 @@
 package edu.utexas.tacc.tapis.sharedapi.security;
 
 import java.time.Instant;
+import java.util.Arrays;
 
-import edu.utexas.tacc.tapis.client.shared.exceptions.TapisClientException;
 import org.testng.annotations.Test;
 
+import edu.utexas.tacc.tapis.client.shared.exceptions.TapisClientException;
 import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
 
 @Test(groups= {"integration"})
@@ -16,6 +17,7 @@ public class ServiceJWTTest
     // Default settings are for the develop environment.  Change at will for
     // different environment and when values need to be modified.
     private static final String TOKENS_BASEURL = "https://dev.develop.tapis.io";
+    private static final String SITE = "tacc";
     private static final String TENANT  = "dev";
     private static final String SERVICE = "jobs";
     private static final String SERVICE_SYSTEMS = "systems";
@@ -39,6 +41,7 @@ public class ServiceJWTTest
         parms.setTokensBaseUrl(TOKENS_BASEURL);
         parms.setAccessTTL(TTL_SECS);
         parms.setRefreshTTL(TTL_SECS);
+        parms.setTargetSites(Arrays.asList(SITE));
         
         // Get start time.
         var start = Instant.now();
@@ -49,17 +52,17 @@ public class ServiceJWTTest
         
         // Get each new JWT.
         for (int i = 0; i < ITERATIONS; i++) {
-            System.out.println("JWT " + i + ": " + serviceJwt.getAccessJWT());
+            System.out.println("JWT " + i + ": " + serviceJwt.getAccessJWT(SITE));
             Thread.sleep(TTL_SECS * 1000);
         }
         
         // Stop automatic refreshes.
         serviceJwt.interrupt();
-        System.out.println("JWT " + ITERATIONS + ": " + serviceJwt.getAccessJWT());
+        System.out.println("JWT " + ITERATIONS + ": " + serviceJwt.getAccessJWT(SITE));
         
         // Wait until the last JWT expires.
         System.out.println("Waiting for JWT expiration...");
-        while (!serviceJwt.hasExpiredAccessJWT()) Thread.sleep(1000);
+        while (!serviceJwt.hasExpiredAccessJWT(SITE)) Thread.sleep(1000);
         
         // Calculate elapsed time in seconds.
         var stop = Instant.now();
@@ -86,7 +89,7 @@ public class ServiceJWTTest
     parms.setTokensBaseUrl(TOKENS_BASEURL);
     // Create serviceJWT and use it to get a service token
     var serviceJwt = new ServiceJWT(parms, SERVICE_PWD);
-    System.out.println("Systems JWT: " + serviceJwt.getAccessJWT());
+    System.out.println("Systems JWT: " + serviceJwt.getAccessJWT(SITE));
   }
 
 }
