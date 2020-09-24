@@ -35,6 +35,9 @@ public class TenantManager
     // Minimum time allowed between refreshes.
     private static final long MIN_REFRESH_SECONDS = 600; // 10 minutes
 
+	// The text to be replaced in the url templates defined in site objects.
+	private static final String BASEURL_PLACEHOLDER = "${tenant_id}";
+	
     /* **************************************************************************** */
     /*                                    Fields                                    */
     /* **************************************************************************** */
@@ -279,6 +282,42 @@ public class TenantManager
     }
     
     /* ---------------------------------------------------------------------------- */
+    /* getRequestRoutingInfo:                                                       */
+    /* ---------------------------------------------------------------------------- */
+    /** Determine the site that a request to the specified tenant/service combination 
+     * should be sent.  Calculate the base url for the service on that site.  Return
+     * the input parameters, the baseUrl and the targetSiteId.  This last value can
+     * be used to select the proper JWT from a ServiceJWT instance.
+     * 
+     * Minimal checking is performed, exceptions are passed up.
+     * 
+     * @param tenantId the non-null request tenant, typically the oboTenant
+     * @param service the non-null requested service
+     * @return a cacheable result object
+     * @throws TapisException on error.
+     */
+    public RequestRoutingInfo getRequestRoutingInfo(String tenantId, String service)
+      throws TapisException
+    {
+    	// Determine the tenant and the site.
+    	var tenant = getTenant(tenantId);
+    	var site   = getSite(tenant.getSiteId());
+    	if (!site.getServices().contains(service)) site = getPrimarySite();
+    	
+		// If the tenant's home site is different from the target site and the target
+		// site is the primary site, then we use the generic primary site base url.
+		// Otherwise, we construct the base url from the target site's url template.
+    	String baseUrl;
+		if (!tenant.getSiteId().equals(site.getSiteId()) && site.getPrimary()) 
+			baseUrl = site.getBaseUrl();
+		else 
+			baseUrl = site.getTenantBaseUrlTemplate().replace(BASEURL_PLACEHOLDER, tenant.getTenantId());
+		
+		// Package up the results.
+		return new RequestRoutingInfo(tenantId, service, baseUrl, site.getSiteId());
+    }
+    
+    /* ---------------------------------------------------------------------------- */
     /* getSites:                                                                    */
     /* ---------------------------------------------------------------------------- */
     @Override
@@ -398,5 +437,37 @@ public class TenantManager
     	}
     	
     	return allowMap;
+    }
+    
+    /* **************************************************************************** */
+    /*                            RequestRoutingInfo Class                          */
+    /* **************************************************************************** */
+    public static class RequestRoutingInfo
+    {
+    	// The text to be replaced in the url templates defined in site objects.
+    	private static final String BASEURL_PLACEHOLDER = "${tenant_id}";
+    	
+    	// All necessary routing information is contained within these fields.
+    	private final String _tenant;
+    	private final String _service;
+    	private final String _baseUrl;
+    	private final String _targetSiteId;
+    	
+    	// Constructor.
+    	private RequestRoutingInfo(String tenant, String service, String baseUrl, 
+    			                   String targetSiteId)
+    	{
+    		// Assign input.
+    		_tenant  = tenant;
+    		_service = service;
+    		_baseUrl = baseUrl;
+    		_targetSiteId = targetSiteId;
+    	}
+    	
+    	// Accessors.
+    	public String getTenant() {return _tenant;}
+		public String getService() {return _service;}
+		public String getBaseUrl() {return _baseUrl;}
+		public String getTargetSiteId() {return _targetSiteId;}
     }
 }
