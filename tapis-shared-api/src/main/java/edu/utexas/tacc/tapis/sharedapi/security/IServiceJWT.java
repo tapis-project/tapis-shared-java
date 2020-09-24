@@ -1,6 +1,7 @@
 package edu.utexas.tacc.tapis.sharedapi.security;
 
 import java.time.Instant;
+import java.util.List;
 
 import edu.utexas.tacc.tapis.tokens.client.model.TokenResponsePackage;
 
@@ -13,7 +14,7 @@ public interface IServiceJWT
 
     String getTokensBaseUrl();
 
-    TokenResponsePackage getTokPkg();
+    TokenResponsePackage getTokPkg(String targetSite);
 
     int getAccessTTL();
 
@@ -24,14 +25,17 @@ public interface IServiceJWT
     String getDelegationUser();
 
     String getAdditionalClaims();
+    
+    List<String> getTargetSites();
 
-    String getAccessJWT();
+    String getAccessJWT(String targetSite);
 
-    Instant getAccessExpiresAt();
+    Instant getAccessExpiresAt(String targetSite);
 
-    Integer getAccessExpiresIn();
+    // Seconds to expiration.  Negative means already expired.
+    long getAccessExpiresIn(String targetSite);
 
-    boolean hasExpiredAccessJWT();
+    boolean hasExpiredAccessJWT(String targetSite);
 
     int getRefreshCount();
 

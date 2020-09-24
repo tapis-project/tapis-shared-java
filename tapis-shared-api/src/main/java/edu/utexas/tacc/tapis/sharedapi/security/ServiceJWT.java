@@ -2,13 +2,15 @@ package edu.utexas.tacc.tapis.sharedapi.security;
 
 import java.time.Instant;
 import java.util.Base64;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-import edu.utexas.tacc.tapis.client.shared.exceptions.TapisClientException;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import edu.utexas.tacc.tapis.client.shared.exceptions.TapisClientException;
 import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
 import edu.utexas.tacc.tapis.shared.utils.TapisGsonUtils;
@@ -71,11 +73,12 @@ public class ServiceJWT
     private final String _delegationTenant;
     private final String _delegationUser;
     private final String _additionalClaims;
+    private final List<String> _targetSites;
     
     // Generated tokens. We use unsynchronized accessors to read contents since
-    // once the field is assign all thread only read its values.  Upon refresh,
+    // once the field is assign all threads only read its values.  Upon refresh,
     // the JVM guarantees that the field reference is atomically assigned.
-    private volatile TokenResponsePackage _tokPkg;
+    private volatile HashMap<String,TokenResponsePackage> _tokPkgMap;
     
     // Fields that get updated on each successful refresh.
     private int     _refreshCount;
@@ -110,12 +113,13 @@ public class ServiceJWT
         _delegationTenant = parms.getDelegationSubjectTenant();
         _delegationUser = parms.getDelegationSubjectUser();
         _additionalClaims = getClaimsAsJson(parms.getAdditionalClaims());
+        _targetSites = parms.getTargetSites();
         
         // Validate input.
         validateInputs();
         
         // Create the service jwt.
-        _tokPkg = createServiceJWT(servicePassword);
+        _tokPkgMap = createServiceJWTMap(servicePassword);
         
         // Start the refresh thread.
         startTokenRefreshThread();
@@ -132,8 +136,6 @@ public class ServiceJWT
     @Override
     public String getTokensBaseUrl() {return _tokensBaseUrl;}
     @Override
-    public TokenResponsePackage getTokPkg() {return _tokPkg;}
-    @Override
     public int getAccessTTL() {return _accessTTL;}
     @Override
     public int getRefreshTTL() {return _refreshTTL;}
@@ -143,20 +145,27 @@ public class ServiceJWT
     public String getDelegationUser() {return _delegationUser;}
     @Override
     public String getAdditionalClaims() {return _additionalClaims;}
+    @Override
+    public List<String> getTargetSites() {return _targetSites;}
     
     // Generated access token information.  There's no chance
     // of the tokens package being null nor its access token.
     @Override
-    public String getAccessJWT() {
-        return _tokPkg.getAccessToken().getAccessToken();
+    public TokenResponsePackage getTokPkg(String targetSite) {
+    	return _tokPkgMap.get(targetSite);
     }
     @Override
-    public Instant getAccessExpiresAt() {
-        return _tokPkg.getAccessToken().getExpiresAt();
+    public String getAccessJWT(String targetSite) {
+        return _tokPkgMap.get(targetSite).getAccessToken().getAccessToken();
     }
     @Override
-    public Integer getAccessExpiresIn() {
-        return _tokPkg.getAccessToken().getExpiresIn();
+    public Instant getAccessExpiresAt(String targetSite) {
+        return _tokPkgMap.get(targetSite).getAccessToken().getExpiresAt();
+    }
+    @Override
+    public long getAccessExpiresIn(String targetSite) {
+    	// Seconds to expiration.  Negative means already expired.
+        return _tokPkgMap.get(targetSite).getAccessToken().getExpiresIn();
     }
     
     /* **************************************************************************** */
@@ -164,8 +173,8 @@ public class ServiceJWT
     /* **************************************************************************** */
     // Generated access token information.  There's no chance
     // of the tokens package being null nor its access token.
-    private String getRefreshJWT() {
-        return _tokPkg.getRefreshToken().getRefreshToken();
+    private String getRefreshJWT(String targetSite) {
+        return _tokPkgMap.get(targetSite).getRefreshToken().getRefreshToken();
     }
     
     /* **************************************************************************** */
@@ -182,8 +191,8 @@ public class ServiceJWT
      * @return true if the access token is expired, false if still useable
      */
     @Override
-    public boolean hasExpiredAccessJWT() {
-        return Instant.now().isAfter(getAccessExpiresAt());
+    public boolean hasExpiredAccessJWT(String targetSite) {
+        return Instant.now().isAfter(getAccessExpiresAt(targetSite));
     }
     
     /* ---------------------------------------------------------------------------- */
@@ -214,15 +223,44 @@ public class ServiceJWT
     /*                                Private Methods                               */
     /* **************************************************************************** */
     /* ---------------------------------------------------------------------------- */
+    /* createServiceJWTMap:                                                         */
+    /* ---------------------------------------------------------------------------- */
+    /** Create and populate the map of target sites to JWT packages.
+     * 
+     * @param password the service password.
+     * @return a new, populated map
+     */
+    HashMap<String,TokenResponsePackage> createServiceJWTMap(String password)
+     throws TapisException, TapisClientException
+    {
+    	// Create a new map.
+    	var map = new HashMap<String,TokenResponsePackage>(1+_targetSites.size()*2);
+    	
+    	// Create JWT for each target site.
+    	for (String site : _targetSites) {
+    		TokenResponsePackage tokPkg = createServiceJWT(password, site);
+    		map.put(site, tokPkg);
+    	}
+    	
+    	return map;
+    }
+    
+    /* ---------------------------------------------------------------------------- */
     /* createServiceJWT:                                                            */
     /* ---------------------------------------------------------------------------- */
-    private TokenResponsePackage createServiceJWT(String password) 
+    private TokenResponsePackage createServiceJWT(String password, String targetSite) 
      throws TapisException, TapisClientException
     {
         // Check parameters.
         if (StringUtils.isBlank(password)) {
             String msg = MsgUtils.getMsg("TAPIS_NULL_PARAMETER", "createServiceJWT", 
                                          "password");
+            _log.error(msg);
+            throw new TapisException(msg);
+        }
+        if (StringUtils.isBlank(targetSite)) {
+            String msg = MsgUtils.getMsg("TAPIS_NULL_PARAMETER", "createServiceJWT", 
+                                         "targetSite");
             _log.error(msg);
             throw new TapisException(msg);
         }
@@ -236,6 +274,7 @@ public class ServiceJWT
         createParms.setAccessTokenTtl(_accessTTL);
         createParms.setRefreshTokenTtl(_refreshTTL);
         createParms.setClaims(_additionalClaims);
+        createParms.setTargetSiteId(targetSite);
         
         // Are we delegating?
         if (StringUtils.isNotBlank(_delegationTenant)) {
@@ -278,17 +317,17 @@ public class ServiceJWT
     /* ---------------------------------------------------------------------------- */
     /* refreshServiceJWT:                                                           */
     /* ---------------------------------------------------------------------------- */
-    private TokenResponsePackage refreshServiceJWT() 
+    private TokenResponsePackage refreshServiceJWT(String targetSite) 
      throws TapisException, TapisClientException
     {
         // Create and populate the client parameter object.
         var refreshParms = new RefreshTokenParms();
-        refreshParms.setRefreshToken(getRefreshJWT());
+        refreshParms.setRefreshToken(getRefreshJWT(targetSite));
         
         // Get the client.
         var client = new TokensClient(_tokensBaseUrl);
         
-        // Create the token package, which is always non-null.
+        // Create the token package, which is always be non-null.
         var tokPkg = client.refreshToken(refreshParms);
         
         // Validate result.
@@ -369,6 +408,14 @@ public class ServiceJWT
         if (!StringUtils.isBlank(_delegationTenant) && StringUtils.isBlank(_delegationUser)) {
             String msg = MsgUtils.getMsg("TAPIS_NULL_PARAMETER", "validateInputs", 
                                          "delegationUser");
+            _log.error(msg);
+            throw new TapisException(msg);
+        }
+        
+        // Make sure we have at least one target site.
+        if (_targetSites == null || _targetSites.isEmpty()) {
+            String msg = MsgUtils.getMsg("TAPIS_NULL_PARAMETER", "validateInputs", 
+                                         "targetSites");
             _log.error(msg);
             throw new TapisException(msg);
         }
@@ -500,8 +547,8 @@ public class ServiceJWT
          * token.
          * 
          * @param sleepMillis milliseconds to wait before trying to refresh
-         * @return true if a new access token was acquired before the current
-         *              access token expired, false otherwise
+         * @return true if all new access tokens were acquired before the current
+         *              access tokens expired, false otherwise
          */
         private boolean refreshToken(long sleepMillis)
         {
@@ -542,21 +589,33 @@ public class ServiceJWT
                     return false;
                 }
                 
+            	// Create the local map to avoid multithread access.
+            	var localTokPkgMap = new HashMap<String,TokenResponsePackage>(_tokPkgMap);
+            	
                 // Refresh the access token.
-                TokenResponsePackage tokPkg = null;
-                try {tokPkg = refreshServiceJWT();}
+                boolean refreshFailed = false;
+                for (var entry : localTokPkgMap.entrySet()) {
+                	try {
+                		// Refresh the current site's token.
+                		localTokPkgMap.put(entry.getKey(), refreshServiceJWT(entry.getKey()));
+                	}
                     catch (Exception e) {
-                        // Log the exception.
-                        String msg = MsgUtils.getMsg("TAPIS_TOKEN_REFRESH_ERROR",
-                                                     _serviceName, _tenant, 
-                                                     Thread.currentThread().getName(),
-                                                     sleepMillis);
-                        _log.error(msg, e);
-                        
-                        // Let's try to schedule a retry?
-                        sleepMillis = calculateRetryMillis();
-                        continue;
+                   		// Log the exception.
+                   		String msg = MsgUtils.getMsg("TAPIS_TOKEN_REFRESH_ERROR",
+                                                   	_serviceName, _tenant, 
+                                                   	Thread.currentThread().getName(),
+                                                    	sleepMillis);
+                   		_log.error(msg, e);
+                       	refreshFailed = true;
                     }
+                }
+                
+                // We try to recover in this invocation.
+                if (refreshFailed) {
+            		// Let's try to schedule a retry?
+            		sleepMillis = calculateRetryMillis();
+            		continue;
+                }
                 
                 // The refresh succeeded and was validated. Atomically 
                 // update the enclosing class's tokens by reassigning
@@ -565,7 +624,7 @@ public class ServiceJWT
                 // of three assignments is not an atomic transaction.
                 // We should be fine--there's nothing critical going 
                 // on here.
-                _tokPkg = tokPkg;
+                _tokPkgMap = localTokPkgMap;
                 _refreshCount++;
                 _lastRefreshTime = Instant.now();
                 return true;
@@ -585,10 +644,17 @@ public class ServiceJWT
          */
         private long calculateNewTokenWaitMillis()
         {
-            // Subtract the current time from the expiration time.
-            Instant sub = getAccessExpiresAt().minusMillis(Instant.now().toEpochMilli());
-            long subMillis = sub.toEpochMilli();
-            if (subMillis <= 0) return 0; // Already expired.
+        	// Initialize the subtracted millis value high.  The value will be
+        	// reduced as we iterate through all JWTs recording the soonest
+        	// expiration time.  Iterate across all target sites.
+        	long subMillis = Long.MAX_VALUE;
+        	for (String siteId : _tokPkgMap.keySet()) 
+        	{
+        		// Subtract the current time from the expiration time.
+        		Instant sub = getAccessExpiresAt(siteId).minusMillis(Instant.now().toEpochMilli());
+                subMillis = Math.min(subMillis, sub.toEpochMilli());
+            	if (subMillis <= 0) return 0; // Already expired.
+        	}
             
             // Wake up a constant amount of time before the expiration time unless that
             // constant offset is too large.  In that case, we simply wait a preset 
@@ -610,10 +676,17 @@ public class ServiceJWT
          */
         private long calculateRetryMillis()
         {
-            // Has time expired?
-            Instant sub = getAccessExpiresAt().minusMillis(Instant.now().toEpochMilli());
-            long subMillis = sub.toEpochMilli();
-            if (subMillis <= 0) return 0; // Already expired.
+        	// Initialize the subtracted millis value high.  The value will be
+        	// reduced as we iterate through all JWTs recording the soonest
+        	// expiration time.  Iterate across all target sites.
+        	long subMillis = Long.MAX_VALUE;
+        	for (String siteId : _tokPkgMap.keySet()) 
+        	{
+        		// Has time expired?
+        		Instant sub = getAccessExpiresAt(siteId).minusMillis(Instant.now().toEpochMilli());
+        		subMillis = Math.min(subMillis, sub.toEpochMilli());
+        		if (subMillis <= 0) return 0; // Already expired.
+        	}
             
             // Try every retry interval or one last time the token will expire
             // before the default retry interval would end.

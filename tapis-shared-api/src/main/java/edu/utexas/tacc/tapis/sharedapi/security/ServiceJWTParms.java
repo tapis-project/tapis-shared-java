@@ -1,5 +1,6 @@
 package edu.utexas.tacc.tapis.sharedapi.security;
 
+import java.util.List;
 import java.util.Map;
 
 public final class ServiceJWTParms 
@@ -17,6 +18,7 @@ public final class ServiceJWTParms
     private String delegationSubjectTenant;
     private String delegationSubjectUser;
     private Map<String,Object> additionalClaims;
+    private List<String> targetSites;
     
     // Accessors.
     public String getServiceName() {
@@ -67,4 +69,10 @@ public final class ServiceJWTParms
     public void setAdditionalClaims(Map<String, Object> additionalClaims) {
         this.additionalClaims = additionalClaims;
     }
+	public List<String> getTargetSites() {
+		return targetSites;
+	}
+	public void setTargetSites(List<String> targetSites) {
+		this.targetSites = targetSites;
+	}
 }
