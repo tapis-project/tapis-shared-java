@@ -124,7 +124,8 @@ public class JWTValidateRequestFilter
     private static String _service;
     
     // This application's site object as specified by _siteId.
-    private static Site   _localSite;
+    private static Site    _localSite;
+    private static Boolean _localOnlyService;
     
     // A real or mocked tenant manager object.
     private ITenantManager _tenantManager;
@@ -697,10 +698,10 @@ public class JWTValidateRequestFilter
     /* ---------------------------------------------------------------------- */
     /* validateSite:                                                          */
     /* ---------------------------------------------------------------------- */
-    /** Validate site and tenant information from the JWT and request headers
-     * in the context of this web application.  If any check fails, the request
-     * context is updated with an error condition, the problem is logged and 
-     * false is returned.  Success is indicated with a true result.
+    /** Validate site, tenant and serviceinformation from the JWT and request 
+     * headers in the context of this web application.  If any check fails, the 
+     * request context is updated with an error condition, the problem is logged  
+     * and false is returned.  Success is indicated with a true result.
      * 
      * @param jwtTenant non-null tenant from jwt
      * @param jwtUser non-null user from jwt
@@ -711,7 +712,7 @@ public class JWTValidateRequestFilter
     		                     String jwtTenant, String jwtUser, String jwtSite)
     {
     	// ----------------------- Target site check -----------------------
-    	// Make sure the request is meant for this site.
+    	// Make sure the request is meant for this site, but first check input.
     	if (StringUtils.isBlank(jwtSite)) {
             String msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_INVALID_CLAIM", CLAIM_SITE, jwtSite);
             _log.error(msg);
@@ -735,11 +736,10 @@ public class JWTValidateRequestFilter
     	}
     	
     	// ----------------------- Cross-site checks -----------------------
-    	var primarySite = _tenantManager.getPrimarySite();
+    	var primarySiteId = _tenantManager.getPrimarySiteId();
     	if (!sourceSiteId.equals(_siteId)) {
     		// Make sure SK and Tokens are only referenced from the local site.
-    		if (_service.equals(TapisConstants.SERVICE_NAME_SECURITY) ||
-    	        _service.equals(TapisConstants.SERVICE_NAME_TOKENS)) {
+    		if (isLocalOnlyService()) {
                 String msg = MsgUtils.getMsg("TAPIS_SECURITY_INVALID_CROSS_SITE_SERVICE", 
                 		                     jwtUser, jwtTenant, _siteId, _service);
                 _log.error(msg);
@@ -749,7 +749,7 @@ public class JWTValidateRequestFilter
     		
         	// If the local site is not the primary site, then the source site must be.	
         	// This prevents associate sites from communicating with each other.
-        	if (!_siteId.equals(primarySite) && !sourceSiteId.equals(primarySite)) {
+        	if (!_siteId.equals(primarySiteId) && !sourceSiteId.equals(primarySiteId)) {
                 String msg = MsgUtils.getMsg("TAPIS_SECURITY_INTERSITE_COMM", 
 	                                         jwtUser, jwtTenant, _siteId, sourceSiteId);
                 _log.error(msg);
@@ -763,7 +763,7 @@ public class JWTValidateRequestFilter
 		// before this method already validates the oboTenant as being allowed.  The 
 		// checks here only validate that this service should receive requests from 
     	// the source site.  
-    	if (_siteId.equals(primarySite)) {
+    	if (_siteId.equals(primarySiteId)) {
     		// Get the source site object.
     		var sourceSite = _tenantManager.getSite(sourceSiteId);
     		if (sourceSite == null) {
@@ -826,7 +826,8 @@ public class JWTValidateRequestFilter
     /* ---------------------------------------------------------------------- */
     /** This method returns the site object associated with the _siteId value.
      * After the first call a cached object is returned.  A null result is 
-     * returned if the site is unknown.
+     * returned if the site is unknown.  Race conditions on first use are 
+     * harmless.
      * 
      * @return the webapp's site object or null
      */
@@ -835,6 +836,26 @@ public class JWTValidateRequestFilter
     	// Cache the object on first call. the cached object.
     	if (_localSite == null) _localSite = _tenantManager.getSite(_siteId);
     	return _localSite;
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* isLocalOnlyService:                                                    */
+    /* ---------------------------------------------------------------------- */
+    /** Determine if this service can be accessed from remote sites.  Once
+     * initialized the statically cached result is reused.  Race conditions 
+     * on first use are harmless.
+     * 
+     * @return
+     */
+    private boolean isLocalOnlyService()
+    {
+    	// Initialize the static field on first use.
+    	if (_localOnlyService == null) 
+    		if (_service.equals(TapisConstants.SERVICE_NAME_SECURITY) ||
+    			_service.equals(TapisConstants.SERVICE_NAME_TOKENS))
+    			_localOnlyService = Boolean.TRUE;
+    		else _localOnlyService = Boolean.FALSE;
+    	return _localOnlyService;
     }
     
     /* ---------------------------------------------------------------------- */

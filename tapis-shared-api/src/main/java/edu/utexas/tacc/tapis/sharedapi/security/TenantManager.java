@@ -51,7 +51,8 @@ public class TenantManager
     private Map<String,Site>         _sites;
     
     // The primary site for this Tapis instance.
-    private String                   _primarySite;
+    private String                   _primarySiteId;
+    private Site                     _primarySite;
     
     // The map of site master tenant keys to list of tenant values that the site
     // master tenant is allowed to act on behalf of.  
@@ -302,11 +303,17 @@ public class TenantManager
     public Instant getLastUpdateTime() {return _lastUpdateTime;}
 
     /* ---------------------------------------------------------------------------- */
-    /* getTenantServiceBaseUrl:                                                     */
+    /* getPrimarySiteId:                                                            */
     /* ---------------------------------------------------------------------------- */
     @Override
-    public String getPrimarySite() {return _primarySite;}
+    public String getPrimarySiteId() {return _primarySiteId;}
 
+    /* ---------------------------------------------------------------------------- */
+    /* getPrimarySite:                                                              */
+    /* ---------------------------------------------------------------------------- */
+	@Override
+	public Site getPrimarySite() {return _primarySite;}
+	
     /* **************************************************************************** */
     /*                               Private Methods                                */
     /* **************************************************************************** */
@@ -340,6 +347,7 @@ public class TenantManager
     	_tenants = null;
     	_sites = null;
     	_allowableTenants = null;
+    	_primarySiteId = null;
     	_primarySite = null;
     }
     
@@ -371,7 +379,10 @@ public class TenantManager
     		String siteMasterTenant = entry.getValue().getSiteMasterTenantId();
     		allowMap.put(siteMasterTenant, new ArrayList<String>());
     		siteToSiteMasterTenant.put(entry.getKey(), siteMasterTenant);
-    		if (entry.getValue().getPrimary()) _primarySite = entry.getKey();
+    		if (entry.getValue().getPrimary()) {
+    			_primarySiteId = entry.getKey();
+    			_primarySite   = entry.getValue();
+    		}
     	}
     	
     	// Populate the allowMap's site master entries. Inconsistent data 
