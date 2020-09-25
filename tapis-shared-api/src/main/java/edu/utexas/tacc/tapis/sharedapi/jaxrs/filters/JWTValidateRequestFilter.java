@@ -423,12 +423,13 @@ public class JWTValidateRequestFilter
         threadContext.setAccountType(accountType);         // from jwt, never null
         threadContext.setDelegatorSubject(delegator);      // from jwt, can be null
         threadContext.setUserJwtHash(headerUserTokenHash); // from header, can be null
+        threadContext.setSiteId(_siteId);                  // statically initialized
 
         // Inject the user and JWT into the security context and request context
         AuthenticatedUser requestUser = 
             new AuthenticatedUser(jwtUser, jwtTenant, accountTypeStr, 
                                   delegator, oboUser, oboTenantId, 
-                                  headerUserTokenHash, encodedJWT);
+                                  headerUserTokenHash, _siteId, encodedJWT);
         requestContext.setSecurityContext(new TapisSecurityContext(requestUser));
     }
 

@@ -353,6 +353,13 @@ public class TenantManager
 	@Override
 	public Site getPrimarySite() {return _primarySite;}
 	
+    /* ---------------------------------------------------------------------------- */
+    /* getSiteMasterTenantId:                                                       */
+    /* ---------------------------------------------------------------------------- */
+	@Override
+	public String getSiteMasterTenantId(String siteId) 
+	{return _sites.get(siteId).getSiteMasterTenantId();}
+	
     /* **************************************************************************** */
     /*                               Private Methods                                */
     /* **************************************************************************** */

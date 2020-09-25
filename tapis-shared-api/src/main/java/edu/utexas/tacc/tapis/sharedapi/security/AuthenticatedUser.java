@@ -14,10 +14,11 @@ public class AuthenticatedUser implements Principal {
     private final String oboUser;
     private final String oboTenantId;
     private final String headerUserTokenHash;
+    private final String siteId;
     private final String jwt;
 
     public AuthenticatedUser(String jwtUser, String jwtTenantId, String accountType, String delegator,
-                             String oboUser, String oboTenantId, String headerUserTokenHash, 
+                             String oboUser, String oboTenantId, String headerUserTokenHash, String siteId,
                              String jwt) 
     {
         this.jwtUser = jwtUser;
@@ -27,6 +28,7 @@ public class AuthenticatedUser implements Principal {
         this.oboUser = oboUser;
         this.oboTenantId = oboTenantId;
         this.headerUserTokenHash = headerUserTokenHash;
+        this.siteId = siteId;
         this.jwt = jwt;
     }
 

@@ -25,7 +25,10 @@ public final class TapisThreadContext
 	private String jwtUser = INVALID_ID;        // as specified in the JWT
     private String oboTenantId = INVALID_ID;    // on-behalf-of tenant id
     private String oboUser = INVALID_ID;        // on-behalf-of user
-
+    
+    // This service's site.
+    private String siteId;
+    
     // Information that is extracted from query parameters
     // TODO Re-evaluate - remove if not ultimately used
     private boolean prettyPrint = false;
@@ -63,6 +66,7 @@ public final class TapisThreadContext
 	    if (INVALID_ID.contentEquals(jwtTenantId) || StringUtils.isBlank(jwtTenantId)) return false;
 	    if (INVALID_ID.contentEquals(jwtUser)     || StringUtils.isBlank(jwtUser))     return false;
 	    if (accountType == null) return false;
+	    if (siteId == null) return false;
 	            
         // These are required on service tokens.
         if (accountType == AccountType.service) {
@@ -103,6 +107,9 @@ public final class TapisThreadContext
     public void setOboUser(String oboUser) {
         if (!StringUtils.isBlank(oboUser)) this.oboUser = oboUser;
     }
+
+	public String getSiteId() {return siteId;}
+	public void setSiteId(String siteId) {this.siteId = siteId;}
 
     public AccountType getAccountType() {return accountType;}
     public void setAccountType(AccountType accountType) {this.accountType = accountType;}
