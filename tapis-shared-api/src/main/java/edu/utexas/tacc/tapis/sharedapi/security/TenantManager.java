@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
@@ -20,7 +19,6 @@ import edu.utexas.tacc.tapis.shared.utils.CallSiteToggle;
 import edu.utexas.tacc.tapis.tenants.client.TenantsClient;
 import edu.utexas.tacc.tapis.tenants.client.gen.model.Site;
 import edu.utexas.tacc.tapis.tenants.client.gen.model.Tenant;
-import io.jsonwebtoken.lang.Collections;
 
 
 public class TenantManager
@@ -40,10 +38,6 @@ public class TenantManager
 
 	// The text to be replaced in the url templates defined in site objects.
 	private static final String BASEURL_PLACEHOLDER = "${tenant_id}";
-	
-	// Create the pattern for a list of one or more comma or semi-colon separated 
-	// names with no embedded whitespace.
-	private static final Pattern _namePattern = Pattern.compile("[,;\\s]");
 	
     /* **************************************************************************** */
     /*                                    Fields                                    */
