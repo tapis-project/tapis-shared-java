@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -18,6 +20,7 @@ import edu.utexas.tacc.tapis.shared.utils.CallSiteToggle;
 import edu.utexas.tacc.tapis.tenants.client.TenantsClient;
 import edu.utexas.tacc.tapis.tenants.client.gen.model.Site;
 import edu.utexas.tacc.tapis.tenants.client.gen.model.Tenant;
+import io.jsonwebtoken.lang.Collections;
 
 
 public class TenantManager
@@ -37,6 +40,10 @@ public class TenantManager
 
 	// The text to be replaced in the url templates defined in site objects.
 	private static final String BASEURL_PLACEHOLDER = "${tenant_id}";
+	
+	// Create the pattern for a list of one or more comma or semi-colon separated 
+	// names with no embedded whitespace.
+	private static final Pattern _namePattern = Pattern.compile("[,;\\s]");
 	
     /* **************************************************************************** */
     /*                                    Fields                                    */
@@ -160,6 +167,9 @@ public class TenantManager
                         // Create the sites hashmap.
                         _sites = new LinkedHashMap<String,Site>(1+siteList.size()*2);
                         for (Site s : siteList) _sites.put(s.getSiteId(), s); 
+                        
+                        // Check the tenant's information for consistency.
+                        checkTenantMaps(_tenants, _sites);
                         
                         // Calculate allowable tenants map and set primary site.
                         _allowableTenants = calculateAllowableTenants(_tenants, _sites);
@@ -398,6 +408,78 @@ public class TenantManager
     }
     
     /* ---------------------------------------------------------------------------- */
+    /* checkTenantMaps:                                                             */
+    /* ---------------------------------------------------------------------------- */
+    /** Basic consistency checking between references into the tenants and sites mappings.
+     * Inconsistencies are simply logged for now.
+     * 
+     * @param tenants the tenants map
+     * @param sites the sites map
+     */
+    private void checkTenantMaps(Map<String,Tenant> tenants, Map<String,Site> sites)
+    {
+    	// Assume no errors.
+    	boolean noErrors = true;
+    	
+    	// Total number of primary sites.
+    	var primarySiteIds = new ArrayList<String>();
+    	
+    	// --- Cycle through the tenants map.
+    	for (var entry : tenants.entrySet()) {
+    		// Make sure each tenant's site exists.
+    		var site = sites.get(entry.getValue().getSiteId());
+    		if (site == null) {
+                String msg = MsgUtils.getMsg("TAPIS_TENANT_NO_SITE", entry.getKey(), 
+                		                     entry.getValue().getSiteId());
+                _log.error(msg);
+                noErrors = false;
+    		}
+    	}
+    	
+    	// --- Cycle through the sites map.
+    	for (var entry : sites.entrySet()) {
+    		// Make sure every site has a master tenant.
+    		var masterTenant = tenants.get(entry.getValue().getSiteMasterTenantId());
+    		if (masterTenant == null) {
+                String msg = MsgUtils.getMsg("TAPIS_SITE_NO_MASTER_TENANT", entry.getKey(), 
+                		                     entry.getValue().getSiteMasterTenantId());
+                _log.error(msg);
+                noErrors = false;
+    		}
+    		
+    		// Make sure there's only one primary site.
+    		var isPrimary = entry.getValue().getPrimary();
+    		if (isPrimary == null) {
+                String msg = MsgUtils.getMsg("TAPIS_SITE_NO_PRIMARY_SETTING", entry.getKey()); 
+                _log.error(msg);
+                noErrors = false;
+    		} else {
+    			if (isPrimary) primarySiteIds.add(entry.getKey());
+    		}
+    	}
+    	
+    	// There should be exactly one primary site.
+    	if (primarySiteIds.isEmpty()) {
+    		String s = sites.keySet().stream().collect(Collectors.joining(", "));
+            String msg = MsgUtils.getMsg("TAPIS_SITE_NO_PRIMARY", s); 
+            _log.error(msg);
+            noErrors = false;
+    	} else if (primarySiteIds.size() > 1) {
+    		String s = primarySiteIds.stream().collect(Collectors.joining(", "));
+            String msg = MsgUtils.getMsg("TAPIS_SITE_MULTIPLE_PRIMARIES", s); 
+            _log.error(msg);
+            noErrors = false;
+    	}
+    	
+    	// Informational message when no errors are detected.
+    	if (noErrors) {
+            String msg = MsgUtils.getMsg("TAPIS_TENANTS_CROSS_REFERENCED", 
+            		                     tenants.size(), sites.size()); 
+            _log.info(msg);
+    	}
+    }
+    
+    /* ---------------------------------------------------------------------------- */
     /* calculateAllowableTenants:                                                   */
     /* ---------------------------------------------------------------------------- */
     /** Create the mapping of site master tenants to the list of tenants they may act
@@ -451,9 +533,6 @@ public class TenantManager
     /* **************************************************************************** */
     public static class RequestRoutingInfo
     {
-    	// The text to be replaced in the url templates defined in site objects.
-    	private static final String BASEURL_PLACEHOLDER = "${tenant_id}";
-    	
     	// All necessary routing information is contained within these fields.
     	private final String _tenant;
     	private final String _service;
