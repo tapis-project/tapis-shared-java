@@ -293,7 +293,7 @@ public class TenantManager
      * the input parameters, the baseUrl and the targetSiteId.  This last value can
      * be used to select the proper JWT from a ServiceJWT instance.
      * 
-     * Minimal checking is performed, exceptions are passed up.
+     * Minimal checking is performed, exceptions are passed up.  
      * 
      * @param tenantId the non-null request tenant, typically the oboTenant
      * @param service the non-null requested service
@@ -315,7 +315,7 @@ public class TenantManager
 		if (!tenant.getSiteId().equals(site.getSiteId()) && site.getPrimary()) 
 			baseUrl = site.getBaseUrl();
 		else 
-			baseUrl = site.getTenantBaseUrlTemplate().replace(BASEURL_PLACEHOLDER, tenant.getTenantId());
+			baseUrl = site.getTenantBaseUrlTemplate().replace(BASEURL_PLACEHOLDER, tenantId);
 		
 		// Package up the results.
 		return new RequestRoutingInfo(tenantId, service, baseUrl, site.getSiteId());
@@ -497,13 +497,16 @@ public class TenantManager
     	// tenants list as values.  Initialize the temporary map with sites as 
     	// keys and their master tenants as values.  There better be only 1 
     	// primary site.
+    	ArrayList<String> primarySiteList = null;
     	for (var entry : sites.entrySet()) {
     		String siteMasterTenant = entry.getValue().getSiteMasterTenantId();
-    		allowMap.put(siteMasterTenant, new ArrayList<String>());
+    		var list = new ArrayList<String>();
+    		allowMap.put(siteMasterTenant, list);
     		siteToSiteMasterTenant.put(entry.getKey(), siteMasterTenant);
     		if (entry.getValue().getPrimary()) {
-    			_primarySiteId = entry.getKey();
-    			_primarySite   = entry.getValue();
+    			_primarySiteId  = entry.getKey();
+    			_primarySite    = entry.getValue();
+    			primarySiteList = list;
     		}
     	}
     	
@@ -517,6 +520,12 @@ public class TenantManager
     		var list = allowMap.get(siteMasterTenant);
     		if (list == null) continue;             // should never happen.
     		list.add(entry.getKey());
+    		
+    		// Add every tenant to the primary site allowable list.
+    		// If we didn't already just add the tenant to the list,
+    		// do it now.
+    		if (primarySiteList != list && primarySiteList != null)
+    			primarySiteList.add(entry.getKey());
     	}
     	
     	return allowMap;
@@ -535,7 +544,8 @@ public class TenantManager
     	
     	// Constructor.
     	private RequestRoutingInfo(String tenant, String service, String baseUrl, 
-    			                   String targetSiteId)
+    			                   String targetSiteId) 
+          throws TapisException
     	{
     		// Assign input.
     		_tenant  = tenant;
