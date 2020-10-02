@@ -305,20 +305,25 @@ public class TenantManager
     {
     	// Determine the tenant and the site.
     	var tenant = getTenant(tenantId);
-    	var site   = getSite(tenant.getSiteId());
-    	if (!site.getServices().contains(service)) site = getPrimarySite();
+    	Site owningSite = getSite(tenant.getSiteId());
+    	Site targetSite;
+    	if (!owningSite.getServices().contains(service)) targetSite = getPrimarySite();
+    	  else targetSite = owningSite; 
     	
-		// If the tenant's home site is different from the target site and the target
-		// site is the primary site, then we use the generic primary site base url.
-		// Otherwise, we construct the base url from the target site's url template.
+		// If the tenant's owning site is different from the target site, then the target
+    	// site must be the primary site because of the previous conditional (and the 
+    	// invariant that the primary site runs all services). In this case, we construct 
+    	// the base url from the target site's base url template.  Otherwise, the target 
+    	// site is the site that owns the tenant, so we can directly use the tenant 
+    	// assigned base url.
     	String baseUrl;
-		if (!tenant.getSiteId().equals(site.getSiteId()) && site.getPrimary()) 
-			baseUrl = site.getBaseUrl();
+		if (targetSite != owningSite) 
+			baseUrl = targetSite.getTenantBaseUrlTemplate().replace(BASEURL_PLACEHOLDER, tenantId);
 		else 
-			baseUrl = site.getTenantBaseUrlTemplate().replace(BASEURL_PLACEHOLDER, tenantId);
+			baseUrl = tenant.getBaseUrl();
 		
 		// Package up the results.
-		return new RequestRoutingInfo(tenantId, service, baseUrl, site.getSiteId());
+		return new RequestRoutingInfo(tenantId, service, baseUrl, targetSite.getSiteId());
     }
     
     /* ---------------------------------------------------------------------------- */
