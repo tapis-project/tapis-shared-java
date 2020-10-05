@@ -310,7 +310,7 @@ public class TenantManager
      * Given the above, requests are normally routed to the tenant's base URL, which 
      * are then forwarded to a specific service.  The one exception is when a service
      * for a tenant owned by an associate site does not actually run at the 
-     * associate, but instead runs at the primary site.  In this case, the request 
+     * associate site, but instead runs at the primary site.  In this case, the request 
      * must target a URL at the primary site.  The URL targeted is the previously 
      * registered DNS address that conforms to the primary site's URL template for 
      * the request's tenant.  
