@@ -293,7 +293,27 @@ public class TenantManager
      * the input parameters, the baseUrl and the targetSiteId.  This last value can
      * be used to select the proper JWT from a ServiceJWT instance.
      * 
-     * Minimal checking is performed, exceptions are passed up.  
+     * Minimal checking is performed, exceptions are passed up.
+     * 
+     * Routing Background<br> 
+     * ------------------<br> 
+     * The correct routing of requests between associate sites and the primary site
+     * assumes the following:
+     * 
+     *   - The primary site runs all services (or least all services that are will 
+     *     ever be accessed by a tapis service running at another site).
+     *     
+     *   - The primary site registers DNS names that conform to its base URL
+     *     template, as many as one for each tenant.  These DNS names point to a
+     *     proxy that forwards requests to the proper services.
+     *     
+     * Given the above, requests are normally routed to the tenant's base URL, which 
+     * are then forwarded to a specific service.  The one exception is when a service
+     * for a tenant owned by an associate site does not actually run at the 
+     * associate, but instead runs at the primary site.  In this case, the request 
+     * must target a URL at the primary site.  The URL targeted is the previously 
+     * registered DNS address that conforms to the primary site's URL template for 
+     * the request's tenant.  
      * 
      * @param tenantId the non-null request tenant, typically the oboTenant
      * @param service the non-null requested service
