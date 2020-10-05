@@ -300,7 +300,7 @@ public class TenantManager
      * The correct routing of requests between associate sites and the primary site
      * assumes the following:
      * 
-     *   - The primary site runs all services (or least all services that are will 
+     *   - The primary site runs all services (or least all services that will 
      *     ever be accessed by a tapis service running at another site).
      *     
      *   - The primary site registers DNS names that conform to its base URL
