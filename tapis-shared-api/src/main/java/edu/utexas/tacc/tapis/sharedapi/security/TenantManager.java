@@ -308,7 +308,7 @@ public class TenantManager
      *     proxy that forwards requests to the proper services.
      *     
      * Given the above, requests are normally routed to the tenant's base URL, which 
-     * are then forwarded to a specific service.  The one exception is when a service
+     * are then forwarded to specific services.  The one exception is when a service
      * for a tenant owned by an associate site does not actually run at the 
      * associate site, but instead runs at the primary site.  In this case, the request 
      * must target a URL at the primary site.  The URL targeted is the previously 
