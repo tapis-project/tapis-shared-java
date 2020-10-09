@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>edu.utexas.tacc.tapis</groupId>
   <artifactId>tapis-shared-java</artifactId>
-  <version>1.11.31</version>
+  <version>1.11.32</version>
   <packaging>pom</packaging>
   <name>Tapis shared</name>
   <description>TAPIS shared Java code</description>
@@ -136,7 +136,6 @@
   </modules>
   <scm>
     <connection>scm:git:git@github.com:tapis-project/tapis-shared-java.git</connection>
-    <tag>tapis-shared-java-1.11.4</tag>
     <url>https://github.com/tapis-project/tapis-shared-java</url>
   </scm>
   <distributionManagement>
@@ -144,6 +143,10 @@
       <id>ossrh</id>
       <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
     </repository>
+    <snapshotRepository>
+      <id>ossrh</id>
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+    </snapshotRepository>
   </distributionManagement>
   <properties>
     <maven-gpg-plugin.version>1.6</maven-gpg-plugin.version>
@@ -208,7 +211,7 @@
     <javax.xml.bind.jaxb-core.version>2.3.0.1</javax.xml.bind.jaxb-core.version>
     <maven-shade-plugin.version>3.2.1</maven-shade-plugin.version>
     <mockito-core.version>3.0.0</mockito-core.version>
-    <build.timestamp>2020-09-22T16:19:47Z</build.timestamp>
+    <build.timestamp>2020-10-09T14:32:30Z</build.timestamp>
     <statefulj.version>3.0</statefulj.version>
     <java-source.version>1.13</java-source.version>
     <google-maven-replacer-plugin.version>1.5.3</google-maven-replacer-plugin.version>
@@ -233,6 +236,7 @@
     <hikariCP.version>3.3.1</hikariCP.version>
     <swagger-ui.version>3.23.8</swagger-ui.version>
     <swagger-annotations.version>2.1.4</swagger-annotations.version>
+    <gitflow-maven-plugin.version>1.14.0</gitflow-maven-plugin.version>
     <swagger-annotations1.version>1.5.24</swagger-annotations1.version>
   </properties>
   <dependencies>
@@ -268,8 +272,17 @@
       <url>http://oss.sonatype.org/content/repositories/snapshots</url>
     </repository>
     <repository>
+      <id>oss.sonatype.org-releases</id>
+      <url>https://oss.sonatype.org/content/repositories/releases/</url>
+    </repository>
+    <repository>
       <id>jitpack.io</id>
       <url>https://jitpack.io</url>
+    </repository>
+    <repository>
+      <id>tacc-snapshot</id>
+      <name>TACC ACI Maven repository</name>
+      <url>https://maven.tacc.utexas.edu/nexus/content/repositories/snapshots</url>
     </repository>
     <repository>
       <snapshots>
@@ -295,7 +308,7 @@
   </pluginRepositories>
   <build>
     <sourceDirectory>src/main/java</sourceDirectory>
-    <scriptSourceDirectory>/var/lib/jenkins/jobs/Tapis/jobs/DEV/jobs/release-shared-java/workspace/src/main/scripts</scriptSourceDirectory>
+    <scriptSourceDirectory>/var/lib/jenkins/jobs/TapisJava/jobs/2_Release/jobs/Shared/jobs/release-shared-java/workspace/src/main/scripts</scriptSourceDirectory>
     <testSourceDirectory>src/test/java</testSourceDirectory>
     <outputDirectory>target/classes</outputDirectory>
     <testOutputDirectory>target/test-classes</testOutputDirectory>
@@ -310,7 +323,6 @@
       </testResource>
     </testResources>
     <directory>target</directory>
-    <finalName>tapis-shared-java-1.11.31</finalName>
   </build>
   <reporting>
     <outputDirectory>target/site</outputDirectory>
