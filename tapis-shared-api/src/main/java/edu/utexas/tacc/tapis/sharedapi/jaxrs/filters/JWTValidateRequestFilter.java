@@ -764,8 +764,22 @@ public class JWTValidateRequestFilter
 		// Check service constraints.  Note that the allowable tenants check called 
 		// before this method already validates the oboTenant as being allowed.  The 
 		// checks here only validate that this service should receive requests from 
-    	// the source site.  
-    	if (_siteId.equals(primarySiteId)) {
+    	// the source site. 
+    	//
+    	// ---- First make sure the local (target) site runs this service.  This is
+    	// somewhat redundant but requires no maintenance on site update.
+		var localSiteServices = getLocalSite().getServices();
+		if (!localSiteServices.contains(_service)) {
+            String msg = MsgUtils.getMsg("TAPIS_SECURITY_NO_LOCAL_SERVICE", 
+                                         jwtUser, jwtTenant, _siteId, _service);
+            _log.error(msg);
+            requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
+            return false;
+		}
+
+		// ---- Second make sure that if this is the primary site and the source site
+		// is an associate site, then the associate site does not run the service.
+		if (getLocalSite().getPrimary() && !_siteId.equals(sourceSiteId)) {
     		// Get the source site object.
     		var sourceSite = _tenantManager.getSite(sourceSiteId);
     		if (sourceSite == null) {
@@ -775,31 +789,18 @@ public class JWTValidateRequestFilter
                 requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
                 return false;
     		}
-    		
-    		// Source site is an associate site that must not run this service.
-    		// If associate site runs this service, then the service's requests 
-    		// are supposed to be routed there.
-    		var sourceSiteServices = sourceSite.getServices();
-    		if (sourceSiteServices.contains(_service)) {
-                String msg = MsgUtils.getMsg("TAPIS_SECURITY_SOURCE_SITE_SERVICE", 
-	                                          jwtUser, jwtTenant, sourceSiteId, _service);
-                _log.error(msg);
-                requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
-                return false;
-    		}
-    	} else {
-    		// The local site object is never null and represents an associate site.
-    		// As an associate site, it should explicitly name this service as one
-    		// that is supports.
-    		var targetSiteServices = getLocalSite().getServices();
-    		if (!targetSiteServices.contains(_service)) {
-                String msg = MsgUtils.getMsg("TAPIS_SECURITY_NO_LOCAL_SERVICE", 
-	                                         jwtUser, jwtTenant, _siteId, _service);
-                _log.error(msg);
-                requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
-                return false;
-    		}
-    	}
+			
+			// If associate site runs this service, then the service's requests 
+			// are supposed to be routed there.
+			var sourceSiteServices = sourceSite.getServices();
+			if (sourceSiteServices.contains(_service)) {
+				String msg = MsgUtils.getMsg("TAPIS_SECURITY_SOURCE_SITE_SERVICE", 
+                                          	 jwtUser, jwtTenant, sourceSiteId, _service);
+				_log.error(msg);
+				requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
+				return false;
+			}
+		}
     	
     	// Success.
     	return true;
