@@ -33,14 +33,14 @@ public final class JsonValidator
   // Local logger.
   private static final Logger _log = LoggerFactory.getLogger(JsonValidator.class);
   
-  //-------- Demand-loaded schema objects.
+  // -------- Demand-loaded schema objects. 
   private static final HashMap<String,Schema> _schemaCache = new HashMap<>();
   
   /* **************************************************************************** */
   /*                                Public Methods                                */
   /* **************************************************************************** */
   /* ---------------------------------------------------------------------------- */
-  /* validateSampleCreateRequest:                                                 */
+  /* validate:                                                                    */
   /* ---------------------------------------------------------------------------- */
   public static void validate(JsonValidatorSpec spec) throws TapisJSONException
   {
