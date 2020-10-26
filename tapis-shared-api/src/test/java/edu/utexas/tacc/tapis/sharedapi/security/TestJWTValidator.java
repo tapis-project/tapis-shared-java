@@ -57,17 +57,16 @@ public class TestJWTValidator {
     @Test
     void testDoesValidateTapisClaimsValid() {
         String jwts = Jwts.builder()
-            .setSubject("testUser")
-            .setAudience("testAud")
-            .claim("tapis/tenant", "testTenant")
+            .claim("tapis/tenant_id", "testTenant")
             .claim("tapis/username", "testUser")
             .claim("tapis/token_type", "access")
             .claim("tapis/account_type",  "user")
-            .claim("tapis/delegation", "")
+            .claim("tapis/target_site", "localSite")
             .signWith(keys.getPrivate())
             .compact();
         TapisJWTValidator validator = new TapisJWTValidator(jwts);
-        Assert.assertThrows(JwtException.class, ()->{validator.validate(keys.getPublic());});
+        Jws<Claims> jws = validator.validate(keys.getPublic());
+        Assert.assertNotNull(jws);
     }
 
 

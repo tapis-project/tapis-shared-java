@@ -51,7 +51,7 @@ public class TapisJWTValidator {
     public Claims getClaimsNoValidation() {
         int i = encodedJWT.lastIndexOf('.');
         String withoutSignature = encodedJWT.substring(0, i+1);
-        Jwt<Header,Claims> untrusted = Jwts.parser()
+        Jwt<?,Claims> untrusted = Jwts.parser()
             .parseClaimsJwt(withoutSignature);
         return untrusted.getBody();
     }
