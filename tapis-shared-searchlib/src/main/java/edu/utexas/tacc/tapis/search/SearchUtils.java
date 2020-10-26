@@ -1,6 +1,9 @@
 package edu.utexas.tacc.tapis.search;
 
+import com.google.gson.JsonSyntaxException;
+import edu.utexas.tacc.tapis.search.requests.ReqSearch;
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
+import edu.utexas.tacc.tapis.shared.utils.TapisGsonUtils;
 import edu.utexas.tacc.tapis.shared.utils.TapisUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -8,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response;
 
 import java.sql.Types;
 import java.time.LocalDateTime;
@@ -42,6 +46,10 @@ public class SearchUtils
   // Local logger.
   private static final Logger _log = LoggerFactory.getLogger(SearchUtils.class);
 
+  public static final String SORT_BY_DIRECTION_ASC = "ASC";
+  public static final String SORT_BY_DIRECTION_DESC = "DESC";
+  public static final String DEFAULT_SORT_BY_DIRECTION = SORT_BY_DIRECTION_ASC;
+
   // Regex for parsing (<attr1>.<op>.<val1>)~(<attr2>.<op>.<val2>) ... See validateAndExtractSearchList
   private static final String SEARCH_REGEX = "(?:\\\\.|[^~\\\\]++)+";
 
@@ -53,7 +61,7 @@ public class SearchUtils
   // ************************************************************************
 
   // Reserved query parameters that cannot be specified when using a dedicated search endpoint
-  public enum ReservedQueryParm {PRETTY, SELECT, SEARCH, LIMIT, OFFSET}
+  public enum ReservedQueryParm {PRETTY, SELECT, SEARCH, SORT_BY, LIMIT, OFFSET, START_AFTER}
   public static final Set<String> RESERVED_QUERY_PARMS = Stream.of(ReservedQueryParm.values()).map(Enum::name).collect(Collectors.toSet());
 
   // Supported operators for search
@@ -325,7 +333,7 @@ public class SearchUtils
     // Check each value
     for (String val : valList)
     {
-      if (!validateTypeAndValue(sqlType, val, sqlTypeName))
+      if (!validTypeAndValue(sqlType, val, sqlTypeName))
       {
         String msg = MsgUtils.getMsg("SEARCH_DB_INVALID_SEARCH_VALUE", op.name(), sqlTypeName, val, tableName, colName);
         _log.error(msg);
@@ -381,6 +389,85 @@ public class SearchUtils
     return retStr.toLowerCase();
   }
 
+  /**
+   * Check validity of sortBy query parameter which must be in the form <attr_name>(<dir>)
+   *   where (<dir>) is optional and <dir> = "asc" or "desc"
+   * @param sortByQueryParam - string value of sort_by query parameter
+   * @return an error message if invalid else return null.
+   */
+  public static String checkSortByQueryParam(String sortByQueryParam)
+  {
+    // Must not be empty
+    if (StringUtils.isBlank(sortByQueryParam)) return "Empty";
+    String sortByAttr = sortByQueryParam;
+    // If left paren then must be matching right paren at end and string between must be a direction
+    int sortDirStart = sortByQueryParam.indexOf('(');
+    if (sortDirStart == 0) return "sort_by attribute name not found. sort_by value: " + sortByQueryParam;
+    if (sortDirStart > 0)
+    {
+      if (!sortByQueryParam.endsWith(")")) return "Unmatched parentheses. sort_by value: " + sortByQueryParam;
+      sortByAttr =  sortByQueryParam.substring(0,sortByQueryParam.indexOf('('));
+      String sortDirection = sortByQueryParam.substring(sortDirStart+1, sortByQueryParam.length()-1);
+      if (StringUtils.isBlank(sortDirection)) return "Sort direction was blank";
+      if (!SORT_BY_DIRECTION_ASC.equalsIgnoreCase(sortDirection) && !SORT_BY_DIRECTION_DESC.equalsIgnoreCase(sortDirection))
+      {
+        return "Invalid sort direction: " + sortDirection;
+      }
+    }
+    // Check that column name is valid
+    if (!validAttributeName(sortByAttr)) return "Invalid attribute name. sort_by value: " + sortByQueryParam;
+    return null;
+  }
+
+  /**
+   * Extract column name from sortBy query parameter which must be in the form <col_name>(<dir>)
+   *   where (<dir>) is optional and <dir> = "asc" or "desc"
+   * NOTE: This method assumes that value has been checked using checkSortByQueryParam
+   * @param sortByQueryParam - string value of sort_by query parameter
+   * @return the sort_by column name or null if not found
+   */
+  public static String getSortByColumn(String sortByQueryParam)
+  {
+    if (StringUtils.isBlank(sortByQueryParam)) return null;
+    String colName = sortByQueryParam;
+    if (sortByQueryParam.indexOf('(') >= 0) colName =  sortByQueryParam.substring(0,sortByQueryParam.indexOf('('));
+    return colName;
+  }
+
+  /**
+   * Extract direction from sortBy query parameter which must be in the form <col_name>(<dir>)
+   *   where (<dir>) is optional and <dir> = "asc" or "desc"
+   * NOTE: This method assumes that value has been checked using checkSortByQueryParam
+   * @param sortByQueryParam - string value of sort_by query parameter
+   * @return the sort_by direction or default value if direction not specified
+   */
+  public static String getSortByDirection(String sortByQueryParam)
+  {
+    String sortDirection;
+    int sortDirStart = sortByQueryParam.indexOf('(');
+    if (sortDirStart <= 0) sortDirection =  DEFAULT_SORT_BY_DIRECTION;
+    else sortDirection = sortByQueryParam.substring(sortDirStart+1, sortByQueryParam.length()-1);
+    return sortDirection.toUpperCase();
+  }
+
+  /**
+   * Given json from a search request body put together the complete SQL-like search string.
+   * @param rawJson - json containing search request
+   * @return - Full search string
+   * @throws JsonSyntaxException on error parsing json
+   */
+  public static String getSearchFromRequestJson(String rawJson) throws JsonSyntaxException
+  {
+    ReqSearch req;
+    req = TapisGsonUtils.getGson().fromJson(rawJson, ReqSearch.class);
+    // Concatenate all strings into a single SQL-like search string
+    // When put together full string must be a valid SQL-like where clause. This will be validated in the service call.
+    // Not all SQL syntax is supported. See SqlParser.jj in tapis-shared-searchlib.
+    StringJoiner sj = new StringJoiner(" ");
+    for (String s : req.search) { sj.add(s); }
+    String searchStr = sj.toString();
+    return searchStr;
+  }
 
   // ************************************************************************
   // **************************  Private Methods  ***************************
@@ -464,6 +551,19 @@ public class SearchUtils
   }
 
   /**
+   * Check that attribute name is valid
+   * @param attrStr value to check
+   * @return true if valid, else false
+   */
+  private static boolean validAttributeName(String attrStr)
+  {
+    // <attr> must start with [a-zA-Z] and contain only [a-zA-Z0-9_]
+    Matcher m = (Pattern.compile("^[a-zA-Z][a-zA-Z0-9_]*$")).matcher(attrStr);
+    if (!m.find()) return false;
+    return true;
+  }
+
+  /**
    * Check that value and sqlType are compatible.
    * sqlTypeName is only used for logging.
    * Mappings based on recommendations from:
@@ -473,7 +573,7 @@ public class SearchUtils
    * @param sqlTypeName name for sql type - logging only
    * @return true if valid, else false
    */
-  private static boolean validateTypeAndValue(int sqlType, String valStr, String sqlTypeName)
+  private static boolean validTypeAndValue(int sqlType, String valStr, String sqlTypeName)
   {
     if (StringUtils.isBlank(valStr)) return false;
     switch (sqlType)
@@ -581,9 +681,7 @@ public class SearchUtils
     }
 
     // Validate <attr>
-    // <attr> must start with [a-zA-Z] and contain only [a-zA-Z0-9_]
-    Matcher m = (Pattern.compile("^[a-zA-Z][a-zA-Z0-9_]*$")).matcher(attr);
-    if (!m.find())
+    if (!validAttributeName(attr))
     {
       String errMsg = MsgUtils.getMsg("SEARCH_COND_INVALID_ATTR", condStr);
       throw new IllegalArgumentException(errMsg);

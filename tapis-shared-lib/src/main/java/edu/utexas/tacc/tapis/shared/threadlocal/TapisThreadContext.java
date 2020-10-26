@@ -2,6 +2,8 @@ package edu.utexas.tacc.tapis.shared.threadlocal;
 
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.List;
+
 public final class TapisThreadContext 
  implements Cloneable
 {
@@ -30,8 +32,13 @@ public final class TapisThreadContext
     private String siteId;
     
     // Information that is extracted from query parameters
-    // TODO Re-evaluate - remove if not ultimately used
     private boolean prettyPrint = false;
+    private List<String> searchList;
+    private int limit = -1;
+    private String sortBy;
+    private String sortByDirection;
+    private int offset = 0;
+    private String startAfter;
 
     // Account type also cannot be null.  The delegator subject is either null when
     // no delegation has occurred or in the 'user@tenant' format when there is 
@@ -86,8 +93,20 @@ public final class TapisThreadContext
 	/* **************************************************************************** */
 	/*                                   Accessors                                  */
 	/* **************************************************************************** */
-    public boolean getPrettyPrint(){return prettyPrint;}
+    public boolean getPrettyPrint() { return prettyPrint; }
     public void setPrettyPrint(boolean p) { prettyPrint = p; }
+    public List<String> getSearchList() { return searchList; }
+    public void setSearchList(List<String> sl) { searchList = sl; }
+    public int getLimit() { return limit; }
+    public void setLimit(int i) { limit = i; }
+    public String getSortBy() { return sortBy; }
+    public void setSortBy(String s) { sortBy = s; }
+    public String getSortByDirection() { return sortByDirection; }
+    public void setSortByDirection(String s) { sortByDirection = s; }
+    public int getOffset() { return offset; }
+    public void setOffset(int i) { offset = i; }
+    public String getStartAfter() { return startAfter; }
+    public void setStartAfter(String s) { startAfter = s; }
 	public String getJwtTenantId(){return jwtTenantId;}
 	public void setJwtTenantId(String tenantId) {
 		if (!StringUtils.isBlank(tenantId)) this.jwtTenantId = tenantId;

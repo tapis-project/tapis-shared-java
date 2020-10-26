@@ -409,6 +409,43 @@ public class SearchUtilsTest
     assertEquals(SearchUtils.camelCaseToSnakeCase("jobRemoteArchiveSystem"), "job_remote_archive_system");
   }
 
+  /*
+   * Test method that validates sortBy query parameter value
+   */
+  @Test(groups={"unit"})
+  public void testSortByQueryParam()
+  {
+    // Check valid cases
+    assertNull(SearchUtils.checkSortByQueryParam("name"));
+    assertNull(SearchUtils.checkSortByQueryParam("name(asc)"));
+    assertNull(SearchUtils.checkSortByQueryParam("name(desc)"));
+    assertNull(SearchUtils.checkSortByQueryParam("name(ASC)"));
+    assertNull(SearchUtils.checkSortByQueryParam("name(DESC)"));
+    // Check invalid cases
+    assertEquals("Empty", SearchUtils.checkSortByQueryParam(""));
+    assertEquals("Empty", SearchUtils.checkSortByQueryParam(" "));
+    assertTrue(SearchUtils.checkSortByQueryParam("name(").startsWith("Unmatched parentheses"));
+    assertTrue(SearchUtils.checkSortByQueryParam("name(asc").startsWith("Unmatched parentheses"));
+    assertTrue(SearchUtils.checkSortByQueryParam("(asc)").startsWith("sort_by attribute name not found"));
+    assertTrue(SearchUtils.checkSortByQueryParam("name()").startsWith("Sort direction was blank"));
+    assertTrue(SearchUtils.checkSortByQueryParam("name(UP)").startsWith("Invalid sort direction"));
+    assertTrue(SearchUtils.checkSortByQueryParam("invalid?col").startsWith("Invalid attribute name"));
+    assertTrue(SearchUtils.checkSortByQueryParam("1invalidcol").startsWith("Invalid attribute name"));
+    assertTrue(SearchUtils.checkSortByQueryParam("invalid-col").startsWith("Invalid attribute name"));
+
+    // Check extract of column name and sort direction
+    assertEquals("name", SearchUtils.getSortByColumn("name"));
+    assertEquals("name", SearchUtils.getSortByColumn("name(asc)"));
+    assertEquals("name", SearchUtils.getSortByColumn("name(desc)"));
+    assertEquals("ASC",  SearchUtils.getSortByDirection("name"));
+    assertEquals("ASC",  SearchUtils.getSortByDirection("name(asc)"));
+    assertEquals("ASC",  SearchUtils.getSortByDirection("name(ASC)"));
+    assertEquals("ASC",  SearchUtils.getSortByDirection("name(Asc)"));
+    assertEquals("DESC", SearchUtils.getSortByDirection("name(desc)"));
+    assertEquals("DESC", SearchUtils.getSortByDirection("name(DESC)"));
+    assertEquals("DESC", SearchUtils.getSortByDirection("name(Desc)"));
+  }
+
   // ************************************************************************
   // **************************  Private Methods  ***************************
   // ************************************************************************
