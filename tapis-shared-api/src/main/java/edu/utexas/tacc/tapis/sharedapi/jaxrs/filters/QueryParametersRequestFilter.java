@@ -17,6 +17,8 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.Provider;
 import java.util.List;
 
+import static edu.utexas.tacc.tapis.search.SearchUtils.*;
+
 /*
  *  jax-rs filter to intercept various query parameters and set values in the thread context.
  *  Parameters:
@@ -69,6 +71,13 @@ public class QueryParametersRequestFilter implements ContainerRequestFilter
     if (queryParameters == null || queryParameters.isEmpty()) return;
     // Get thread context
     TapisThreadContext threadContext = TapisThreadLocal.tapisThreadContext.get();
+
+    // Set default sort and paginate options
+    threadContext.setLimit(DEFAULT_LIMIT);
+    threadContext.setSortBy(DEFAULT_SORT_BY);
+    threadContext.setSortByDirection(DEFAULT_SORT_BY_DIRECTION);
+    threadContext.setOffset(DEFAULT_OFFSET);
+    threadContext.setStartAfter(DEFAULT_START_AFTER);
 
     // Look for and extract pretty print query parameter.
     // Common checks for query parameters
@@ -172,11 +181,20 @@ public class QueryParametersRequestFilter implements ContainerRequestFilter
     if (!StringUtils.isBlank(parmValueStartAfter)) threadContext.setStartAfter(parmValueStartAfter);
 
     // Check constraints
-    // If startAfter is set then we must also have a sortBy
+    // Specifying startAfter without sortBy is an invalid combination
     if (!StringUtils.isBlank(threadContext.getStartAfter()) && StringUtils.isBlank(threadContext.getSortBy()))
     {
-      String msg = MsgUtils.getMsg("TAPIS_QUERY_PARAM_INVALID_PAIR", threadContext.getJwtTenantId(), threadContext.getJwtUser(),
+      String msg = MsgUtils.getMsg("TAPIS_QUERY_PARAM_INVALID_PAIR1", threadContext.getJwtTenantId(), threadContext.getJwtUser(),
               threadContext.getOboTenantId(), threadContext.getOboUser(), PARM_STARTAFTER, PARM_SORTBY);
+      _log.error(msg);
+      requestContext.abortWith(Response.status(Response.Status.BAD_REQUEST).entity(msg).build());
+      return;
+    }
+    // Specifying startAfter and offset is an invalid combination
+    if (!StringUtils.isBlank(threadContext.getStartAfter()) && !StringUtils.isBlank(parmValueOffset))
+    {
+      String msg = MsgUtils.getMsg("TAPIS_QUERY_PARAM_INVALID_PAIR2", threadContext.getJwtTenantId(), threadContext.getJwtUser(),
+              threadContext.getOboTenantId(), threadContext.getOboUser(), PARM_STARTAFTER, PARM_OFFSET);
       _log.error(msg);
       requestContext.abortWith(Response.status(Response.Status.BAD_REQUEST).entity(msg).build());
       return;

@@ -34,10 +34,10 @@ public final class TapisThreadContext
     // Information that is extracted from query parameters
     private boolean prettyPrint = false;
     private List<String> searchList;
-    private int limit = -1;
+    private int limit;
     private String sortBy;
     private String sortByDirection;
-    private int offset = 0;
+    private int offset;
     private String startAfter;
 
     // Account type also cannot be null.  The delegator subject is either null when

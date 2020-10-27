@@ -48,7 +48,12 @@ public class SearchUtils
 
   public static final String SORT_BY_DIRECTION_ASC = "ASC";
   public static final String SORT_BY_DIRECTION_DESC = "DESC";
+
+  public static final int DEFAULT_LIMIT = -1;
+  public static final String DEFAULT_SORT_BY = "";
   public static final String DEFAULT_SORT_BY_DIRECTION = SORT_BY_DIRECTION_ASC;
+  public static final int DEFAULT_OFFSET = -1;
+  public static final String DEFAULT_START_AFTER = "";
 
   // Regex for parsing (<attr1>.<op>.<val1>)~(<attr2>.<op>.<val2>) ... See validateAndExtractSearchList
   private static final String SEARCH_REGEX = "(?:\\\\.|[^~\\\\]++)+";
