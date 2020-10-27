@@ -66,9 +66,7 @@ public class QueryParametersRequestFilter implements ContainerRequestFilter
     // Tracing.
     if (_log.isTraceEnabled())
       _log.trace("Executing JAX-RX request filter: " + this.getClass().getSimpleName() + ".");
-    // Retrieve all query parameters. If none we are done.
-    MultivaluedMap<String, String> queryParameters = requestContext.getUriInfo().getQueryParameters();
-    if (queryParameters == null || queryParameters.isEmpty()) return;
+
     // Get thread context
     TapisThreadContext threadContext = TapisThreadLocal.tapisThreadContext.get();
 
@@ -78,6 +76,10 @@ public class QueryParametersRequestFilter implements ContainerRequestFilter
     threadContext.setSortByDirection(DEFAULT_SORT_BY_DIRECTION);
     threadContext.setOffset(DEFAULT_OFFSET);
     threadContext.setStartAfter(DEFAULT_START_AFTER);
+
+    // Retrieve all query parameters. If none we are done.
+    MultivaluedMap<String, String> queryParameters = requestContext.getUriInfo().getQueryParameters();
+    if (queryParameters == null || queryParameters.isEmpty()) return;
 
     // Look for and extract pretty print query parameter.
     // Common checks for query parameters
@@ -122,7 +124,7 @@ public class QueryParametersRequestFilter implements ContainerRequestFilter
     String parmValueLimit = getQueryParm(queryParameters, PARM_LIMIT);
     if (!StringUtils.isBlank(parmValueLimit))
     {
-      int limit;
+      int limit = DEFAULT_LIMIT;
       // Check that it is an integer
       try { limit = Integer.parseInt(parmValueLimit); }
       catch (NumberFormatException e)
