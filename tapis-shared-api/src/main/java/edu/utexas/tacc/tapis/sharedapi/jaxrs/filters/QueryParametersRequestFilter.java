@@ -26,7 +26,7 @@ import static edu.utexas.tacc.tapis.search.SearchUtils.*;
  *    search - String indicating search conditions to use when retrieving results
  *    limit - Integer indicating maximum number of results to be included, -1 for unlimited
  *    sort_by - e.g. sort_by=owner(asc), sort_by=created(desc)
- *    offset - number of results to skip
+ *    skip - number of results to skip
  *    start_after - e.g. systems?limit=10&sort_by=id(asc)&start_after=101
  *
  *  NOTE: Process "pretty" here because it is a parameter for all endpoints and
@@ -51,7 +51,7 @@ public class QueryParametersRequestFilter implements ContainerRequestFilter
   private static final String PARM_SEARCH = "search";
   private static final String PARM_LIMIT = "limit";
   private static final String PARM_SORTBY = "sort_by";
-  private static final String PARM_OFFSET = "offset";
+  private static final String PARM_SKIP = "skip";
   private static final String PARM_STARTAFTER = "start_after";
 
   /* ********************************************************************** */
@@ -74,7 +74,7 @@ public class QueryParametersRequestFilter implements ContainerRequestFilter
     threadContext.setLimit(DEFAULT_LIMIT);
     threadContext.setSortBy(DEFAULT_SORT_BY);
     threadContext.setSortByDirection(DEFAULT_SORT_BY_DIRECTION);
-    threadContext.setOffset(DEFAULT_OFFSET);
+    threadContext.setSkip(DEFAULT_SKIP);
     threadContext.setStartAfter(DEFAULT_START_AFTER);
 
     // Retrieve all query parameters. If none we are done.
@@ -158,23 +158,23 @@ public class QueryParametersRequestFilter implements ContainerRequestFilter
       threadContext.setSortByDirection(SearchUtils.getSortByDirection(parmValueSortBy));
     }
 
-    // Look for and extract offset query parameter.
-    if (invalidParm(threadContext, requestContext, PARM_OFFSET)) { return; }
-    String parmValueOffset = getQueryParm(queryParameters, PARM_OFFSET);
-    if (!StringUtils.isBlank(parmValueOffset))
+    // Look for and extract skip query parameter.
+    if (invalidParm(threadContext, requestContext, PARM_SKIP)) { return; }
+    String parmValueSkip = getQueryParm(queryParameters, PARM_SKIP);
+    if (!StringUtils.isBlank(parmValueSkip))
     {
-      int offset;
+      int skip;
       // Check that it is an integer
-      try { offset = Integer.parseInt(parmValueOffset); }
+      try { skip = Integer.parseInt(parmValueSkip); }
       catch (NumberFormatException e)
       {
         String msg = MsgUtils.getMsg("TAPIS_QUERY_PARAM_NOTINT", threadContext.getJwtTenantId(), threadContext.getJwtUser(),
-                threadContext.getOboTenantId(), threadContext.getOboUser(), PARM_OFFSET, parmValueOffset);
+                threadContext.getOboTenantId(), threadContext.getOboUser(), PARM_SKIP, parmValueSkip);
         _log.error(msg);
         requestContext.abortWith(Response.status(Response.Status.BAD_REQUEST).entity(msg).build());
         return;
       }
-      threadContext.setOffset(offset);
+      threadContext.setSkip(skip);
     }
 
     // Look for and extract start_after query parameter.
@@ -192,11 +192,11 @@ public class QueryParametersRequestFilter implements ContainerRequestFilter
       requestContext.abortWith(Response.status(Response.Status.BAD_REQUEST).entity(msg).build());
       return;
     }
-    // Specifying startAfter and offset is an invalid combination
-    if (!StringUtils.isBlank(threadContext.getStartAfter()) && !StringUtils.isBlank(parmValueOffset))
+    // Specifying startAfter and skip is an invalid combination
+    if (!StringUtils.isBlank(threadContext.getStartAfter()) && !StringUtils.isBlank(parmValueSkip))
     {
       String msg = MsgUtils.getMsg("TAPIS_QUERY_PARAM_INVALID_PAIR2", threadContext.getJwtTenantId(), threadContext.getJwtUser(),
-              threadContext.getOboTenantId(), threadContext.getOboUser(), PARM_STARTAFTER, PARM_OFFSET);
+              threadContext.getOboTenantId(), threadContext.getOboUser(), PARM_STARTAFTER, PARM_SKIP);
       _log.error(msg);
       requestContext.abortWith(Response.status(Response.Status.BAD_REQUEST).entity(msg).build());
       return;

@@ -37,7 +37,7 @@ public final class TapisThreadContext
     private int limit;
     private String sortBy;
     private String sortByDirection;
-    private int offset;
+    private int skip;
     private String startAfter;
 
     // Account type also cannot be null.  The delegator subject is either null when
@@ -103,8 +103,8 @@ public final class TapisThreadContext
     public void setSortBy(String s) { sortBy = s; }
     public String getSortByDirection() { return sortByDirection; }
     public void setSortByDirection(String s) { sortByDirection = s; }
-    public int getOffset() { return offset; }
-    public void setOffset(int i) { offset = i; }
+    public int getSkip() { return skip; }
+    public void setSkip(int i) { skip = i; }
     public String getStartAfter() { return startAfter; }
     public void setStartAfter(String s) { startAfter = s; }
 	public String getJwtTenantId(){return jwtTenantId;}
