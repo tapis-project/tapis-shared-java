@@ -25,9 +25,9 @@ import static edu.utexas.tacc.tapis.search.SearchUtils.*;
  *    pretty - Boolean indicating if response should be pretty printed
  *    search - String indicating search conditions to use when retrieving results
  *    limit - Integer indicating maximum number of results to be included, -1 for unlimited
- *    sort_by - e.g. sort_by=owner(asc), sort_by=created(desc)
+ *    sortBy - e.g. sortBy=owner(asc), sortBy=created(desc)
  *    skip - number of results to skip
- *    start_after - e.g. systems?limit=10&sort_by=id(asc)&start_after=101
+ *    startAfter - e.g. systems?limit=10&sortBy=id(asc)&startAfter=101
  *
  *  NOTE: Process "pretty" here because it is a parameter for all endpoints and
  *        is not needed for the java client or the back-end (tapis-systemslib)
@@ -50,9 +50,9 @@ public class QueryParametersRequestFilter implements ContainerRequestFilter
   private static final String PARM_PRETTY = "pretty";
   private static final String PARM_SEARCH = "search";
   private static final String PARM_LIMIT = "limit";
-  private static final String PARM_SORTBY = "sort_by";
+  private static final String PARM_SORTBY = "sortBy";
   private static final String PARM_SKIP = "skip";
-  private static final String PARM_STARTAFTER = "start_after";
+  private static final String PARM_STARTAFTER = "startAfter";
 
   /* ********************************************************************** */
   /*                            Public Methods                              */
@@ -138,7 +138,7 @@ public class QueryParametersRequestFilter implements ContainerRequestFilter
       threadContext.setLimit(limit);
     }
 
-    // Look for and extract sort_by query parameter.
+    // Look for and extract sortBy query parameter.
     if (invalidParm(threadContext, requestContext, PARM_SORTBY)) { return; }
     String parmValueSortBy = getQueryParm(queryParameters, PARM_SORTBY);
     if (!StringUtils.isBlank(parmValueSortBy))
@@ -177,7 +177,7 @@ public class QueryParametersRequestFilter implements ContainerRequestFilter
       threadContext.setSkip(skip);
     }
 
-    // Look for and extract start_after query parameter.
+    // Look for and extract startAfter query parameter.
     if (invalidParm(threadContext, requestContext, PARM_STARTAFTER)) { return; }
     String parmValueStartAfter = getQueryParm(queryParameters, PARM_STARTAFTER);
     if (!StringUtils.isBlank(parmValueStartAfter)) threadContext.setStartAfter(parmValueStartAfter);

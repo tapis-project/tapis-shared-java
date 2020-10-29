@@ -426,7 +426,7 @@ public class SearchUtilsTest
     assertEquals("Empty", SearchUtils.checkSortByQueryParam(" "));
     assertTrue(SearchUtils.checkSortByQueryParam("name(").startsWith("Unmatched parentheses"));
     assertTrue(SearchUtils.checkSortByQueryParam("name(asc").startsWith("Unmatched parentheses"));
-    assertTrue(SearchUtils.checkSortByQueryParam("(asc)").startsWith("sort_by attribute name not found"));
+    assertTrue(SearchUtils.checkSortByQueryParam("(asc)").startsWith("sortBy attribute name not found"));
     assertTrue(SearchUtils.checkSortByQueryParam("name()").startsWith("Sort direction was blank"));
     assertTrue(SearchUtils.checkSortByQueryParam("name(UP)").startsWith("Invalid sort direction"));
     assertTrue(SearchUtils.checkSortByQueryParam("invalid?col").startsWith("Invalid attribute name"));

@@ -65,7 +65,7 @@ public class SearchUtils
   // ************************************************************************
 
   // Reserved query parameters that cannot be specified when using a dedicated search endpoint
-  public enum ReservedQueryParm {PRETTY, SELECT, SEARCH, SORT_BY, LIMIT, SKIP, START_AFTER}
+  public enum ReservedQueryParm {PRETTY, SELECT, SEARCH, SortBy, LIMIT, SKIP, STARTAFTER}
   public static final Set<String> RESERVED_QUERY_PARMS = Stream.of(ReservedQueryParm.values()).map(Enum::name).collect(Collectors.toSet());
 
   // Supported operators for search
@@ -379,10 +379,10 @@ public class SearchUtils
   }
 
   /**
-   * Convert a string from camelcase to snakecase.
+   * Convert a string from camelCase to snake_case.
    * If input string is null or empty then input string is returned
    * @param str string to convert
-   * @return resulting string converted to snakecase
+   * @return resulting string converted to snake_case
    */
   public static String camelCaseToSnakeCase(String str)
   {
@@ -396,7 +396,7 @@ public class SearchUtils
   /**
    * Check validity of sortBy query parameter which must be in the form <attr_name>(<dir>)
    *   where (<dir>) is optional and <dir> = "asc" or "desc"
-   * @param sortByQueryParam - string value of sort_by query parameter
+   * @param sortByQueryParam - string value of sortBy query parameter
    * @return an error message if invalid else return null.
    */
   public static String checkSortByQueryParam(String sortByQueryParam)
@@ -406,10 +406,10 @@ public class SearchUtils
     String sortByAttr = sortByQueryParam;
     // If left paren then must be matching right paren at end and string between must be a direction
     int sortDirStart = sortByQueryParam.indexOf('(');
-    if (sortDirStart == 0) return "sort_by attribute name not found. sort_by value: " + sortByQueryParam;
+    if (sortDirStart == 0) return "sortBy attribute name not found. sortBy value: " + sortByQueryParam;
     if (sortDirStart > 0)
     {
-      if (!sortByQueryParam.endsWith(")")) return "Unmatched parentheses. sort_by value: " + sortByQueryParam;
+      if (!sortByQueryParam.endsWith(")")) return "Unmatched parentheses. sortBy value: " + sortByQueryParam;
       sortByAttr =  sortByQueryParam.substring(0,sortByQueryParam.indexOf('('));
       String sortDirection = sortByQueryParam.substring(sortDirStart+1, sortByQueryParam.length()-1);
       if (StringUtils.isBlank(sortDirection)) return "Sort direction was blank";
@@ -419,7 +419,7 @@ public class SearchUtils
       }
     }
     // Check that column name is valid
-    if (!validAttributeName(sortByAttr)) return "Invalid attribute name. sort_by value: " + sortByQueryParam;
+    if (!validAttributeName(sortByAttr)) return "Invalid attribute name. sortBy value: " + sortByQueryParam;
     return null;
   }
 
@@ -427,8 +427,8 @@ public class SearchUtils
    * Extract column name from sortBy query parameter which must be in the form <col_name>(<dir>)
    *   where (<dir>) is optional and <dir> = "asc" or "desc"
    * NOTE: This method assumes that value has been checked using checkSortByQueryParam
-   * @param sortByQueryParam - string value of sort_by query parameter
-   * @return the sort_by column name or null if not found
+   * @param sortByQueryParam - string value of sortBy query parameter
+   * @return the sortBy column name or null if not found
    */
   public static String getSortByColumn(String sortByQueryParam)
   {
@@ -442,8 +442,8 @@ public class SearchUtils
    * Extract direction from sortBy query parameter which must be in the form <col_name>(<dir>)
    *   where (<dir>) is optional and <dir> = "asc" or "desc"
    * NOTE: This method assumes that value has been checked using checkSortByQueryParam
-   * @param sortByQueryParam - string value of sort_by query parameter
-   * @return the sort_by direction or default value if direction not specified
+   * @param sortByQueryParam - string value of sortBy query parameter
+   * @return the sortBy direction or default value if direction not specified
    */
   public static String getSortByDirection(String sortByQueryParam)
   {
