@@ -11,7 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.Response;
 
 import java.sql.Types;
 import java.time.LocalDateTime;
@@ -46,14 +45,14 @@ public class SearchUtils
   // Local logger.
   private static final Logger _log = LoggerFactory.getLogger(SearchUtils.class);
 
-  public static final String SORT_BY_DIRECTION_ASC = "ASC";
-  public static final String SORT_BY_DIRECTION_DESC = "DESC";
+  public static final String SORTBY_DIRECTION_ASC = "ASC";
+  public static final String SORTBY_DIRECTION_DESC = "DESC";
 
   public static final int DEFAULT_LIMIT = -1;
-  public static final String DEFAULT_SORT_BY = "";
-  public static final String DEFAULT_SORT_BY_DIRECTION = SORT_BY_DIRECTION_ASC;
+  public static final String DEFAULT_SORTBY = "";
+  public static final String DEFAULT_SORTBY_DIRECTION = SORTBY_DIRECTION_ASC;
   public static final int DEFAULT_SKIP = -1;
-  public static final String DEFAULT_START_AFTER = "";
+  public static final String DEFAULT_STARTAFTER = "";
 
   // Regex for parsing (<attr1>.<op>.<val1>)~(<attr2>.<op>.<val2>) ... See validateAndExtractSearchList
   private static final String SEARCH_REGEX = "(?:\\\\.|[^~\\\\]++)+";
@@ -414,7 +413,7 @@ public class SearchUtils
       sortByAttr =  sortByQueryParam.substring(0,sortByQueryParam.indexOf('('));
       String sortDirection = sortByQueryParam.substring(sortDirStart+1, sortByQueryParam.length()-1);
       if (StringUtils.isBlank(sortDirection)) return "Sort direction was blank";
-      if (!SORT_BY_DIRECTION_ASC.equalsIgnoreCase(sortDirection) && !SORT_BY_DIRECTION_DESC.equalsIgnoreCase(sortDirection))
+      if (!SORTBY_DIRECTION_ASC.equalsIgnoreCase(sortDirection) && !SORTBY_DIRECTION_DESC.equalsIgnoreCase(sortDirection))
       {
         return "Invalid sort direction: " + sortDirection;
       }
@@ -450,7 +449,7 @@ public class SearchUtils
   {
     String sortDirection;
     int sortDirStart = sortByQueryParam.indexOf('(');
-    if (sortDirStart <= 0) sortDirection =  DEFAULT_SORT_BY_DIRECTION;
+    if (sortDirStart <= 0) sortDirection = DEFAULT_SORTBY_DIRECTION;
     else sortDirection = sortByQueryParam.substring(sortDirStart+1, sortByQueryParam.length()-1);
     return sortDirection.toUpperCase();
   }

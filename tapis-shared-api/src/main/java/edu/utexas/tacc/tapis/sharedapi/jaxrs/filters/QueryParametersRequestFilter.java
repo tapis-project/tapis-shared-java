@@ -72,10 +72,10 @@ public class QueryParametersRequestFilter implements ContainerRequestFilter
 
     // Set default sort and paginate options
     threadContext.setLimit(DEFAULT_LIMIT);
-    threadContext.setSortBy(DEFAULT_SORT_BY);
-    threadContext.setSortByDirection(DEFAULT_SORT_BY_DIRECTION);
+    threadContext.setSortBy(DEFAULT_SORTBY);
+    threadContext.setSortByDirection(DEFAULT_SORTBY_DIRECTION);
     threadContext.setSkip(DEFAULT_SKIP);
-    threadContext.setStartAfter(DEFAULT_START_AFTER);
+    threadContext.setStartAfter(DEFAULT_STARTAFTER);
 
     // Retrieve all query parameters. If none we are done.
     MultivaluedMap<String, String> queryParameters = requestContext.getUriInfo().getQueryParameters();
