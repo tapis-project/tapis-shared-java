@@ -22,6 +22,7 @@ import reactor.rabbitmq.Sender;
 import reactor.rabbitmq.SenderOptions;
 
 import java.io.IOException;
+import java.text.MessageFormat;
 import java.util.UUID;
 
 @Service
@@ -31,6 +32,7 @@ public class TapisNotificationsClient implements ITapisNotificationsClient {
     private final Receiver receiver;
     private final Sender sender;
     private static final String EXCHANGE_NAME = NotificationsConstants.EXCHANGE_NAME;
+    private static final String USER_EXCHANGE_NAME = NotificationsConstants.USER_NOTIFICATIONS_EXCHANGE;
 
     private static final ObjectMapper mapper = TapisObjectMapper.getMapper();
 
@@ -51,18 +53,42 @@ public class TapisNotificationsClient implements ITapisNotificationsClient {
         sender.declareExchange(spec).subscribe();
     }
 
+
+    @Override
+    public Mono<Void> sendUserNotificationAsync(Notification note) {
+        String routingKey = String.format("%s.%s", note.getTenant(), note.getRecipient());
+        try {
+            String m = mapper.writeValueAsString(note);
+            OutboundMessage outboundMessage = new OutboundMessage(USER_EXCHANGE_NAME, routingKey, m.getBytes());
+            return sender.send(Mono.just(outboundMessage));
+        } catch (IOException ex) {
+            log.error("Could not serialize message, ignoring: {}", note.toString());
+            return Mono.empty();
+        }
+    }
+
+    @Override
+    public Mono<Void> sendNotificationAsync(String routingKey, Notification note) {
+        try {
+            String m = mapper.writeValueAsString(note);
+            OutboundMessage outboundMessage = new OutboundMessage(EXCHANGE_NAME, routingKey, m.getBytes());
+            return sender.send(Mono.just(outboundMessage));
+        } catch (IOException ex) {
+            log.error("Could not serialize message, ignoring: {}", note.toString());
+            return Mono.empty();
+        }
+    }
+
     @Override
     public void sendNotification(String routingKey, Notification note) throws IOException {
-        String m = mapper.writeValueAsString(note);
-        OutboundMessage outboundMessage = new OutboundMessage(EXCHANGE_NAME, routingKey, m.getBytes());
-        sender.send(Mono.just(outboundMessage)).subscribe();
+        sendNotificationAsync(routingKey, note).subscribe();
     }
 
     @Override
     public Flux<Notification> streamNotifications(String bindingKey) {
         QueueSpecification qspec = new QueueSpecification();
         qspec.durable(true);
-        qspec.name("tapis.notifications." + UUID.randomUUID().toString());
+        qspec.name("tapis.notifications." + bindingKey);
 
         // Binding the queue to the exchange
         BindingSpecification bindSpec = new BindingSpecification();

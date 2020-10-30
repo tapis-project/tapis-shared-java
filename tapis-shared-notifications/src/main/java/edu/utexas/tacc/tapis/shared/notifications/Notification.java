@@ -1,7 +1,9 @@
 package edu.utexas.tacc.tapis.shared.notifications;
 
+import javax.annotation.Nullable;
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
+import javax.validation.Valid;
 import javax.validation.Validation;
 import javax.validation.Validator;
 import javax.validation.constraints.NotNull;
@@ -18,6 +20,7 @@ public class Notification implements INotification {
     private final String body;
     private final String level;
     private final String eventType; //FILE_TRANSFER_PROGRESS
+    private final NotificationMechanism notificationMechanism;
 
 
     private Notification(Builder builder) {
@@ -27,6 +30,7 @@ public class Notification implements INotification {
         this.creator = builder.creator;
         this.level = builder.level;
         this.eventType = builder.eventType;
+        this.notificationMechanism = builder.mechanism;
         this.created = Instant.now();
     }
 
@@ -38,6 +42,7 @@ public class Notification implements INotification {
         private String level;
         private String recipient;
         private String eventType;
+        private NotificationMechanism mechanism;
 
         private static Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
 
@@ -71,6 +76,12 @@ public class Notification implements INotification {
             this.eventType = eventType;
             return this;
         }
+
+        public Builder setMechanism(NotificationMechanism mechanism) {
+            this.mechanism = mechanism;
+            return this;
+        }
+
 
         public Notification build() {
 
@@ -128,5 +139,12 @@ public class Notification implements INotification {
     public String getTenant() {
         return tenant;
     }
+
+    @Nullable
+    @Valid
+    public NotificationMechanism getNotificationMechanism(){
+        return notificationMechanism;
+    }
+
 
 }

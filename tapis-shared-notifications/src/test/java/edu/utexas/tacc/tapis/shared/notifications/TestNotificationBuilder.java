@@ -5,6 +5,7 @@ import edu.utexas.tacc.tapis.shared.notifications.Notification;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.validation.ConstraintViolationException;
 import javax.validation.ValidationException;
 
 @Test
@@ -29,6 +30,24 @@ public class TestNotificationBuilder {
             .setTenant("testTenant")
             .build();
         Assert.assertNotNull(notification.getCreated());
+        Assert.assertNull(notification.getNotificationMechanism());
     }
+
+
+    @Test
+    void testShouldValidateWithMechanism() {
+        Notification notification = new Notification.Builder()
+            .setBody("hello")
+            .setCreator("testService")
+            .setEventType("TEST_EVENT")
+            .setLevel("INFO")
+            .setRecipient("testuser")
+            .setTenant("testTenant")
+            .setMechanism(new NotificationMechanism.Builder().setMechanism("email").setEmailAddress("test@test").build())
+            .build();
+        Assert.assertNotNull(notification.getCreated());
+        Assert.assertEquals(notification.getNotificationMechanism().getEmailAddress(), "test@test");
+    }
+
 
 }
