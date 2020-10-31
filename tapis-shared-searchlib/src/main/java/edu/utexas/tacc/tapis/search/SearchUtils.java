@@ -65,7 +65,7 @@ public class SearchUtils
   // ************************************************************************
 
   // Reserved query parameters that cannot be specified when using a dedicated search endpoint
-  public enum ReservedQueryParm {PRETTY, SELECT, SEARCH, SortBy, LIMIT, SKIP, STARTAFTER}
+  public enum ReservedQueryParm {PRETTY, SELECT, SEARCH, SORTBY, LIMIT, SKIP, STARTAFTER}
   public static final Set<String> RESERVED_QUERY_PARMS = Stream.of(ReservedQueryParm.values()).map(Enum::name).collect(Collectors.toSet());
 
   // Supported operators for search
@@ -125,6 +125,23 @@ public class SearchUtils
     SearchOperator op = null;
     if (SEARCH_OP_SET.contains(opStr)) op = SearchOperator.valueOf(opStr);
     return op;
+  }
+
+  /**
+   * Extract a list of select attributes provided as a single string
+   * Select list must have the form  <attribute1>,<attribute2>, ...
+   * @param selectListStr - String containing comma separated list of attributes
+   * @return the list of extracted attributes
+   * @throws IllegalArgumentException if error encountered while parsing.
+   */
+  public static List<String> extractAndValidateSelectList(String selectListStr) throws IllegalArgumentException
+  {
+    var selectList = new ArrayList<String>();
+    if (StringUtils.isBlank(selectListStr)) return selectList;
+    _log.trace("Parsing SelectList: " + selectListStr);
+    // Parse search string into a list of attributes
+// TODO    ???
+    return selectList;
   }
 
   /**

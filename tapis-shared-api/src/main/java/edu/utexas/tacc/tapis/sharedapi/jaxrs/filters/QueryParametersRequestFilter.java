@@ -15,6 +15,7 @@ import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.Provider;
+import java.util.Arrays;
 import java.util.List;
 
 import static edu.utexas.tacc.tapis.search.SearchUtils.*;
@@ -23,6 +24,7 @@ import static edu.utexas.tacc.tapis.search.SearchUtils.*;
  *  jax-rs filter to intercept various query parameters and set values in the thread context.
  *  Parameters:
  *    pretty - Boolean indicating if response should be pretty printed
+ *    select - String indicating which attributes to include when returning results
  *    search - String indicating search conditions to use when retrieving results
  *    limit - Integer indicating maximum number of results to be included, -1 for unlimited
  *    sortBy - e.g. sortBy=owner(asc), sortBy=created(desc)
@@ -48,6 +50,7 @@ public class QueryParametersRequestFilter implements ContainerRequestFilter
 
   // Query parameter names
   private static final String PARM_PRETTY = "pretty";
+  private static final String PARM_SELECT = "select";
   private static final String PARM_SEARCH = "search";
   private static final String PARM_LIMIT = "limit";
   private static final String PARM_SORTBY = "sortBy";
@@ -99,6 +102,26 @@ public class QueryParametersRequestFilter implements ContainerRequestFilter
         threadContext.setPrettyPrint(Boolean.parseBoolean(parmValuePretty));
       }
     }
+
+    // Look for and extract select query parameter.
+    if (invalidParm(threadContext, requestContext, PARM_SELECT)) { return; }
+    String parmValueSelect = getQueryParm(queryParameters, PARM_SELECT);
+    // Extract the select list
+    try
+    {
+      List<String> selectList = SearchUtils.extractAndValidateSelectList(parmValueSelect);
+      threadContext.setSelectList(selectList);
+    }
+    catch (Exception e)
+    {
+      String msg = MsgUtils.getMsg("SELECT_LIST_ERROR", threadContext.getJwtTenantId(), threadContext.getJwtUser(),
+              threadContext.getOboTenantId(), threadContext.getOboUser(), e.getMessage());
+      _log.error(msg, e);
+      requestContext.abortWith(Response.status(Response.Status.BAD_REQUEST).entity(msg).build());
+      return;
+    }
+    // TODO
+    threadContext.setSelectList(Arrays.asList("name", "id"));
 
     // Look for and extract search query parameter.
     if (invalidParm(threadContext, requestContext, PARM_SEARCH)) { return; }
