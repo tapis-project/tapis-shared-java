@@ -23,6 +23,8 @@ import reactor.rabbitmq.SenderOptions;
 
 import java.io.IOException;
 import java.text.MessageFormat;
+import java.time.Duration;
+import java.time.temporal.TemporalUnit;
 import java.util.UUID;
 
 @Service
@@ -33,6 +35,7 @@ public class TapisNotificationsClient implements ITapisNotificationsClient {
     private final Sender sender;
     private static final String EXCHANGE_NAME = NotificationsConstants.EXCHANGE_NAME;
     private static final String USER_EXCHANGE_NAME = NotificationsConstants.USER_NOTIFICATIONS_EXCHANGE;
+    private static final long EXPIRATION = Duration.ofDays(7).toMillis();
 
     private static final ObjectMapper mapper = TapisObjectMapper.getMapper();
 
@@ -58,8 +61,11 @@ public class TapisNotificationsClient implements ITapisNotificationsClient {
     public Mono<Void> sendUserNotificationAsync(Notification note) {
         String routingKey = String.format("%s.%s", note.getTenant(), note.getRecipient());
         try {
+            AMQP.BasicProperties props = new AMQP.BasicProperties.Builder()
+                .expiration(String.valueOf(EXPIRATION))
+                .build();
             String m = mapper.writeValueAsString(note);
-            OutboundMessage outboundMessage = new OutboundMessage(USER_EXCHANGE_NAME, routingKey, m.getBytes());
+            OutboundMessage outboundMessage = new OutboundMessage(USER_EXCHANGE_NAME, routingKey, props, m.getBytes());
             return sender.send(Mono.just(outboundMessage));
         } catch (IOException ex) {
             log.error("Could not serialize message, ignoring: {}", note.toString());
@@ -67,11 +73,21 @@ public class TapisNotificationsClient implements ITapisNotificationsClient {
         }
     }
 
+
+    /**
+     * The routing key MUST be in the format of {service}.{tenant}.{eventType}.{OptionalUUID}
+     * @param routingKey
+     * @param note
+     * @return
+     */
     @Override
     public Mono<Void> sendNotificationAsync(String routingKey, Notification note) {
         try {
+            AMQP.BasicProperties props = new AMQP.BasicProperties.Builder()
+                .expiration(String.valueOf(EXPIRATION))
+                .build();
             String m = mapper.writeValueAsString(note);
-            OutboundMessage outboundMessage = new OutboundMessage(EXCHANGE_NAME, routingKey, m.getBytes());
+            OutboundMessage outboundMessage = new OutboundMessage(EXCHANGE_NAME, routingKey, props, m.getBytes());
             return sender.send(Mono.just(outboundMessage));
         } catch (IOException ex) {
             log.error("Could not serialize message, ignoring: {}", note.toString());
