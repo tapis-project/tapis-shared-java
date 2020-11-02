@@ -6,8 +6,8 @@
     <parent>
         <groupId>edu.utexas.tacc.tapis</groupId>
         <artifactId>tapis-bom</artifactId>
-<!--        <version>[1.11,2.0)</version>-->
-        <version>1.11.26-SNAPSHOT</version>
+        <version>[1.11,2.0)</version>
+<!--        <version>1.11.26</version>-->
         <!-- Set empty relative path to avoid maven warning and-->
         <!--   ensure parent is found in local repository if that-->
         <!--   is the only place it exists.-->
