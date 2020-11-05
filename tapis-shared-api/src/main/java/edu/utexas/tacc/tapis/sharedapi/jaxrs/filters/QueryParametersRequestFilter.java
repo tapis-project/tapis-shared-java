@@ -22,12 +22,13 @@ import static edu.utexas.tacc.tapis.search.SearchUtils.*;
 /*
  *  jax-rs filter to intercept various query parameters and set values in the thread context.
  *  Parameters:
- *    pretty - Boolean indicating if response should be pretty printed
+ *    pretty - Boolean indicating if response should be pretty printed. Default is false.
  *    search - String indicating search conditions to use when retrieving results
  *    limit - Integer indicating maximum number of results to be included, -1 for unlimited
  *    sortBy - e.g. sortBy=owner(asc), sortBy=created(desc)
  *    skip - number of results to skip
  *    startAfter - e.g. systems?limit=10&sortBy=id(asc)&startAfter=101
+ *    computeTotal - Boolean indicating if total count should be computed. Default is false.
  *
  *  NOTE: Process "pretty" here because it is a parameter for all endpoints and
  *        is not needed for the java client or the back-end (tapis-systemslib)
@@ -53,6 +54,7 @@ public class QueryParametersRequestFilter implements ContainerRequestFilter
   private static final String PARM_SORTBY = "sortBy";
   private static final String PARM_SKIP = "skip";
   private static final String PARM_STARTAFTER = "startAfter";
+  private static final String PARM_COMPUTETOTAL = "computeTotal";
 
   /* ********************************************************************** */
   /*                            Public Methods                              */
@@ -76,6 +78,7 @@ public class QueryParametersRequestFilter implements ContainerRequestFilter
     threadContext.setSortByDirection(DEFAULT_SORTBY_DIRECTION);
     threadContext.setSkip(DEFAULT_SKIP);
     threadContext.setStartAfter(DEFAULT_STARTAFTER);
+    threadContext.setComputeTotal(DEFAULT_COMPUTETOTAL);
 
     // Retrieve all query parameters. If none we are done.
     MultivaluedMap<String, String> queryParameters = requestContext.getUriInfo().getQueryParameters();
@@ -97,6 +100,25 @@ public class QueryParametersRequestFilter implements ContainerRequestFilter
       else
       {
         threadContext.setPrettyPrint(Boolean.parseBoolean(parmValuePretty));
+      }
+    }
+
+    // Look for and extract computeTotal query parameter.
+    // Common checks for query parameters
+    if (invalidParm(threadContext, requestContext, PARM_COMPUTETOTAL)) { return; }
+    String parmValueComputeTotal = getQueryParm(queryParameters, PARM_COMPUTETOTAL);
+    if (!StringUtils.isBlank(parmValueComputeTotal))
+    {
+      // Provided parameter is valid. Set as boolean
+      if (!"true".equalsIgnoreCase(parmValueComputeTotal) && !"false".equalsIgnoreCase(parmValueComputeTotal))
+      {
+        String msg = MsgUtils.getMsg("TAPIS_QUERY_PARAM_NOTBOOL", threadContext.getJwtTenantId(), threadContext.getJwtUser(),
+                threadContext.getOboTenantId(), threadContext.getOboUser(), PARM_COMPUTETOTAL, parmValueComputeTotal);
+        _log.warn(msg);
+      }
+      else
+      {
+        threadContext.setComputeTotal(Boolean.parseBoolean(parmValueComputeTotal));
       }
     }
 

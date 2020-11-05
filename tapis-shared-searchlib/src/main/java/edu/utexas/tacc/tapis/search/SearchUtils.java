@@ -53,6 +53,7 @@ public class SearchUtils
   public static final String DEFAULT_SORTBY_DIRECTION = SORTBY_DIRECTION_ASC;
   public static final int DEFAULT_SKIP = -1;
   public static final String DEFAULT_STARTAFTER = "";
+  public static final boolean DEFAULT_COMPUTETOTAL = false;
 
   // Regex for parsing (<attr1>.<op>.<val1>)~(<attr2>.<op>.<val2>) ... See validateAndExtractSearchList
   private static final String SEARCH_REGEX = "(?:\\\\.|[^~\\\\]++)+";
@@ -65,7 +66,7 @@ public class SearchUtils
   // ************************************************************************
 
   // Reserved query parameters that cannot be specified when using a dedicated search endpoint
-  public enum ReservedQueryParm {PRETTY, SELECT, SEARCH, SortBy, LIMIT, SKIP, STARTAFTER}
+  public enum ReservedQueryParm {PRETTY, SELECT, SEARCH, SORTBY, LIMIT, SKIP, STARTAFTER, COMPUTETOTAL}
   public static final Set<String> RESERVED_QUERY_PARMS = Stream.of(ReservedQueryParm.values()).map(Enum::name).collect(Collectors.toSet());
 
   // Supported operators for search
