@@ -93,8 +93,12 @@ public class NotificationMechanism {
         return this.webhookURL;
     }
 
-
-    
-    
-    
+    @Override
+    public String toString() {
+        return "NotificationMechanism{" +
+            "mechanism='" + mechanism + '\'' +
+            ", webhookURL='" + webhookURL + '\'' +
+            ", emailAddress='" + emailAddress + '\'' +
+            '}';
+    }
 }

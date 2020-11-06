@@ -31,7 +31,7 @@ public interface INotification {
      * Get the actual body of the notification.
      * @return
      */
-    String getBody();
+    Object getBody();
 
     /**
      * Returns the level of the notification, should be INFO or ERROR at the moment. Useful for

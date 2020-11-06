@@ -13,14 +13,16 @@ import java.util.Set;
 
 public class Notification implements INotification {
 
-    private final String tenant;
-    private final Instant created;
-    private final String recipient;
-    private final String creator;
-    private final String body;
-    private final String level;
-    private final String eventType; //FILE_TRANSFER_PROGRESS
-    private final NotificationMechanism notificationMechanism;
+    private String tenant;
+    private Instant created;
+    private String recipient;
+    private String creator;
+    private Object body;
+    private String level;
+    private String eventType; //FILE_TRANSFER_PROGRESS
+    private NotificationMechanism notificationMechanism;
+
+    public Notification(){}
 
 
     private Notification(Builder builder) {
@@ -38,7 +40,7 @@ public class Notification implements INotification {
     public static class Builder {
         private String tenant;
         private String creator;
-        private String body;
+        private Object body;
         private String level;
         private String recipient;
         private String eventType;
@@ -61,7 +63,7 @@ public class Notification implements INotification {
             return this;
         }
 
-        public Builder setBody(String body) {
+        public Builder setBody(Object body) {
             this.body = body;
             return this;
         }
@@ -124,7 +126,7 @@ public class Notification implements INotification {
 
     @Override
     @NotNull
-    public String getBody() {
+    public Object getBody() {
         return body;
     }
 
@@ -146,5 +148,45 @@ public class Notification implements INotification {
         return notificationMechanism;
     }
 
+    public void setEventType(String eventType) {
+        this.eventType = eventType;
+    }
 
+    public void setNotificationMechanism(NotificationMechanism notificationMechanism) {
+        this.notificationMechanism = notificationMechanism;
+    }
+
+    public void setTenant(String tenant) {
+        this.tenant = tenant;
+    }
+
+    public void setCreated(Instant created) {
+        this.created = created;
+    }
+
+    public void setRecipient(String recipient) {
+        this.recipient = recipient;
+    }
+
+    public void setCreator(String creator) {
+        this.creator = creator;
+    }
+
+    public void setBody(Object body) {
+        this.body = body;
+    }
+
+    @Override
+    public String toString() {
+        return "Notification{" +
+            "tenant='" + tenant + '\'' +
+            ", created=" + created +
+            ", recipient='" + recipient + '\'' +
+            ", creator='" + creator + '\'' +
+            ", body='" + body + '\'' +
+            ", level='" + level + '\'' +
+            ", eventType='" + eventType + '\'' +
+            ", notificationMechanism=" + notificationMechanism +
+            '}';
+    }
 }

@@ -57,23 +57,6 @@ public class TapisNotificationsClient implements ITapisNotificationsClient {
     }
 
 
-    @Override
-    public Mono<Void> sendUserNotificationAsync(Notification note) {
-        String routingKey = String.format("%s.%s", note.getTenant(), note.getRecipient());
-        try {
-            AMQP.BasicProperties props = new AMQP.BasicProperties.Builder()
-                .expiration(String.valueOf(EXPIRATION))
-                .build();
-            String m = mapper.writeValueAsString(note);
-            OutboundMessage outboundMessage = new OutboundMessage(USER_EXCHANGE_NAME, routingKey, props, m.getBytes());
-            return sender.send(Mono.just(outboundMessage));
-        } catch (IOException ex) {
-            log.error("Could not serialize message, ignoring: {}", note.toString());
-            return Mono.empty();
-        }
-    }
-
-
     /**
      * The routing key MUST be in the format of {service}.{tenant}.{eventType}.{OptionalUUID}
      * @param routingKey
@@ -104,7 +87,7 @@ public class TapisNotificationsClient implements ITapisNotificationsClient {
     public Flux<Notification> streamNotifications(String bindingKey) {
         QueueSpecification qspec = new QueueSpecification();
         qspec.durable(true);
-        qspec.name("tapis.notifications." + bindingKey);
+        qspec.name("tapis.notifications." + UUID.randomUUID().toString());
 
         // Binding the queue to the exchange
         BindingSpecification bindSpec = new BindingSpecification();
@@ -128,7 +111,7 @@ public class TapisNotificationsClient implements ITapisNotificationsClient {
             Notification note = mapper.readValue(message.getBody(), Notification.class);
             return Mono.just(note);
         } catch (IOException ex) {
-            log.error("ERROR: Could new deserialize message {}", message.getBody());
+            log.error("ERROR: Could new deserialize message", ex);
             return Mono.empty();
         }
     }
