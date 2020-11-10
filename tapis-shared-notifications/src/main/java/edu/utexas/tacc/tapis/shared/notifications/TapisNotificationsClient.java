@@ -25,6 +25,8 @@ import java.io.IOException;
 import java.text.MessageFormat;
 import java.time.Duration;
 import java.time.temporal.TemporalUnit;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -86,7 +88,10 @@ public class TapisNotificationsClient implements ITapisNotificationsClient {
     @Override
     public Flux<Notification> streamNotifications(String bindingKey) {
         QueueSpecification qspec = new QueueSpecification();
+        Map<String, Object> args = new HashMap<>();
+        args.put("x-expires", Duration.ofDays(7).toMillis());
         qspec.durable(true);
+        qspec.arguments(args);
         qspec.name("tapis.notifications." + UUID.randomUUID().toString());
 
         // Binding the queue to the exchange

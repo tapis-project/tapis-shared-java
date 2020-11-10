@@ -47,4 +47,11 @@ public interface INotification {
     String getEventType();
 
 
+    /**
+     *
+     * @return
+     */
+    public NotificationMechanism getNotificationMechanism();
+
+
 }
