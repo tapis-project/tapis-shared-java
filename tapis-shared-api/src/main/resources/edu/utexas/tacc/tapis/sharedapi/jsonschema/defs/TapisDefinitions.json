@@ -49,26 +49,9 @@
              "additionalProperties": false
         },
         "Constraint": {
-            "$comment": "Used to specify constraints to be applied against system capabilities",
-            "type": "object",
-                "properties": {
-                    "key":   {"type": "string"},
-                    "op": {
-                        "type": "string",
-                        "enum": ["eq", "=", "neq", "!=", "gt", ">", "gte", ">=", "lt", "<", "lte", "<=", "in", "nin", "like", "nlike", "between"]
-                    },
-                    "value": {
-                        "anyOf": [
-                            {"type": "string", "minLength": 0},
-                            {"type": "integer"},
-                            {"type": "number"},
-                            {"type": "boolean" },
-                            {"type": "null" }
-                        ]
-                    }
-             },
-             "required": ["key", "op", "value"],
-             "additionalProperties": false
+            "$comment": "Specify a constraint expression to be applied against system capabilities as the concatenation of the array items",
+            "type": "array",
+            "items": {"type": "string"}
         }
   }
 }
