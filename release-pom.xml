@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>edu.utexas.tacc.tapis</groupId>
   <artifactId>tapis-shared-java</artifactId>
-  <version>1.11.37</version>
+  <version>1.11.38</version>
   <packaging>pom</packaging>
   <name>Tapis shared</name>
   <description>TAPIS shared Java code</description>
@@ -133,6 +133,7 @@
     <module>tapis-shared-lib</module>
     <module>tapis-shared-queue</module>
     <module>tapis-shared-searchlib</module>
+    <module>tapis-shared-notifications</module>
   </modules>
   <scm>
     <connection>scm:git:git@github.com:tapis-project/tapis-shared-java.git</connection>
@@ -217,7 +218,7 @@
     <maven-shade-plugin.version>3.2.1</maven-shade-plugin.version>
     <mockito-core.version>3.0.0</mockito-core.version>
     <javax.websocket-api.version>1.1</javax.websocket-api.version>
-    <build.timestamp>2020-11-12T17:33:57Z</build.timestamp>
+    <build.timestamp>2020-11-13T16:52:01Z</build.timestamp>
     <statefulj.version>3.0</statefulj.version>
     <java-source.version>1.13</java-source.version>
     <reactor-rabbitmq.version>1.4.4.RELEASE</reactor-rabbitmq.version>
@@ -255,9 +256,33 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>net.bytebuddy</groupId>
+      <artifactId>byte-buddy</artifactId>
+      <version>1.9.10</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>net.bytebuddy</groupId>
+      <artifactId>byte-buddy-agent</artifactId>
+      <version>1.9.10</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>org.apache-extras.beanshell</groupId>
       <artifactId>bsh</artifactId>
       <version>2.0b6</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <version>3.0.0</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.objenesis</groupId>
+      <artifactId>objenesis</artifactId>
+      <version>2.6</version>
       <scope>test</scope>
     </dependency>
     <dependency>
