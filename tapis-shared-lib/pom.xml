@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>edu.utexas.tacc.tapis</groupId>
 		<artifactId>tapis-shared-java</artifactId>
-		<version>1.11.38-SNAPSHOT</version>
+		<version>1.11.39-SNAPSHOT</version>
 	</parent>
 
 	<artifactId>tapis-shared-lib</artifactId>
@@ -13,6 +13,19 @@
 	<description>Libraries used by multiple Tapis modules</description>
 
 	<dependencies>
+		<dependency>
+			<groupId>edu.utexas.tacc.tapis</groupId>
+			<artifactId>systems-client</artifactId>
+			<version>${tapis-client-java.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.datatype</groupId>
+			<artifactId>jackson-datatype-jsr310</artifactId>
+		</dependency>
 		<dependency>
 			<!-- Logback supplies the proper version of sl4j -->
 			<groupId>ch.qos.logback</groupId>
@@ -57,6 +70,10 @@
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
         </dependency>
+		<dependency>
+			<groupId>com.jcraft</groupId>
+			<artifactId>jsch</artifactId>
+		</dependency>
         
 	</dependencies>
     <build>
