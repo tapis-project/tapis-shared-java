@@ -129,25 +129,6 @@ public class TapisEnv
 	  // Boolean, default is true.
 	  TAPIS_QUEUE_AUTO_RECOVERY("tapis.queue.auto.recovery"),
 	  
-	  // ------------------- Notification Parameters -------------------
-	  // Currently, only "BEANSTALK" is supported.
-	  TAPIS_NOTIF_QUEUE_TYPE("tapis.notif.queue.type"),
-	  
-	  // The notification queue host.
-	  TAPIS_NOTIF_HOST("tapis.notif.host"),
-	  
-	  // The port used on the notification queue host.
-	  TAPIS_NOTIF_PORT("tapis.notif.port"),
-	  
-	  // The onto which messages that generate notifications are placed.
-	  TAPIS_NOTIF_QUEUE_NAME("tapis.notif.queue.name"),
-	  
-	  // The retry queue name.
-	  TAPIS_NOTIF_RETRY_QUEUE_NAME("tapis.notif.retry.queue.name"),
-	  
-	  // The topic queue name (not currently used).
-	  TAPIS_NOTIF_TOPIC_NAME("tapis.notif.topic.name"),
-	  
 	  // ------------------- Mail Parameters ---------------------------
 	  // One of the currently supported providers (SMTP or LOG).
 	  TAPIS_MAIL_PROVIDER("tapis.mail.provider"),
@@ -263,7 +244,6 @@ public class TapisEnv
 	  // being skipped, then this value does not need to be set.
 	  // String value, no default.
 	  TAPIS_ENVONLY_KEYSTORE_PASSWORD(ENVONLY_KEY_PREFIX + "keystore.password");
-	    
 	  
 	  // The name of the actual environment variable in the OS.
 	  private String _envName;
