@@ -1,4 +1,4 @@
-package edu.utexas.tacc.tapis.sharedapi.security;
+package edu.utexas.tacc.tapis.shared.security;
 
 import java.util.List;
 import java.util.Map;

@@ -1,7 +1,7 @@
-package edu.utexas.tacc.tapis.sharedapi.security;
+package edu.utexas.tacc.tapis.shared.security;
 
 import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
-import edu.utexas.tacc.tapis.sharedapi.security.TenantManager.RequestRoutingInfo;
+import edu.utexas.tacc.tapis.shared.security.TenantManager.RequestRoutingInfo;
 
 /** This class ties together the TenantManager and ServiceJWT classes to provide all
  * the routing and authentication information needed to send a request to a service
