@@ -1,6 +1,7 @@
 package edu.utexas.tacc.tapis.search;
 
 import com.google.gson.JsonSyntaxException;
+import edu.utexas.tacc.tapis.search.requests.ReqMatch;
 import edu.utexas.tacc.tapis.search.requests.ReqSearch;
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
 import edu.utexas.tacc.tapis.shared.utils.TapisGsonUtils;
@@ -469,9 +470,28 @@ public class SearchUtils
     // When put together full string must be a valid SQL-like where clause. This will be validated in the service call.
     // Not all SQL syntax is supported. See SqlParser.jj in tapis-shared-searchlib.
     StringJoiner sj = new StringJoiner(" ");
-    for (String s : req.search) { sj.add(s); }
+    if (req != null & req.search != null)
+    {
+      for (String s : req.search) { sj.add(s); }
+    }
     String searchStr = sj.toString();
     return searchStr;
+  }
+
+  /**
+   * Given json from a match request body put together the complete SQL-like search string.
+   * @param rawJson - json containing match request
+   * @return - Full match string
+   * @throws JsonSyntaxException on error parsing json
+   */
+  public static String getMatchFromRequestJson(String rawJson) throws JsonSyntaxException
+  {
+    ReqMatch req;
+    req = TapisGsonUtils.getGson().fromJson(rawJson, ReqMatch.class);
+    // Concatenate all strings into a single SQL-like search string
+    StringJoiner sj = new StringJoiner(" ");
+    if (req != null & req.match != null) { for (String s : req.match) { sj.add(s); } }
+    return sj.toString();
   }
 
   // ************************************************************************
