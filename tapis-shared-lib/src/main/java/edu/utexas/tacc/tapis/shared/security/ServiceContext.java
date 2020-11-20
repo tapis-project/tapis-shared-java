@@ -13,7 +13,12 @@ import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
 import edu.utexas.tacc.tapis.shared.exceptions.runtime.TapisRuntimeException;
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
 
-public final class ServiceContext 
+/** Use this singleton class or any subclass of it to manage the execution 
+ * environment of Tapis service web applications or worker programs. 
+ * 
+ * @author rcardone
+ */
+public class ServiceContext 
 {
     /* ********************************************************************** */
 	/*                               Constants                                */
