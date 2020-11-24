@@ -12,6 +12,7 @@ import edu.utexas.tacc.tapis.shared.TapisConstants;
 import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
 import edu.utexas.tacc.tapis.shared.exceptions.runtime.TapisRuntimeException;
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
+import edu.utexas.tacc.tapis.tokens.client.model.TapisAccessToken;
 
 /** Use this singleton class or any subclass of it to manage the execution 
  * environment of Tapis service web applications or worker programs. 
@@ -62,6 +63,23 @@ public class ServiceContext
 	public static ServiceContext getInstance() {return SingletonInitializer._instance;}
 
 	/* ---------------------------------------------------------------------- */
+    /* getAccessJWT:                                                          */
+	/* ---------------------------------------------------------------------- */
+	/** Get the calling service's serialized JWT for a given service and tenant.
+	 * 
+	 * @param tenant the tenant of the target service
+	 * @param service the target service 
+	 * @return the serialized access JWT 
+	 * @throws TapisException 
+	 * @throws RuntimeException 
+	 */
+	public String getAccessJWT(String tenant, String service) 
+     throws RuntimeException, TapisException
+	{
+		return getRouter(tenant, service).getAccessJWT();
+	}
+	
+	/* ---------------------------------------------------------------------- */
     /* initServiceJWT:                                                        */
 	/* ---------------------------------------------------------------------- */
 	/** Initialize the JWT manager responsible for acquiring and refreshing
@@ -71,12 +89,14 @@ public class ServiceContext
 	 * The password is not saved.  Initialization succeeds at most once. 
 	 * 
 	 * @param siteId the site at which the initializing service is running
+	 * @param service the name of the call service whose JWTs will be created
 	 * @param servicePassword the service password provided at start up
 	 * @throws TapisRuntimeException
 	 * @throws TapisException
 	 * @throws TapisClientException
 	 */
-	public synchronized void initServiceJWT(String siteId, String servicePassword) 
+	public synchronized void initServiceJWT(String siteId, String service, 
+			                                String servicePassword) 
 	 throws TapisRuntimeException, TapisException, TapisClientException
 	{
 		// Check input.
@@ -115,7 +135,7 @@ public class ServiceContext
 		jwtParms.setTenant(tenantId);
 		jwtParms.setTargetSites(sites);
 		jwtParms.setTokensBaseUrl(tenant.getBaseUrl());
-		jwtParms.setServiceName(TapisConstants.SERVICE_NAME_JOBS);
+		jwtParms.setServiceName(service);
 		  
 		// Create the manager and complete initialization.
 		_serviceJWT = new ServiceJWT(jwtParms, servicePassword);
