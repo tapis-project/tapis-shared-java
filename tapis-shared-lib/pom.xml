@@ -23,11 +23,36 @@
             <artifactId>tokens-client</artifactId>
             <version>${tapis-client-java.version}</version>
         </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>apps-client</artifactId>
+            <version>${tapis-client-java.version}</version>
+        </dependency>
 		<dependency>
 			<groupId>edu.utexas.tacc.tapis</groupId>
 			<artifactId>systems-client</artifactId>
 			<version>${tapis-client-java.version}</version>
 		</dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>security-client</artifactId>
+            <version>${tapis-client-java.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>auth-client</artifactId>
+            <version>${tapis-client-java.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>meta-client</artifactId>
+            <version>${tapis-client-java.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>files-client</artifactId>
+            <version>${tapis-client-java.version}</version>
+        </dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>

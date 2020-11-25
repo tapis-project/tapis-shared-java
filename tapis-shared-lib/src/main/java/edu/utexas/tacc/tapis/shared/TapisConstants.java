@@ -24,6 +24,7 @@ public class TapisConstants
 	public static final String SERVICE_NAME_APPS     = "apps";
 	public static final String SERVICE_NAME_FILES    = "files";
 	public static final String SERVICE_NAME_POSTITS  = "postits";
+	public static final String SERVICE_NAME_META     = "meta";
 
 	// Thread local logging identifier.
 	public static final String MDC_ID_KEY = "UNIQUE_ID";
