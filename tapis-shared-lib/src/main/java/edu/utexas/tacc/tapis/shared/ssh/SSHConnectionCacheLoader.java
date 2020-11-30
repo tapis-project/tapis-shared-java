@@ -1,10 +1,13 @@
 package edu.utexas.tacc.tapis.shared.ssh;
 
-import com.google.common.cache.CacheLoader;
-import edu.utexas.tacc.tapis.systems.client.gen.model.TSystem;
+import java.io.IOException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.io.IOException;
+
+import com.google.common.cache.CacheLoader;
+
+import edu.utexas.tacc.tapis.systems.client.gen.model.TSystem;
 
 public class SSHConnectionCacheLoader extends CacheLoader<SSHConnectionCacheKey, SSHConnection> {
 
@@ -16,12 +19,12 @@ public class SSHConnectionCacheLoader extends CacheLoader<SSHConnectionCacheKey,
         String username = key.getUsername();
         int port;
         SSHConnection sshConnection;
-        TSystem.DefaultAccessMethodEnum accessMethodEnum = system.getDefaultAccessMethod();
+        TSystem.DefaultAuthnMethodEnum accessMethodEnum = system.getDefaultAuthnMethod();
         // This should not be null, but if it is, we default to password.
-        accessMethodEnum = accessMethodEnum == null ? TSystem.DefaultAccessMethodEnum.PASSWORD : accessMethodEnum;
+        accessMethodEnum = accessMethodEnum == null ? TSystem.DefaultAuthnMethodEnum.PASSWORD : accessMethodEnum;
         switch (accessMethodEnum) {
             case PASSWORD:
-                String password = system.getAccessCredential().getPassword();
+                String password = system.getAuthnCredential().getPassword();
                 port = system.getPort();
                 if (port <= 0) port = 22;
                 sshConnection = new SSHConnection(
@@ -31,8 +34,8 @@ public class SSHConnectionCacheLoader extends CacheLoader<SSHConnectionCacheKey,
                         password);
                 return sshConnection;
             case PKI_KEYS:
-                String pubKey = system.getAccessCredential().getPublicKey();
-                String privateKey = system.getAccessCredential().getPrivateKey();
+                String pubKey = system.getAuthnCredential().getPublicKey();
+                String privateKey = system.getAuthnCredential().getPrivateKey();
                 port = system.getPort();
                 if (port <= 0) port = 22;
                 sshConnection = new SSHConnection(system.getHost(), username, port, pubKey, privateKey);

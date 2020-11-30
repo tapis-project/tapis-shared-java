@@ -1,21 +1,19 @@
 package edu.utexas.tacc.tapis.shared.ssh;
 
-import com.jcraft.jsch.Channel;
-import edu.utexas.tacc.tapis.shared.ssh.ISSHConnection;
-import edu.utexas.tacc.tapis.shared.ssh.SSHConnection;
-import edu.utexas.tacc.tapis.shared.ssh.SSHConnectionCache;
-import edu.utexas.tacc.tapis.shared.ssh.SSHConnectionCacheKey;
-import edu.utexas.tacc.tapis.systems.client.gen.model.Credential;
-import edu.utexas.tacc.tapis.systems.client.gen.model.TSystem;
-import org.testng.Assert;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Test;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+
+import org.testng.Assert;
+import org.testng.annotations.BeforeTest;
+import org.testng.annotations.Test;
+
+import com.jcraft.jsch.Channel;
+
+import edu.utexas.tacc.tapis.systems.client.gen.model.Credential;
+import edu.utexas.tacc.tapis.systems.client.gen.model.TSystem;
 
 @Test(groups = {"integration"})
 public class ITestSSHConnectionCache {
@@ -28,13 +26,13 @@ public class ITestSSHConnectionCache {
         creds.setAccessKey("testuser");
         creds.setPassword("password");
         testSystem = new TSystem();
-        testSystem.setAccessCredential(creds);
+        testSystem.setAuthnCredential(creds);
         testSystem.setHost("localhost");
         testSystem.setPort(2222);
         testSystem.setRootDir("/home/testuser/");
         testSystem.setName("testSystem");
         testSystem.setEffectiveUserId("testuser");
-        testSystem.setDefaultAccessMethod(TSystem.DefaultAccessMethodEnum.PASSWORD);
+        testSystem.setDefaultAuthnMethod(TSystem.DefaultAuthnMethodEnum.PASSWORD);
         List<TSystem.TransferMethodsEnum> transferMechs = new ArrayList<>();
         transferMechs.add(TSystem.TransferMethodsEnum.SFTP);
         testSystem.setTransferMethods(transferMechs);
