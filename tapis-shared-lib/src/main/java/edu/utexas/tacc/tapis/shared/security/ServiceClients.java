@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
+import com.google.common.cache.CacheStats;
 import com.google.common.cache.LoadingCache;
 
 import edu.utexas.tacc.tapis.apps.client.AppsClient;
@@ -179,6 +180,14 @@ public class ServiceClients
 		_clientCache.invalidate(key);
 	}
 	
+    /* ---------------------------------------------------------------------- */
+    /* getStats:                                                              */
+    /* ---------------------------------------------------------------------- */
+	/** Get cache usage information.
+	 * @return the guava cache statistics
+	 */
+	public CacheStats getStats() {return _clientCache.stats();}
+	
 	/* ********************************************************************** */
 	/*                            Private Methods                             */
 	/* ********************************************************************** */
@@ -202,6 +211,7 @@ public class ServiceClients
 	    LoadingCache<String,Object> cache = CacheBuilder.newBuilder()
 	        .maximumSize(MAX_CLIENTS)
 	        .expireAfterAccess(MAX_MINUTES, TimeUnit.MINUTES)
+	        .recordStats()
 	        .build(new CacheLoader<String, Object>() {
 	             @Override
 	             public Object load(String key) throws Exception {
