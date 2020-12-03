@@ -19,6 +19,8 @@ public final class TapisImplException
     public enum Condition {
         INTERNAL_SERVER_ERROR,
         BAD_REQUEST,
+        UNAUTHORIZED,
+        FORBIDDEN,
         NOT_FOUND
     }
     
@@ -45,6 +47,8 @@ public final class TapisImplException
      */
     private Condition translate(int status)
     {
+        if (status == 401) return Condition.UNAUTHORIZED;
+        if (status == 403) return Condition.FORBIDDEN;
         if (status == 404) return Condition.NOT_FOUND;
         if (status >= 400 && status < 500) return Condition.BAD_REQUEST;
         return Condition.INTERNAL_SERVER_ERROR;
