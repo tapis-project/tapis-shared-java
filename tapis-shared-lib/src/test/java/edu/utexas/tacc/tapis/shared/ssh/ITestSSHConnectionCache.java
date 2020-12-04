@@ -30,7 +30,7 @@ public class ITestSSHConnectionCache {
         testSystem.setHost("localhost");
         testSystem.setPort(2222);
         testSystem.setRootDir("/home/testuser/");
-        testSystem.setName("testSystem");
+        testSystem.setId("testSystem");
         testSystem.setEffectiveUserId("testuser");
         testSystem.setDefaultAuthnMethod(TSystem.DefaultAuthnMethodEnum.PASSWORD);
         List<TSystem.TransferMethodsEnum> transferMechs = new ArrayList<>();
