@@ -1,4 +1,4 @@
-package edu.utexas.tacc.tapis.sharedapi.model;
+package edu.utexas.tacc.tapis.shared.model;
 
 public class KeyValueString 
 {
