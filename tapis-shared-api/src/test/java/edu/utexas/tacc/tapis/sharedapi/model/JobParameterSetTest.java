@@ -4,6 +4,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
 import edu.utexas.tacc.tapis.shared.exceptions.TapisJSONException;
@@ -11,6 +12,7 @@ import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
 import edu.utexas.tacc.tapis.shared.schema.JsonValidator;
 import edu.utexas.tacc.tapis.shared.schema.JsonValidatorSpec;
 import edu.utexas.tacc.tapis.shared.utils.TapisGsonUtils;
+import edu.utexas.tacc.tapis.shared.utils.gson.javatime.Converters;
 
 /** This class tests the ability to marshal a jobs parameterSet json object into a 
  * JobParameterSet Java object.  Apps and Jobs share the parameterSet model.
@@ -78,6 +80,32 @@ public class JobParameterSetTest
         Assert.assertEquals(parmSet.archiveFilter.includes.get(1), "tapis*.log");
     }
     
+    @Test
+    public void parseTest4() throws TapisException
+    {
+        // Test minimal input.
+        String json = getInputTest3();
+        parse(wrapForParsing(json));
+        JobParameterSet parmSet = _gson.fromJson(json, JobParameterSet.class);
+        
+        // Convert back to json and then to java again.
+        String json2 = getGsonIgnoreNulls(true).toJson(parmSet);
+        parse(wrapForParsing(json2));
+        JobParameterSet parmSet2 = _gson.fromJson(json2, JobParameterSet.class);
+        
+        // Now inspect the new java object.
+        Assert.assertNotNull(parmSet2.appArgs);
+        Assert.assertEquals(parmSet2.appArgs.size(), 2);
+        Assert.assertNotNull(parmSet2.containerArgs);
+        Assert.assertEquals(parmSet2.containerArgs.size(), 2);
+        Assert.assertEquals(parmSet2.containerArgs.get(1).meta.kv.get(0).key, "k1");
+        Assert.assertEquals(parmSet2.schedulerOptions.size(), 2);
+        Assert.assertEquals(parmSet2.schedulerOptions.get(1).meta.kv.get(1).value, "");
+        Assert.assertEquals(parmSet2.envVariables.size(), 2);
+        Assert.assertEquals(parmSet2.envVariables.get(1).value, "");
+        Assert.assertNotNull(parmSet2.archiveFilter);
+        Assert.assertEquals(parmSet2.archiveFilter.includes.get(1), "tapis*.log");
+    }
     /* ********************************************************************** */
     /*                            Private Methods                             */
     /* ********************************************************************** */
@@ -96,6 +124,15 @@ public class JobParameterSetTest
     
     // Wrap the json as a parameterSet json object for validation parsing.
     private String wrapForParsing(String json) {return "{\"parameterSet\": " + json + "}";}
+    
+    // Create a gson object that does NOT serialize nulls.
+    private Gson getGsonIgnoreNulls(boolean prettyPrint)
+    {
+        GsonBuilder builder = new GsonBuilder().disableHtmlEscaping();
+        if (prettyPrint) builder.setPrettyPrinting();
+        Converters.registerAll(builder);
+        return builder.create();
+    }
     
     private String getInputTest1()
     {
