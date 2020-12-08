@@ -44,8 +44,8 @@ public class JobParameterSetTest
         String json = getInputTest1();
         parse(wrapForParsing(json));
         JobParameterSet parmSet = _gson.fromJson(json, JobParameterSet.class);
-        Assert.assertNotNull(parmSet.appArgs);
-        Assert.assertEquals(parmSet.appArgs.size(), 2);
+        Assert.assertNotNull(parmSet.getAppArgs());
+        Assert.assertEquals(parmSet.getAppArgs().size(), 2);
     }
     
     @Test
@@ -55,9 +55,9 @@ public class JobParameterSetTest
         String json = getInputTest2();
         parse(wrapForParsing(json));
         JobParameterSet parmSet = _gson.fromJson(json, JobParameterSet.class);
-        Assert.assertNotNull(parmSet.appArgs);
-        Assert.assertEquals(parmSet.appArgs.size(), 2);
-        Assert.assertNotNull(parmSet.containerArgs);
+        Assert.assertNotNull(parmSet.getAppArgs());
+        Assert.assertEquals(parmSet.getAppArgs().size(), 2);
+        Assert.assertNotNull(parmSet.getContainerArgs());
     }
     
     @Test
@@ -67,17 +67,17 @@ public class JobParameterSetTest
         String json = getInputTest3();
         parse(wrapForParsing(json));
         JobParameterSet parmSet = _gson.fromJson(json, JobParameterSet.class);
-        Assert.assertNotNull(parmSet.appArgs);
-        Assert.assertEquals(parmSet.appArgs.size(), 2);
-        Assert.assertNotNull(parmSet.containerArgs);
-        Assert.assertEquals(parmSet.containerArgs.size(), 2);
-        Assert.assertEquals(parmSet.containerArgs.get(1).meta.kv.get(0).key, "k1");
-        Assert.assertEquals(parmSet.schedulerOptions.size(), 2);
-        Assert.assertEquals(parmSet.schedulerOptions.get(1).meta.kv.get(1).value, "");
-        Assert.assertEquals(parmSet.envVariables.size(), 2);
-        Assert.assertEquals(parmSet.envVariables.get(1).value, "");
-        Assert.assertNotNull(parmSet.archiveFilter);
-        Assert.assertEquals(parmSet.archiveFilter.includes.get(1), "tapis*.log");
+        Assert.assertNotNull(parmSet.getAppArgs());
+        Assert.assertEquals(parmSet.getAppArgs().size(), 2);
+        Assert.assertNotNull(parmSet.getContainerArgs());
+        Assert.assertEquals(parmSet.getContainerArgs().size(), 2);
+        Assert.assertEquals(parmSet.getContainerArgs().get(1).getMeta().getKv().get(0).getKey(), "k1");
+        Assert.assertEquals(parmSet.getSchedulerOptions().size(), 2);
+        Assert.assertEquals(parmSet.getSchedulerOptions().get(1).getMeta().getKv().get(1).getValue(), "");
+        Assert.assertEquals(parmSet.getEnvVariables().size(), 2);
+        Assert.assertEquals(parmSet.getEnvVariables().get(1).getValue(), "");
+        Assert.assertNotNull(parmSet.getArchiveFilter());
+        Assert.assertEquals(parmSet.getArchiveFilter().getIncludes().get(1), "tapis*.log");
     }
     
     @Test
@@ -94,17 +94,17 @@ public class JobParameterSetTest
         JobParameterSet parmSet2 = _gson.fromJson(json2, JobParameterSet.class);
         
         // Now inspect the new java object.
-        Assert.assertNotNull(parmSet2.appArgs);
-        Assert.assertEquals(parmSet2.appArgs.size(), 2);
-        Assert.assertNotNull(parmSet2.containerArgs);
-        Assert.assertEquals(parmSet2.containerArgs.size(), 2);
-        Assert.assertEquals(parmSet2.containerArgs.get(1).meta.kv.get(0).key, "k1");
-        Assert.assertEquals(parmSet2.schedulerOptions.size(), 2);
-        Assert.assertEquals(parmSet2.schedulerOptions.get(1).meta.kv.get(1).value, "");
-        Assert.assertEquals(parmSet2.envVariables.size(), 2);
-        Assert.assertEquals(parmSet2.envVariables.get(1).value, "");
-        Assert.assertNotNull(parmSet2.archiveFilter);
-        Assert.assertEquals(parmSet2.archiveFilter.includes.get(1), "tapis*.log");
+        Assert.assertNotNull(parmSet2.getAppArgs());
+        Assert.assertEquals(parmSet2.getAppArgs().size(), 2);
+        Assert.assertNotNull(parmSet2.getContainerArgs());
+        Assert.assertEquals(parmSet2.getContainerArgs().size(), 2);
+        Assert.assertEquals(parmSet2.getContainerArgs().get(1).getMeta().getKv().get(0).getKey(), "k1");
+        Assert.assertEquals(parmSet2.getSchedulerOptions().size(), 2);
+        Assert.assertEquals(parmSet2.getSchedulerOptions().get(1).getMeta().getKv().get(1).getValue(), "");
+        Assert.assertEquals(parmSet2.getEnvVariables().size(), 2);
+        Assert.assertEquals(parmSet2.getEnvVariables().get(1).getValue(), "");
+        Assert.assertNotNull(parmSet2.getArchiveFilter());
+        Assert.assertEquals(parmSet2.getArchiveFilter().getIncludes().get(1), "tapis*.log");
     }
     /* ********************************************************************** */
     /*                            Private Methods                             */

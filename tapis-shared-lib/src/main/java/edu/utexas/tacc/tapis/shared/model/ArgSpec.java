@@ -7,6 +7,19 @@ package edu.utexas.tacc.tapis.shared.model;
  */
 public class ArgSpec 
 {
-    public String      arg;
-    public ArgMetaSpec meta;
+    private String      arg;
+    private ArgMetaSpec meta;
+    
+    public String getArg() {
+        return arg;
+    }
+    public void setArg(String arg) {
+        this.arg = arg;
+    }
+    public ArgMetaSpec getMeta() {
+        return meta;
+    }
+    public void setMeta(ArgMetaSpec meta) {
+        this.meta = meta;
+    }
 }
