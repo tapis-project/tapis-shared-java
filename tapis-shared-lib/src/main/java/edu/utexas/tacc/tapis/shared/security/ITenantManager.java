@@ -100,8 +100,8 @@ public interface ITenantManager {
     /* ---------------------------------------------------------------------------- */
     Site getPrimarySite();
 
+    /* --------------------------------- ------------------------------------------- */
+    /* getSiteAdminTenantId:                                                       */
     /* ---------------------------------------------------------------------------- */
-    /* getSiteMasterTenantId:                                                       */
-    /* ---------------------------------------------------------------------------- */
-	String getSiteMasterTenantId(String siteId);  
+	String getSiteAdminTenantId(String siteId);  
 }

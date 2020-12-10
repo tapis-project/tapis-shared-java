@@ -110,15 +110,15 @@ public class ServiceContext
 		// One-time initialization enforced.
 		if (_serviceJWT != null) return;
 		
-		// Get the master tenant id of the site at which we are running. 
-		var tenantId = TenantManager.getInstance().getSiteMasterTenantId(siteId);
+		// Get the admin tenant id of the site at which we are running. 
+		var tenantId = TenantManager.getInstance().getSiteAdminTenantId(siteId);
 		if (StringUtils.isBlank(tenantId)) {
-		     String msg = MsgUtils.getMsg("TAPIS_SITE_NO_MASTER_TENANT",
+		     String msg = MsgUtils.getMsg("TAPIS_SITE_NO_ADMIN_TENANT",
 		    		                      siteId, tenantId);
 		     throw new TapisException(msg);
 		}
 		   
-		// Get the site master tenant object.
+		// Get the site admin tenant object.
 		var tenant =  TenantManager.getInstance().getTenant(tenantId);
 		if (tenant == null) {
 		     String msg = MsgUtils.getMsg("TAPIS_TENANT_NOT_FOUND", tenantId);

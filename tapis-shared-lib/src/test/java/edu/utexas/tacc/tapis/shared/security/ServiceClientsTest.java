@@ -33,7 +33,7 @@ import edu.utexas.tacc.tapis.tokens.client.TokensClient;
 public class ServiceClientsTest 
 {
     // Test configuration.
-    private static final String TENANTS_BASE_URL = "https://master.develop.tapis.io";
+    private static final String TENANTS_BASE_URL = "https://admin.develop.tapis.io";
     private static final String SITE_ID = "tacc";
     private static final String CALLING_SERVICE_NAME = TapisConstants.SERVICE_NAME_JOBS;
     private static final String CALLING_SERVICE_PASSWORD = ""; // ASSIGN PASSWORD HERE

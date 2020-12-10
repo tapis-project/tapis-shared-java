@@ -7,8 +7,8 @@ package edu.utexas.tacc.tapis.shared;
  */
 public class TapisConstants 
 {
-	// Primary site master tenant.
-	public static final String PRIMARY_SITE_TENANT = "master";
+	// Primary site admin tenant.
+	public static final String PRIMARY_SITE_TENANT = "admin";
 	
 	// Service names used to identify service code externally.
 	public static final String SERVICE_NAME_JOBS     = "jobs";

@@ -58,8 +58,8 @@ public class TenantManager
     private String                   _primarySiteId;
     private Site                     _primarySite;
     
-    // The map of site master tenant keys to list of tenant values that the site
-    // master tenant is allowed to act on behalf of.  
+    // The map of site admin tenant keys to list of tenant values that the site
+    // admin tenant is allowed to act on behalf of.  
     private Map<String,List<String>> _allowableTenants;
     
     // Time of the last update.
@@ -275,7 +275,7 @@ public class TenantManager
     	// Easy case.
     	if (jwtTenantId.equals(newTenantId)) return true;
     	
-    	// Use the precalculated mapping of site master tenants to their
+    	// Use the precalculated mapping of site admin tenants to their
     	// allowable tenants.
     	var allowableTenantList = _allowableTenants.get(jwtTenantId);
     	if (allowableTenantList != null && allowableTenantList.contains(newTenantId))
@@ -383,11 +383,11 @@ public class TenantManager
 	public Site getPrimarySite() {return _primarySite;}
 	
     /* ---------------------------------------------------------------------------- */
-    /* getSiteMasterTenantId:                                                       */
+    /* getSiteAdminTenantId:                                                        */
     /* ---------------------------------------------------------------------------- */
 	@Override
-	public String getSiteMasterTenantId(String siteId) 
-	{return _sites.get(siteId).getSiteMasterTenantId();}
+	public String getSiteAdminTenantId(String siteId) 
+	{return _sites.get(siteId).getSiteAdminTenantId();}
 	
     /* **************************************************************************** */
     /*                               Private Methods                                */
@@ -457,11 +457,11 @@ public class TenantManager
     	
     	// --- Cycle through the sites map.
     	for (var entry : sites.entrySet()) {
-    		// Make sure every site has a master tenant.
-    		var masterTenant = tenants.get(entry.getValue().getSiteMasterTenantId());
-    		if (masterTenant == null) {
-                String msg = MsgUtils.getMsg("TAPIS_SITE_NO_MASTER_TENANT", entry.getKey(), 
-                		                     entry.getValue().getSiteMasterTenantId());
+    		// Make sure every site has a admin tenant.
+    		var adminTenant = tenants.get(entry.getValue().getSiteAdminTenantId());
+    		if (adminTenant == null) {
+                String msg = MsgUtils.getMsg("TAPIS_SITE_NO_ADMIN_TENANT", entry.getKey(), 
+                		                     entry.getValue().getSiteAdminTenantId());
                 _log.error(msg);
                 noErrors = false;
     		}
@@ -501,33 +501,33 @@ public class TenantManager
     /* ---------------------------------------------------------------------------- */
     /* calculateAllowableTenants:                                                   */
     /* ---------------------------------------------------------------------------- */
-    /** Create the mapping of site master tenants to the list of tenants they may act
+    /** Create the mapping of site admin tenants to the list of tenants they may act
      * on behalf of.
      * 
      * @param tenants the tenants map
      * @param sites the sites map
-     * @return the map of site master tenants to their allowable tenants
+     * @return the map of site admin tenants to their allowable tenants
      */
     private Map<String,List<String>> calculateAllowableTenants(Map<String,Tenant> tenants, 
     		                                                   Map<String,Site> sites)
     {
-    	// Create a map with sufficient capacity. The key is a site master tenant
-    	// and the value is the list of tenant ids owned by the site master.
+    	// Create a map with sufficient capacity. The key is a site admin tenant
+    	// and the value is the list of tenant ids owned by the site admin.
     	var allowMap = new HashMap<String,List<String>>(1+sites.size()*2);
     	
-    	// Create a temporary site to site master tenant mapping.
-    	var siteToSiteMasterTenant = new HashMap<String,String>(1+sites.size()*2);
+    	// Create a temporary site to site admin tenant mapping.
+    	var siteToSiteAdminTenant = new HashMap<String,String>(1+sites.size()*2);
     	
-    	// Initialize allowMap with the site master tenants as keys and an empty 
+    	// Initialize allowMap with the site admin tenants as keys and an empty 
     	// tenants list as values.  Initialize the temporary map with sites as 
-    	// keys and their master tenants as values.  There better be only 1 
+    	// keys and their admin tenants as values.  There better be only 1 
     	// primary site.
     	ArrayList<String> primarySiteList = null;
     	for (var entry : sites.entrySet()) {
-    		String siteMasterTenant = entry.getValue().getSiteMasterTenantId();
+    		String siteAdminTenant = entry.getValue().getSiteAdminTenantId();
     		var list = new ArrayList<String>();
-    		allowMap.put(siteMasterTenant, list);
-    		siteToSiteMasterTenant.put(entry.getKey(), siteMasterTenant);
+    		allowMap.put(siteAdminTenant, list);
+    		siteToSiteAdminTenant.put(entry.getKey(), siteAdminTenant);
     		if (entry.getValue().getPrimary()) {
     			_primarySiteId  = entry.getKey();
     			_primarySite    = entry.getValue();
@@ -535,14 +535,14 @@ public class TenantManager
     		}
     	}
     	
-    	// Populate the allowMap's site master entries. Inconsistent data 
+    	// Populate the allowMap's site admin entries. Inconsistent data 
     	// errors are ignored and must be fixed in the Tenants service database.
     	for (var entry : tenants.entrySet()) {
     		var siteId = entry.getValue().getSiteId();
     		if (siteId == null) continue;           // should never happen.
-    		var siteMasterTenant = siteToSiteMasterTenant.get(siteId);
-    		if (siteMasterTenant == null) continue; // should never happen
-    		var list = allowMap.get(siteMasterTenant);
+    		var siteAdminTenant = siteToSiteAdminTenant.get(siteId);
+    		if (siteAdminTenant == null) continue; // should never happen
+    		var list = allowMap.get(siteAdminTenant);
     		if (list == null) continue;             // should never happen.
     		list.add(entry.getKey());
     		
