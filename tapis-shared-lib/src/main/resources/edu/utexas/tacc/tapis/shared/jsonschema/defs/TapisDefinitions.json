@@ -10,6 +10,7 @@
                 "properties": {
                     "sourceUrl":  {"type": "string", "minLength": 1, "format": "uri"},
                     "targetPath": {"type": "string", "minLength": 0},
+                    "inPlace":    {"type": "boolean"},
                     "meta":       {"type": "object", "$ref": "#/$defs/ArgMetaSpec"}             
              },
              "required": ["sourceUrl"],
