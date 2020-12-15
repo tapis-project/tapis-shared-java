@@ -344,19 +344,19 @@ public class ServiceJWT
         // Get the client.
         var client = new TokensClient(_tokensBaseUrl);
         
-        // Create the token package, which is always be non-null.
+        // Create the token package, which is always non-null.
         var tokPkg = client.refreshToken(refreshParms);
         
         // Validate result.
         if (!tokPkg.isValidAccessToken()) {
             String msg = MsgUtils.getMsg("TAPIS_SECURITY_BAD_TOKEN_RESP", "access",
-                                         _serviceName, _tenant);
+                                         _serviceName, _tenant, targetSite);
             _log.error(msg);
             throw new TapisException(msg);
         }
         if (!tokPkg.isValidRefreshToken()) {
             String msg = MsgUtils.getMsg("TAPIS_SECURITY_BAD_TOKEN_RESP", "refresh",
-                                        _serviceName, _tenant);
+                                        _serviceName, _tenant, targetSite);
             _log.error(msg);
             throw new TapisException(msg);
         }
@@ -621,9 +621,9 @@ public class ServiceJWT
                     catch (Exception e) {
                    		// Log the exception.
                    		String msg = MsgUtils.getMsg("TAPIS_TOKEN_REFRESH_ERROR",
-                                                   	_serviceName, _tenant, 
-                                                   	Thread.currentThread().getName(),
-                                                    	sleepMillis);
+                                                   	 _serviceName, _tenant, 
+                                                   	 Thread.currentThread().getName(),
+                                                     sleepMillis);
                    		_log.error(msg, e);
                        	refreshFailed = true;
                        	_refreshJwtFailedCount++;
