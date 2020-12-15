@@ -525,7 +525,7 @@ public class ServiceJWT
         /* ---------------------------------------------------------------------- */
         /* run:                                                                   */
         /* ---------------------------------------------------------------------- */
-        /** Indefinitely refresh the access toking using the refresh token.  The
+        /** Indefinitely refresh access tokens using refresh tokens.  The
          * refresh token is guaranteed to expire no earlier than the access token.
          * The first token refresh operation on any access token will occur 
          * REFRESH_TIME_MILLIS before that token expires.  If the refresh fails, 
