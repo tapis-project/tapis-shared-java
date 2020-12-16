@@ -106,6 +106,34 @@ public class JobParameterSetTest
         Assert.assertNotNull(parmSet2.getArchiveFilter());
         Assert.assertEquals(parmSet2.getArchiveFilter().getIncludes().get(1), "tapis*.log");
     }
+    
+    @Test
+    public void parseTest5() throws TapisException
+    {
+        // Test notification subscriptions.
+        String json = getInputTest5();
+        NotificationSubscription sub = _gson.fromJson(json, NotificationSubscription.class);
+        
+        // Convert back to json and then to java again.
+        String json2 = getGsonIgnoreNulls(true).toJson(sub);
+        NotificationSubscription sub2 = _gson.fromJson(json, NotificationSubscription.class);
+        
+        // Now inspect the new java object.
+        Assert.assertNotNull(sub.getFilter());
+        Assert.assertNotNull(sub2.getFilter());
+        Assert.assertEquals(sub2.getFilter(), sub.getFilter());
+        Assert.assertNotNull(sub.getNotificationMechanisms());
+        Assert.assertNotNull(sub2.getNotificationMechanisms());
+        Assert.assertEquals(sub.getNotificationMechanisms().size(), 2);
+        Assert.assertEquals(sub2.getNotificationMechanisms().size(), 2);
+        Assert.assertEquals(sub2.getNotificationMechanisms().get(0).getMechanism(), 
+                            sub.getNotificationMechanisms().get(0).getMechanism());
+        Assert.assertEquals(sub2.getNotificationMechanisms().get(0).getWebhookURL(), 
+                            sub.getNotificationMechanisms().get(0).getWebhookURL());
+        Assert.assertEquals(sub2.getNotificationMechanisms().get(0).getEmailAddress(), 
+                            sub.getNotificationMechanisms().get(0).getEmailAddress());
+    }
+    
     /* ********************************************************************** */
     /*                            Private Methods                             */
     /* ********************************************************************** */
@@ -171,4 +199,14 @@ public class JobParameterSetTest
         return s;
     }
 
+    private String getInputTest5()
+    {
+        String s = "{"
+                   + "\"filter\": \"tag = job123\", "
+                   + "\"notificationMechanisms\": [{\"mechanism\": \"WEBHOOK\", \"webhookURL\": \"https://bozolives.com\"}, "
+                   +                              "{\"mechanism\": \"EMAIL\", \"emailAddress\": \"bozo@bozolives.com\"}]"
+                   + "}";
+        return s;        
+    }
+    
 }

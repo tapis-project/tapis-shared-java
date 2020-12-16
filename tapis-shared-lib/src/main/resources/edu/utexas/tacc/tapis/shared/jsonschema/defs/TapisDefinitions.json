@@ -53,6 +53,33 @@
             "$comment": "Specify a constraint expression to be applied against system capabilities as the concatenation of the array items",
             "type": "array",
             "items": {"type": "string"}
-        }
+        },
+        "NotificationSubscription": {
+            "$comment": "Define a notification service subscription",
+            "type" : "object",
+                "properties" : {
+                    "filter" : {"type" : "string", "minLength": 1},
+                    "notificationMechanisms" : {
+                        "type" : "array",
+                        "items" : {"$ref" : "#/$defs/NotificationMechanism"},
+                        "uniqueItems": true}
+                },
+            "required" : [ "notificationMechanisms" ],
+            "additionalProperties": false
+        },
+        "NotificationMechanism" : {
+            "$comment": "The delivery modes for notifications",
+            "type" : "object",
+            "properties" : {
+                "mechanism" : {
+                    "type" : "string",
+                    "enum" : [ "WEBHOOK", "EMAIL", "QUEUE", "ACTOR" ]
+                },
+                "webhookURL" :   {"type" : "string"},
+                "emailAddress" : {"type" : "string"}
+            },
+            "required" : [ "mechanism" ],
+            "additionalProperties": false
+      }
   }
 }

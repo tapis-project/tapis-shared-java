@@ -1,5 +1,6 @@
 package edu.utexas.tacc.tapis.shared.model;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /** This is the java model for the parameterSet JSON value defined in 
@@ -14,6 +15,19 @@ public class JobParameterSet
     private List<ArgSpec>        schedulerOptions;
     private List<KeyValueString> envVariables;
     private IncludeExcludeFilter archiveFilter;
+    
+    
+    // A simple way to make sure all lists and other fields are non-null.
+    public void initAll()
+    {
+        // Don't stump on exist data.
+        if (appArgs == null) appArgs = new ArrayList<ArgSpec>();
+        if (containerArgs == null) containerArgs = new ArrayList<ArgSpec>();
+        if (schedulerOptions == null) schedulerOptions = new ArrayList<ArgSpec>();
+        if (envVariables == null) envVariables = new ArrayList<KeyValueString>();
+        if (archiveFilter == null) archiveFilter = new IncludeExcludeFilter();
+        archiveFilter.initAll();
+    }
     
     public List<ArgSpec> getAppArgs() {
         return appArgs;
