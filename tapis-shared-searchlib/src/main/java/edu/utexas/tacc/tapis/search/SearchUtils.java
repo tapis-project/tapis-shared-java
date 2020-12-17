@@ -286,6 +286,7 @@ public class SearchUtils
 
   /**
    * Break up a string containing comma separated values
+   * Match "," but not "\," (i.e. match only an unescaped comma)
    * @param valStr string containing comma separated list of values
    * @return Resulting list of strings
    */
