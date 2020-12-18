@@ -15,7 +15,7 @@
     </parent>
 
     <artifactId>tapis-shared-java</artifactId>
-    <version>1.11.50-SNAPSHOT</version>
+    <version>1.11.49</version>
 
     <name>Tapis shared</name>
     <description>TAPIS shared Java code</description>
@@ -31,14 +31,14 @@
       <repository>
         <id>tapis-local-snapshots</id>
         <name>Local repo for snapshots</name>
-        <url>http://c002.rodeo.tacc.utexas.edu:32140/repository/maven-snapshots</url>
+        <url>http://c002.rodeo.tacc.utexas.edu:30044/repository/maven-snapshots</url>
         <releases>  <enabled>false</enabled> </releases>
         <snapshots> <enabled>true</enabled>  </snapshots>
       </repository>
       <repository>
         <id>tapis-local-releases</id>
         <name>Local repo for releases</name>
-        <url>http://c002.rodeo.tacc.utexas.edu:32140/repository/maven-releases</url>
+        <url>http://c002.rodeo.tacc.utexas.edu:30044/repository/maven-releases</url>
       </repository>
     </repositories>
 
