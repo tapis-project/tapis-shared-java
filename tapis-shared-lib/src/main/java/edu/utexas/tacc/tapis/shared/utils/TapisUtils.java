@@ -1,5 +1,7 @@
 package edu.utexas.tacc.tapis.shared.utils;
 
+import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE;
+
 import java.io.Console;
 import java.io.IOException;
 import java.io.InputStream;
@@ -18,8 +20,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
-import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE;
-
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
@@ -37,9 +37,14 @@ import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import edu.utexas.tacc.tapis.client.shared.exceptions.TapisClientException;
+import edu.utexas.tacc.tapis.security.client.SKClient;
 import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
 import edu.utexas.tacc.tapis.shared.exceptions.recoverable.TapisRecoverableException;
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
+import edu.utexas.tacc.tapis.shared.security.ServiceClients;
+import edu.utexas.tacc.tapis.shared.threadlocal.TapisThreadLocal;
+import edu.utexas.tacc.tapis.systems.client.SystemsClient;
 
 public class TapisUtils
 {
@@ -809,5 +814,68 @@ public class TapisUtils
       // Encode the 3 bytes into 4 characters 
       // and avoid any padding.
       return Base64.getUrlEncoder().encodeToString(b);
+  }
+  
+  /* ---------------------------------------------------------------------------- */
+  /* isAdmin:                                                                     */
+  /* ---------------------------------------------------------------------------- */
+  /** Convenience method that retrieves oboUser and oboTenant from threadlocal and
+   * passes them to the actual isAdmin method.  This method is expected to be called
+   * from service code in which threadlocal has already been validated.
+   * 
+   * @param user the non-null user that may be an admin
+   * @param tenant the user's non-null tenant
+   * @return true if the user is a tenant admin, false otherwise
+   * @throws TapisException
+   */
+  public static boolean isAdmin(String user, String tenant) 
+   throws TapisException
+  {
+      var threadContext = TapisThreadLocal.tapisThreadContext.get();
+      return isAdmin(threadContext.getOboUser(), threadContext.getOboTenantId(), user, tenant);
+  }
+  
+  /* ---------------------------------------------------------------------------- */
+  /* isAdmin:                                                                     */
+  /* ---------------------------------------------------------------------------- */
+  /** Check if the user has been assigned the admin role in their tenant.  Null 
+   * checking on inputs is not performed for performance reasons.
+   * 
+   * @param oboUser the non-null obo user used on the REST call
+   * @param oboTenant the non-null obo tenant used on the REST call
+   * @param user the non-null user being tested
+   * @param tenant the user's non-null tenant
+   * @return true if the user is a tenant admin, false otherwise
+   * @throws TapisException
+   */
+  public static boolean isAdmin(String oboUser, String oboTenant, String user, String tenant) 
+   throws TapisException
+  {
+      // Disallow cross tenant queries.
+      if (!tenant.equals(oboTenant)) {
+          String msg = MsgUtils.getMsg("JOBS_MISMATCHED_TENANT", oboTenant, tenant);
+          throw new TapisException(msg);
+      }
+      
+      SKClient skClient;
+      try {
+          skClient = ServiceClients.getInstance().getClient(oboUser, oboTenant, SKClient.class);
+      }
+      catch (Exception e) {
+          String msg = MsgUtils.getMsg("TAPIS_CLIENT_NOT_FOUND", "SK", oboTenant, oboUser);
+          throw new TapisException(msg, e);
+      }
+      
+      // Issue the sk call to see if the user has been assigned the 
+      // tenant admin role.
+      boolean hasRole;
+      try {hasRole = skClient.hasRole(tenant, user, SkConstants.ADMIN_ROLE_NAME);} 
+      catch (Exception e) {
+          String msg = MsgUtils.getMsg("SK_ROLE_GET_ERROR", tenant, user, tenant, 
+                                       SkConstants.ADMIN_ROLE_NAME);
+          throw new TapisException(msg, e);
+      }
+      
+      return hasRole;
   }
 }
