@@ -8,7 +8,16 @@ public class NotificationMechanism
     private String   webhookURL;
     private String   emailAddress;
     
+    // Constructors.
+    public NotificationMechanism() {}
+    public NotificationMechanism(edu.utexas.tacc.tapis.apps.client.gen.model.NotificationMechanism appMech)
+    {
+        mechanism = Delivery.valueOf(appMech.getMechanism().name());
+        webhookURL = appMech.getWebhookURL();
+        emailAddress = appMech.getEmailAddress();
+    }
     
+    // Accessors.
     public Delivery getMechanism() {
         return mechanism;
     }
