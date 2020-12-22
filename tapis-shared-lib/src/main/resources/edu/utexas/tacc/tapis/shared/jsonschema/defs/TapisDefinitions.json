@@ -30,11 +30,12 @@
             "$comment": "An open-ended way to name and annotate arguments",
             "type": "object",
                 "properties": {
-                    "name":     {"type": "string", "minLength": 1},
-                    "required": {"type": "boolean"},
-                    "kv":       {"type": "array",
-                                 "items": {"$ref": "#/$defs/KeyValueString"},
-                                 "uniqueItems": true}
+                    "description": {"type": "string", "minLength": 1, "maxLength": 8096},
+                    "name":        {"type": "string", "minLength": 1},
+                    "required":    {"type": "boolean"},
+                    "kv":          {"type": "array",
+                                    "items": {"$ref": "#/$defs/KeyValueString"},
+                                    "uniqueItems": true}
              },
              "required": ["name", "required"],
              "additionalProperties": false
