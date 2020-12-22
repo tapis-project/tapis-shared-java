@@ -2,6 +2,7 @@ package edu.utexas.tacc.tapis.shared.ssh;
 
 import java.io.IOException;
 
+import edu.utexas.tacc.tapis.systems.client.gen.model.AuthnEnum;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,9 +20,9 @@ public class SSHConnectionCacheLoader extends CacheLoader<SSHConnectionCacheKey,
         String username = key.getUsername();
         int port;
         SSHConnection sshConnection;
-        TSystem.DefaultAuthnMethodEnum accessMethodEnum = system.getDefaultAuthnMethod();
+        AuthnEnum accessMethodEnum = system.getDefaultAuthnMethod();
         // This should not be null, but if it is, we default to password.
-        accessMethodEnum = accessMethodEnum == null ? TSystem.DefaultAuthnMethodEnum.PASSWORD : accessMethodEnum;
+        accessMethodEnum = accessMethodEnum == null ? AuthnEnum.PASSWORD : accessMethodEnum;
         switch (accessMethodEnum) {
             case PASSWORD:
                 String password = system.getAuthnCredential().getPassword();

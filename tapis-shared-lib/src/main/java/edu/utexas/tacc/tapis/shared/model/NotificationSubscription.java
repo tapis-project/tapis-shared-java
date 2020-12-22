@@ -13,8 +13,8 @@ public class NotificationSubscription
     public NotificationSubscription(edu.utexas.tacc.tapis.apps.client.gen.model.NotificationSubscription appSub)
     {
         filter = appSub.getFilter();
-        if (appSub.getNotificationMechanims() != null) 
-            for (var appMech : appSub.getNotificationMechanims()) {
+        if (appSub.getNotificationMechanisms() != null)
+            for (var appMech : appSub.getNotificationMechanisms()) {
                 var mech = new NotificationMechanism(appMech);
                 notificationMechanisms.add(mech);
             }
