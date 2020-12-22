@@ -7,7 +7,7 @@ public class ArgMetaSpec
     private String               name;
     private String               description;
     private Boolean              required;
-    private List<KeyValueString> kv;
+    private List<KeyValuePair>   kv;
     
     public String getName() {
         return name;
@@ -21,10 +21,10 @@ public class ArgMetaSpec
     public void setRequired(Boolean required) {
         this.required = required;
     }
-    public List<KeyValueString> getKv() {
+    public List<KeyValuePair> getKv() {
         return kv;
     }
-    public void setKv(List<KeyValueString> kv) {
+    public void setKv(List<KeyValuePair> kv) {
         this.kv = kv;
     }
     public String getDescription() {

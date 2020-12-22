@@ -34,13 +34,13 @@
                     "name":        {"type": "string", "minLength": 1},
                     "required":    {"type": "boolean"},
                     "kv":          {"type": "array",
-                                    "items": {"$ref": "#/$defs/KeyValueString"},
+                                    "items": {"$ref": "#/$defs/KeyValuePair"},
                                     "uniqueItems": true}
              },
              "required": ["name", "required"],
              "additionalProperties": false
         },
-        "KeyValueString": {
+        "KeyValuePair": {
             "$comment": "A simple key/value pair",
             "type": "object",
                 "properties": {

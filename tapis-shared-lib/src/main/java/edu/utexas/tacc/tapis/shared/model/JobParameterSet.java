@@ -13,7 +13,7 @@ public class JobParameterSet
     private List<ArgSpec>        appArgs;
     private List<ArgSpec>        containerArgs;
     private List<ArgSpec>        schedulerOptions;
-    private List<KeyValueString> envVariables;
+    private List<KeyValuePair>   envVariables;
     private IncludeExcludeFilter archiveFilter;
     
     
@@ -24,7 +24,7 @@ public class JobParameterSet
         if (appArgs == null) appArgs = new ArrayList<ArgSpec>();
         if (containerArgs == null) containerArgs = new ArrayList<ArgSpec>();
         if (schedulerOptions == null) schedulerOptions = new ArrayList<ArgSpec>();
-        if (envVariables == null) envVariables = new ArrayList<KeyValueString>();
+        if (envVariables == null) envVariables = new ArrayList<KeyValuePair>();
         if (archiveFilter == null) archiveFilter = new IncludeExcludeFilter();
         archiveFilter.initAll();
     }
@@ -47,10 +47,10 @@ public class JobParameterSet
     public void setSchedulerOptions(List<ArgSpec> schedulerOptions) {
         this.schedulerOptions = schedulerOptions;
     }
-    public List<KeyValueString> getEnvVariables() {
+    public List<KeyValuePair> getEnvVariables() {
         return envVariables;
     }
-    public void setEnvVariables(List<KeyValueString> envVariables) {
+    public void setEnvVariables(List<KeyValuePair> envVariables) {
         this.envVariables = envVariables;
     }
     public IncludeExcludeFilter getArchiveFilter() {

@@ -1,6 +1,6 @@
 package edu.utexas.tacc.tapis.shared.model;
 
-public class KeyValueString 
+public class KeyValuePair 
 {
     private String key;
     private String value;
