@@ -5,7 +5,8 @@ import java.util.List;
 public class ArgMetaSpec 
 {
     private String               name;
-    private boolean              required;
+    private String               description;
+    private Boolean              required;
     private List<KeyValueString> kv;
     
     public String getName() {
@@ -14,10 +15,10 @@ public class ArgMetaSpec
     public void setName(String name) {
         this.name = name;
     }
-    public boolean isRequired() {
+    public Boolean getRequired() {
         return required;
     }
-    public void setRequired(boolean required) {
+    public void setRequired(Boolean required) {
         this.required = required;
     }
     public List<KeyValueString> getKv() {
@@ -25,5 +26,11 @@ public class ArgMetaSpec
     }
     public void setKv(List<KeyValueString> kv) {
         this.kv = kv;
+    }
+    public String getDescription() {
+        return description;
+    }
+    public void setDescription(String description) {
+        this.description = description;
     }
 }

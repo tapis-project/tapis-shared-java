@@ -133,4 +133,61 @@ public class TapisUtilsTest
         e = TapisUtils.findInChain(tapisDBConnectionException, IllegalArgumentException.class);
         Assert.assertNotNull(e, "IllegalArgumentException not found!");
    }
+    
+   /* ---------------------------------------------------------------------------- */
+   /* extractFilenameTest:                                                         */
+   /* ---------------------------------------------------------------------------- */
+   @Test(enabled=true)
+   public void extractFilenameTest()
+   {
+       // tapis urls.
+       String url = "tapis://myhost.com/mysystem/a/b/c.txt";
+       String fileName = TapisUtils.extractFilename(url);
+       Assert.assertEquals(fileName, "c.txt");
+      
+       url = "tapis://myhost.com/mysystem/a.txt";
+       fileName = TapisUtils.extractFilename(url);
+       Assert.assertEquals(fileName, "a.txt");
+      
+       url = "tapis://myhost.com/mysystem/";
+       fileName = TapisUtils.extractFilename(url);
+       Assert.assertEquals(fileName, "");
+      
+       url = "tapis://myhost.com/mysystem";
+       fileName = TapisUtils.extractFilename(url);
+       Assert.assertEquals(fileName, "");
+
+       url = "tapis://myhost.com";
+       fileName = TapisUtils.extractFilename(url);
+       Assert.assertEquals(fileName, "");
+   
+       url = "tapis://myhost.com////";
+       fileName = TapisUtils.extractFilename(url);
+       Assert.assertEquals(fileName, "");
+   
+       // Non-tapis urls.
+       url = "http://myhost.com/mysystem/a/b/c.txt";
+       fileName = TapisUtils.extractFilename(url);
+       Assert.assertEquals(fileName, "c.txt");
+      
+       url = "https://myhost.com/mysystem/a.txt";
+       fileName = TapisUtils.extractFilename(url);
+       Assert.assertEquals(fileName, "a.txt");
+      
+       url = "ftp://myhost.com/mysystem/";
+       fileName = TapisUtils.extractFilename(url);
+       Assert.assertEquals(fileName, "");
+      
+       url = "sftp://myhost.com/mysystem";
+       fileName = TapisUtils.extractFilename(url);
+       Assert.assertEquals(fileName, "mysystem");
+
+       url = "https://myhost.com";
+       fileName = TapisUtils.extractFilename(url);
+       Assert.assertEquals(fileName, "");
+   
+       url = "xxx://myhost.com////";
+       fileName = TapisUtils.extractFilename(url);
+       Assert.assertEquals(fileName, "");
+   }
 }

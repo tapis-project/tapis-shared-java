@@ -44,6 +44,7 @@ import edu.utexas.tacc.tapis.shared.exceptions.recoverable.TapisRecoverableExcep
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
 import edu.utexas.tacc.tapis.shared.security.ServiceClients;
 import edu.utexas.tacc.tapis.shared.threadlocal.TapisThreadLocal;
+import edu.utexas.tacc.tapis.shared.uri.TapisUrl;
 import edu.utexas.tacc.tapis.systems.client.SystemsClient;
 
 public class TapisUtils
@@ -877,5 +878,56 @@ public class TapisUtils
       }
       
       return hasRole;
+  }
+  
+  /* ---------------------------------------------------------------------------- */
+  /* extractFilename:                                                             */
+  /* ---------------------------------------------------------------------------- */
+  /** Extract the last path segment from a tapis or non-tapis url string.  The string
+   * may contains unresolved macros and other characters that are invalid in URLs or
+   * URIs, so we have to do the parsing ourselves without relying on standard classes.
+   * 
+   * This method always returns a string of length zero or more.  The last path 
+   * segment typically represents a simple file name, which is the reason why this
+   * method is usually called.  If the url ends with a slash, as is the case when
+   * it represents a directory, the empty string will be returned.
+   * 
+   * @param url a tapis or non-tapis url string
+   * @return the last path segment or an empty string if none could be extracted
+   */
+  public static String extractFilename(String url)
+  {
+      // Get the easy cases out of the way.
+      if (url == null || url.isEmpty()) return "";
+      if (url.endsWith("/")) return "";
+      
+      // The path segment starts at the 4th slash in tapis urls and at the 
+      // 3rd slash for all other urls.
+      int pathStartIndex;
+      if (url.startsWith(TapisUrl.TAPIS_PROTOCOL_PREFIX)) pathStartIndex = 4;
+        else pathStartIndex = 3;
+      
+      // Walk the url looking for the path start index.
+      String path = null;
+      int slashCount = 0;
+      for (int i = 0; i < url.length(); i++) {
+          // Look for slashes.
+          char c = url.charAt(i);
+          if (c != '/') continue;
+          slashCount++;
+          
+          // Are we ready to assign the path?
+          if (slashCount == pathStartIndex) {
+              path = url.substring(i); // leading slash included
+              break;
+          }
+      }
+      if (path == null) return "";
+      
+      // Extract the last segment from the path.
+      // We know the path starts with a slash.
+      int lastSlashIndex = path.lastIndexOf("/");
+      if (lastSlashIndex + 1 >= path.length()) return "";
+      return path.substring(lastSlashIndex + 1);
   }
 }
