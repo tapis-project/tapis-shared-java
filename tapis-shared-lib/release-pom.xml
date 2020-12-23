@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>edu.utexas.tacc.tapis</groupId>
   <artifactId>tapis-shared-lib</artifactId>
-  <version>1.11.49</version>
+  <version>1.11.50</version>
   <name>Tapis Shared Library</name>
   <description>Libraries used by multiple Tapis modules</description>
   <url>https://github.com/tapis-project/tapis-shared-java/tapis-shared-lib</url>
@@ -133,11 +133,11 @@
   <distributionManagement>
     <repository>
       <id>nexus-releases</id>
-      <url>http://c002.rodeo.tacc.utexas.edu:32140/repository/maven-releases</url>
+      <url>http://c002.rodeo.tacc.utexas.edu:30044/repository/maven-releases</url>
     </repository>
     <snapshotRepository>
       <id>nexus-snapshots</id>
-      <url>http://c002.rodeo.tacc.utexas.edu:32140/repository/maven-snapshots</url>
+      <url>http://c002.rodeo.tacc.utexas.edu:30044/repository/maven-snapshots</url>
     </snapshotRepository>
   </distributionManagement>
   <properties>
@@ -209,7 +209,7 @@
     <maven-shade-plugin.version>3.2.1</maven-shade-plugin.version>
     <mockito-core.version>3.0.0</mockito-core.version>
     <javax.websocket-api.version>1.1</javax.websocket-api.version>
-    <build.timestamp>2020-12-17T18:23:58Z</build.timestamp>
+    <build.timestamp>2020-12-23T01:58:08Z</build.timestamp>
     <statefulj.version>3.0</statefulj.version>
     <java-source.version>1.13</java-source.version>
     <reactor-rabbitmq.version>1.4.4.RELEASE</reactor-rabbitmq.version>
@@ -412,55 +412,55 @@
     <dependency>
       <groupId>edu.utexas.tacc.tapis</groupId>
       <artifactId>apps-client</artifactId>
-      <version>1.11.23</version>
+      <version>1.11.26</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>edu.utexas.tacc.tapis</groupId>
       <artifactId>auth-client</artifactId>
-      <version>1.11.23</version>
+      <version>1.11.26</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>edu.utexas.tacc.tapis</groupId>
       <artifactId>files-client</artifactId>
-      <version>1.11.23</version>
+      <version>1.11.26</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>edu.utexas.tacc.tapis</groupId>
       <artifactId>meta-client</artifactId>
-      <version>1.11.23</version>
+      <version>1.11.26</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>edu.utexas.tacc.tapis</groupId>
       <artifactId>security-client</artifactId>
-      <version>1.11.23</version>
+      <version>1.11.26</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>edu.utexas.tacc.tapis</groupId>
       <artifactId>shared</artifactId>
-      <version>1.11.23</version>
+      <version>1.11.26</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>edu.utexas.tacc.tapis</groupId>
       <artifactId>systems-client</artifactId>
-      <version>1.11.23</version>
+      <version>1.11.26</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>edu.utexas.tacc.tapis</groupId>
       <artifactId>tenants-client</artifactId>
-      <version>1.11.23</version>
+      <version>1.11.26</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>edu.utexas.tacc.tapis</groupId>
       <artifactId>tokens-client</artifactId>
-      <version>1.11.23</version>
+      <version>1.11.26</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
@@ -624,12 +624,12 @@
       </snapshots>
       <id>tapis-local-snapshots</id>
       <name>Local repo for snapshots</name>
-      <url>http://c002.rodeo.tacc.utexas.edu:32140/repository/maven-snapshots</url>
+      <url>http://c002.rodeo.tacc.utexas.edu:30044/repository/maven-snapshots</url>
     </repository>
     <repository>
       <id>tapis-local-releases</id>
       <name>Local repo for releases</name>
-      <url>http://c002.rodeo.tacc.utexas.edu:32140/repository/maven-releases</url>
+      <url>http://c002.rodeo.tacc.utexas.edu:30044/repository/maven-releases</url>
     </repository>
     <repository>
       <releases>
@@ -648,11 +648,6 @@
     <repository>
       <id>jitpack.io</id>
       <url>https://jitpack.io</url>
-    </repository>
-    <repository>
-      <id>tacc-snapshot</id>
-      <name>TACC ACI Maven repository</name>
-      <url>https://maven.tacc.utexas.edu/nexus/content/repositories/snapshots</url>
     </repository>
     <repository>
       <snapshots>
