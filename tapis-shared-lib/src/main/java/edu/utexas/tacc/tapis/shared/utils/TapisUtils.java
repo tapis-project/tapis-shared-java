@@ -858,6 +858,7 @@ public class TapisUtils
           throw new TapisException(msg);
       }
       
+      // Get the sk client for the oboUser@oboTenant.
       SKClient skClient;
       try {
           skClient = ServiceClients.getInstance().getClient(oboUser, oboTenant, SKClient.class);
