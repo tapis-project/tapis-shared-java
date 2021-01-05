@@ -493,7 +493,8 @@ public class TapisUtils
   /* ---------------------------------------------------------------------------- */
   /* getPasswordFromConsole:                                                      */
   /* ---------------------------------------------------------------------------- */
-  /** Get the specified user's password masking the input if possible.
+  /** Get the specified user's password masking the input if possible.  Note there
+   * may be a newline character at the end of the returned string.
    * 
    * @param userid the user account whose credentials are requested.
    * @return the password string.
@@ -519,11 +520,11 @@ public class TapisUtils
     // When no console is available (like in Eclipse),
     // try using stdin and stdout.
     System.out.print(prompt);
-    byte[] bytes = new byte[256];
+    byte[] bytes = new byte[4096];
     try {   
         // Read the input bytes which are not masked.
         int bytesread = System.in.read(bytes);
-        return new String(bytes);
+        return new String(bytes, 0, bytesread);
       }
       catch (IOException e){}
     
@@ -534,7 +535,8 @@ public class TapisUtils
   /* ---------------------------------------------------------------------------- */
   /* getInputFromConsole:                                                         */
   /* ---------------------------------------------------------------------------- */
-  /** Get the user input if possible.
+  /** Get the user input if possible.  Note there may be a newline character at the 
+   * end of the returned string.
    * 
    * @param prompt the text to display to get a response from the user
    * @return user input or null if no input was captured
@@ -556,11 +558,11 @@ public class TapisUtils
     // When no console is available (like in Eclipse),
     // try using stdin and stdout.
     System.out.print(prompt);
-    byte[] bytes = new byte[256];
+    byte[] bytes = new byte[4096];
     try {   
         // Read the input bytes which are not masked.
         int bytesread = System.in.read(bytes);
-        return new String(bytes);
+        return new String(bytes, 0, bytesread);
       }
       catch (IOException e){}
     
