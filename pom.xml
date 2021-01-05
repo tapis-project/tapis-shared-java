@@ -27,21 +27,6 @@
         <tag>HEAD</tag>
     </scm>
 
-    <repositories>
-      <repository>
-        <id>tapis-local-snapshots</id>
-        <name>Local repo for snapshots</name>
-        <url>http://c002.rodeo.tacc.utexas.edu:30044/repository/maven-snapshots</url>
-        <releases>  <enabled>false</enabled> </releases>
-        <snapshots> <enabled>true</enabled>  </snapshots>
-      </repository>
-      <repository>
-        <id>tapis-local-releases</id>
-        <name>Local repo for releases</name>
-        <url>http://c002.rodeo.tacc.utexas.edu:30044/repository/maven-releases</url>
-      </repository>
-    </repositories>
-
     <properties>
         <!--  Default to no release to suppress signing etc      -->
         <skip.signing>true</skip.signing>
@@ -68,6 +53,32 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <profiles>
+      <!-- Profile for building using TACC repositories -->
+      <profile>
+        <id>tacc</id>
+        <activation> <activeByDefault>true</activeByDefault> </activation>
+        <repositories>
+          <repository>
+            <id>tapis-local-snapshots</id>
+            <name>Local repo for snapshots</name>
+            <url>http://c002.rodeo.tacc.utexas.edu:30044/repository/maven-snapshots</url>
+            <releases>  <enabled>false</enabled> </releases>
+            <snapshots> <enabled>true</enabled>  </snapshots>
+          </repository>
+          <repository>
+            <id>tapis-local-releases</id>
+            <name>Local repo for releases</name>
+            <url>http://c002.rodeo.tacc.utexas.edu:30044/repository/maven-releases</url>
+          </repository>
+        </repositories>
+      </profile>
+      <!-- Profile for building without using TACC repositories -->
+      <profile>
+        <id>tacc-external</id>
+      </profile>
+    </profiles>
 
     <modules>
         <module>tapis-shared-db</module>
