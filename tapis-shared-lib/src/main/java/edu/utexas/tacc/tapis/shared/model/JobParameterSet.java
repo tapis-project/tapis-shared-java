@@ -20,7 +20,7 @@ public class JobParameterSet
     // A simple way to make sure all lists and other fields are non-null.
     public void initAll()
     {
-        // Don't stump on exist data.
+        // Don't stomp on existing data.
         if (appArgs == null) appArgs = new ArrayList<ArgSpec>();
         if (containerArgs == null) containerArgs = new ArrayList<ArgSpec>();
         if (schedulerOptions == null) schedulerOptions = new ArrayList<ArgSpec>();
