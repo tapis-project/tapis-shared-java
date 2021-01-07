@@ -1,5 +1,7 @@
 package edu.utexas.tacc.tapis.shareddb;
 
+import java.util.List;
+
 public final class TapisDBUtils 
 {
     /** Create the aloe database url with the given parameters.
@@ -26,5 +28,36 @@ public final class TapisDBUtils
         s = s.replace("%", "\\%");
         s = s.replace("_", "\\_");
         return s;
+    }
+    
+    /** Convert a list of string into a string with the format:
+     * 
+     *      ('item1', 'item2', ...)
+     *      
+     * Null is returned if the list is null or empty.     
+     * 
+     * @param items list of strings
+     * @return a string in sql format or null
+     */
+    public static String makeSqlList(List<String> items)
+    {
+        // We accept everything.
+        if (items == null || items.isEmpty()) return null;
+        
+        // Create the a buffer initialized to some length
+        // proportional to the number of list items.
+        var buf = new StringBuilder(items.size() * 10);
+        boolean firstItem = true;
+        buf.append("(");
+        for (String item : items) {
+            if (!firstItem) buf.append(", ");
+              else firstItem = false;
+            buf.append("'");
+            buf.append(item);
+            buf.append("'");
+        }
+        buf.append(")");
+        
+        return buf.toString();
     }
 }
