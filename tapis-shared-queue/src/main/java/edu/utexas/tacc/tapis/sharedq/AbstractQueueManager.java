@@ -20,14 +20,14 @@ import edu.utexas.tacc.tapis.shared.exceptions.runtime.TapisRuntimeException;
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
 import edu.utexas.tacc.tapis.sharedq.exceptions.TapisQueueException;
 
-public final class QueueManager 
+public abstract class AbstractQueueManager 
   extends QueueManagerNames
 {
   /* ********************************************************************** */
   /*                               Constants                                */
   /* ********************************************************************** */
   // Tracing.
-  private static final Logger _log = LoggerFactory.getLogger(QueueManager.class);
+  private static final Logger _log = LoggerFactory.getLogger(AbstractQueueManager.class);
     
   // Binding key to use with fanout exchanges.
   public static final String DEFAULT_BINDING_KEY = "";
@@ -38,11 +38,8 @@ public final class QueueManager
   /* ********************************************************************** */
   /*                                 Fields                                 */
   /* ********************************************************************** */
-  // Singleton instance of this class.
-  private static QueueManager     _instance;
-  
   // Configuration parameters.
-  private final QueueManagerParms _parms;
+  protected final QueueManagerParms _parms;
   
   // Fields that get initialized once and tend not to change.
   private ConnectionFactory       _factory;
@@ -55,22 +52,18 @@ public final class QueueManager
   /* ---------------------------------------------------------------------- */
   /* constructor:                                                           */
   /* ---------------------------------------------------------------------- */
-  /** This constructor creates all job worker queues and exchanges by querying 
-   * the job_queues table.  It also creates each active tenant's command and 
-   * event topics and their exchanges by accessing data in the tenants table.
-   * Without the ability to connect to the database, not much is going to get
-   * done even though we don't throw exceptions.
+  /** This constructor creates a service's standard queues.
  * @throws TapisException 
    */
-  private QueueManager(QueueManagerParms parms) 
-   throws TapisException
+  protected AbstractQueueManager(QueueManagerParms parms) 
+   throws TapisRuntimeException
   {
       // Make sure we have a parameter object.
       if (parms == null) {
           String msg = MsgUtils.getMsg("TAPIS_NULL_PARAMETER", "QueueManager", 
                                        "parms");
           _log.error(msg);
-          throw new TapisException(msg);
+          throw new TapisRuntimeException(msg);
       }
       
       // Validate the parameters.
@@ -80,9 +73,9 @@ public final class QueueManager
       _parms = parms;
       
       // Create the multi-tenant queues.
-      try {createStandardMultiTenantQueues();}
+      try {createStandardQueues();}
       catch (Exception e) {
-          String msg = MsgUtils.getMsg("TAPIS_QMGR_INIT_ERROR", ALL_TENANTS_NAME);
+          String msg = MsgUtils.getMsg("QMGR_INIT_ERROR", _parms.getService());
           _log.error(msg, e);
       }
   }
@@ -90,48 +83,6 @@ public final class QueueManager
   /* ********************************************************************** */
   /*                             Public Methods                             */
   /* ********************************************************************** */
-  /* ---------------------------------------------------------------------- */
-  /* getInstance:                                                           */
-  /* ---------------------------------------------------------------------- */
-  /** Get the singleton instance of this class, creating it if necessary.
-   * If the singleton already exists, the parameters are ignored.
-   * 
-   * @return the new or existing singleton.
- * @throws TapisException 
-   */
-  public static QueueManager getInstance(QueueManagerParms parms) 
-   throws TapisException
-  {
-    // Create the singleton instance if it's null without
-    // setting up a synchronized block in the common case.
-    if (_instance == null) {
-      synchronized (QueueManager.class) {
-        if (_instance == null) _instance = new QueueManager(parms);
-      }
-    }
-    return _instance;
-  }
-  
-  /* ---------------------------------------------------------------------- */
-  /* getInstance:                                                           */
-  /* ---------------------------------------------------------------------- */
-  /** Get the singleton instance of this class.  Calling this method before
-   * the singleton exists causes a runtime error.
-   * 
-   * @return the existing singleton
-   */
-  public static QueueManager getInstance()
-  {
-    // The singleton instance must have been created before
-    // this method is called.
-    if (_instance == null) {
-        String msg = MsgUtils.getMsg("QMGR_UNINITIALIZED_ERROR");
-        _log.error(msg);
-        throw new TapisRuntimeException(msg);
-    }
-    return _instance;
-  }
-  
   /* ---------------------------------------------------------------------- */
   /* getNewOutChannel:                                                      */
   /* ---------------------------------------------------------------------- */
@@ -193,7 +144,7 @@ public final class QueueManager
   /* ---------------------------------------------------------------------- */
   /* postDeadLetterQueue:                                                   */
   /* ---------------------------------------------------------------------- */
-  /** Write a json message to the named tenant queue.  The queue name is used 
+  /** Write a json message to the named queue.  The queue name is used 
    * as the routing key on the direct exchange.
    * 
    * @param queueName the target queue name
@@ -203,8 +154,8 @@ public final class QueueManager
     throws TapisQueueException
   {
     // Get the exchange and queuenames.
-    String queueName    = getAllTenantDeadLetterQueueName();
-    String exchangeName = getAllTenantDeadLetterExchangeName(); 
+    String queueName    = getDeadLetterQueueName();
+    String exchangeName = getDeadLetterExchangeName(); 
     
     // Create a temporary channel.
     Channel channel = null;
@@ -213,20 +164,19 @@ public final class QueueManager
       // Create a temporary channel.
       try {channel = getNewOutChannel();}
         catch (Exception e) {
-          String msg = MsgUtils.getMsg("QMGR_CHANNEL_TENANT_ERROR", ALL_TENANTS_NAME);
-          _log.error(msg, e);
+          String msg = MsgUtils.getMsg("QMGR_CHANNEL_SERVICE_ERROR", _parms.getService());
           throw e;
         }
     
       // Publish the message to the queue.
       try {
         // Write the job to the tenant recovery queue.
-        channel.basicPublish(exchangeName, DEFAULT_BINDING_KEY, QueueManager.PERSISTENT_TEXT, 
+        channel.basicPublish(exchangeName, DEFAULT_BINDING_KEY, AbstractQueueManager.PERSISTENT_TEXT, 
                              message.getBytes("UTF-8"));
         
         // Tracing.
         if (_log.isDebugEnabled()) {
-            String msg = MsgUtils.getMsg("QMGR_POST", ALL_TENANTS_NAME, exchangeName, queueName);
+            String msg = MsgUtils.getMsg("QMGR_POST", _parms.getService(), exchangeName, queueName);
             _log.debug(msg);
         }
       }
@@ -234,7 +184,6 @@ public final class QueueManager
           String msg = MsgUtils.getMsg("QMGR_PUBLISH_ERROR", exchangeName, 
                                        getOutConnectionName(), channel.getChannelNumber(), 
                                        e.getMessage());
-          _log.error(msg, e);
           throw new TapisQueueException(msg, e);
         }
     } 
@@ -261,34 +210,30 @@ public final class QueueManager
   }
 
   /* ---------------------------------------------------------------------- */
-  /* getTenantExchangeArgs:                                                 */
+  /* createAndBindQueue:                                                    */
   /* ---------------------------------------------------------------------- */
-  /** Get the configuration arguments for the standard exchanges created for
-   * tenants.  Using these arguments both senders and receivers can create the
-   * exchange since it will be created in exactly the same way in both cases.  
+  /** Create a queue and bind it to the specified direct exchange.
+   * The binding key is the queue name. 
    * 
-   * @param tenantId the tenant who is creating an exchange
-   * @return the exchange configuration arguments
+   * @param channel the channel used to post to the queue
+   * @param exchangeName the target exchange
+   * @param queueName the queue to be posted
+   * @throws JobQueueException on error
    */
-  public Map<String,Object> getTenantExchangeArgs(String exchangeName, String tenantId)
+  public void createAndBindQueue(Channel channel, String exchangeName, String queueName)
+    throws TapisQueueException
   {
-      // Create the argument mapping.
-      HashMap<String,Object> args = new HashMap<>();
+      // Set the standard queue/topic options.
+      boolean durable = true;
+      boolean exclusive = false;
+      boolean autoDelete = false;
       
-      // Special case AllTenants.
-      if (ALL_TENANTS_NAME.equals(tenantId)) {
-          if (exchangeName.endsWith(MULTI_TENANT_ALT_EXCHANGE_SUFFIX))
-              args.put("x-dead-letter-exchange", getAllTenantDeadLetterExchangeName());
-          return args;
-      }
-      
-      args.put("x-dead-letter-exchange", getAllTenantDeadLetterExchangeName());
-      args.put("alternate-exchange", getAllTenantAltExchangeName());
-      return args;
+      // Create the queue with the configured name.
+      createAndBindQueue(channel, exchangeName, queueName, null, durable, exclusive, autoDelete);
   }
   
   /* ---------------------------------------------------------------------- */
-  /* createAndBindJobSpecificTopic:                                         */
+  /* createAndBindAutoDeleteTopic:                                          */
   /* ---------------------------------------------------------------------- */
   /** Create and bind a job-specific topic to the tenant's command exchange.
    * 
@@ -296,8 +241,8 @@ public final class QueueManager
    * @param jobUuid the job's uuid
    * @throws JobQueueException
    */
-  public void createAndBindSpecificTopic(Channel channel, String exchangeName, 
-                                            String topicName, String bindingKey)
+  public void createAndBindAutoDeleteTopic(Channel channel, String exchangeName, 
+                                           String topicName, String bindingKey)
    throws TapisQueueException
   {
       // Set the options for a transient, job-specific topic.
@@ -418,6 +363,66 @@ public final class QueueManager
   }
   
   /* ********************************************************************** */
+  /*                           Protected Methods                            */
+  /* ********************************************************************** */
+  /* ---------------------------------------------------------------------- */
+  /* createExchangeAndQueue:                                                */
+  /* ---------------------------------------------------------------------- */
+  /** Create the named exchange, the named queue, and bind them.
+   * 
+   * @param channel the communication channel
+   * @param service the calling service
+   * @param exchangeName the exchange to create
+   * @param exchangeType the type of exchange
+   * @param queueName the queue to create or null if no queue should be created
+   * @param bindingKey the key to use when binding the queue to the exchange
+   * @throws JobQueueException on error
+   */
+  protected void createExchangeAndQueue(Channel channel, String service, 
+                                        String exchangeName, BuiltinExchangeType exchangeType,
+                                        String queueName, String bindingKey, 
+                                        Map<String,Object> exchangeArgs) 
+   throws TapisQueueException
+  {
+      // Establish a durable exchange for the service.
+      // Create the durable, non-autodelete topic exchange.
+      boolean durable = true;
+      boolean autodelete = false;
+      try {channel.exchangeDeclare(exchangeName, exchangeType, durable, autodelete, exchangeArgs);}
+          catch (IOException e) {
+              String msg = MsgUtils.getMsg("QMGR_XCHG_SERVICE_ERROR", service, 
+                                            getInConnectionName(), channel.getChannelNumber(), 
+                                            e.getMessage());
+              throw new TapisQueueException(msg, e);
+          }
+      
+      // Worker processes create and bind their own queues using their runtime 
+      // name parameter.  In these cases, there's no more work to do.
+      if (queueName == null) return;
+      
+      // Create the durable queue or topic with a well-known name.
+      durable = true;
+      boolean exclusive = false;
+      boolean autoDelete = false;
+      try {channel.queueDeclare(queueName, durable, exclusive, autoDelete, null);}
+          catch (IOException e) {
+              String msg = MsgUtils.getMsg("QMGR_Q_DECLARE_ERROR", exchangeType.getType(), 
+                                           queueName, getInConnectionName(), 
+                                           channel.getChannelNumber(), e.getMessage());
+              throw new TapisQueueException(msg, e);
+          }
+      
+      // Bind the queue/topic to the exchange with the binding key.
+      try {channel.queueBind(queueName, exchangeName, bindingKey);}
+          catch (IOException e) {
+              String msg = MsgUtils.getMsg("QMGR_Q_BIND_ERROR", exchangeType.getType(), 
+                                           bindingKey, queueName, getInConnectionName(), 
+                                           channel.getChannelNumber(), e.getMessage());
+              throw new TapisQueueException(msg, e);
+          }
+  }
+  
+  /* ********************************************************************** */
   /*                             Private Methods                            */
   /* ********************************************************************** */
   /* ---------------------------------------------------------------------- */
@@ -436,7 +441,7 @@ public final class QueueManager
       if (_outConnection == null)
       {
         // Only allow one thread at a time to create a shared connection.
-        synchronized(QueueManager.class) {
+        synchronized(AbstractQueueManager.class) {
           // Don't do anything if another thread beat us to the punch.
           if (_outConnection == null)
             try {_outConnection = getConnectionFactory().newConnection(getOutConnectionName());}
@@ -472,7 +477,7 @@ public final class QueueManager
     if (_inConnection == null)
     {
       // Only allow one thread at a time to create a shared connection.
-      synchronized(QueueManager.class) {
+      synchronized(AbstractQueueManager.class) {
         // Don't do anything if another thread beat us to the punch.
         if (_inConnection == null)
           try {_inConnection = getConnectionFactory().newConnection(getInConnectionName());}
@@ -516,49 +521,46 @@ public final class QueueManager
           _factory.setUsername(_parms.getQueueUser());
           _factory.setPassword(_parms.getQueuePassword());
           _factory.setAutomaticRecoveryEnabled(_parms.isQueueAutoRecoveryEnabled());
+          if (_parms.getVhost() != null) _factory.setVirtualHost(_parms.getVhost());
       }
       
       return _factory;
   }
 
   /* ---------------------------------------------------------------------- */
-  /* createStandardMultiTenantQueue:                                        */
+  /* createStandardQueues:                                                  */
   /* ---------------------------------------------------------------------- */
   /** Create the exchanges and queues service all tenants in an installation.
-   * These queue objects use the pseudo-tenant id "AllTenants", which should
-   * never name an actual tenant and we treat as a reserved name.  
    * 
-   * Note: We don't currently check for a tenant named "AllTenants".
-   * 
-   * @throws AloeException
+   * @throws TapisQueueException
    */
   @SuppressWarnings("unchecked")
-  private void createStandardMultiTenantQueues()
+  private void createStandardQueues()
    throws TapisQueueException
   {
-      String allTenantId = QueueManager.ALL_TENANTS_NAME;
+      String service = _parms.getService();
       Channel channel = null;
       try {
           // Create a temporary channel.
           try {channel = getNewInChannel();}
             catch (Exception e) {
-              String msg = MsgUtils.getMsg("JOBS_QMGR_CHANNEL_TENANT_ERROR", allTenantId);
+              String msg = MsgUtils.getMsg("QMGR_CHANNEL_SERVICE_ERROR", service);
               _log.error(msg, e);
               throw e;
             }
           
           // Create the dead letter exchange and queue and bind them together.
-          createExchangeAndQueue(channel, allTenantId, 
-                                 getAllTenantDeadLetterExchangeName(), BuiltinExchangeType.FANOUT, 
-                                 getAllTenantDeadLetterQueueName(), DEFAULT_BINDING_KEY, null);
+          createExchangeAndQueue(channel, service, 
+                                 getDeadLetterExchangeName(), BuiltinExchangeType.FANOUT, 
+                                 getDeadLetterQueueName(), DEFAULT_BINDING_KEY, null);
           
           // Create the alternate exchange and queue and bind them together.  
           // Configure the dead letter queue on this exchange.
           HashMap<String,Object> exchangeArgs = new HashMap<>();
-          exchangeArgs.put("x-dead-letter-exchange", getAllTenantDeadLetterExchangeName());
-          createExchangeAndQueue(channel, allTenantId, 
-                                 getAllTenantAltExchangeName(), BuiltinExchangeType.FANOUT, 
-                                 getAllTenantAltQueueName(), DEFAULT_BINDING_KEY, 
+          exchangeArgs.put("x-dead-letter-exchange", getDeadLetterExchangeName());
+          createExchangeAndQueue(channel, service, 
+                                 getAltExchangeName(), BuiltinExchangeType.FANOUT, 
+                                 getAltQueueName(), DEFAULT_BINDING_KEY, 
                                  (HashMap<String,Object>) exchangeArgs.clone());
       }
       finally {
@@ -571,89 +573,6 @@ public final class QueueManager
                 _log.warn(msg, e1);
             }
         }
-  }
-  
-  /* ---------------------------------------------------------------------- */
-  /* createExchangeAndQueue:                                                */
-  /* ---------------------------------------------------------------------- */
-  /** Create the named exchange, the named queue, and bind them.
-   * 
-   * @param channel the communication channel
-   * @param tenantId the tenant whose components are being configured
-   * @param exchangeName the exchange to create
-   * @param exchangeType the type of exchange
-   * @param queueName the queue to create or null if no queue should be created
-   * @param bindingKey the key to use when binding the queue to the exchange
-   * @throws JobQueueException on error
-   */
-  private void createExchangeAndQueue(Channel channel, String tenantId, 
-                                      String exchangeName, BuiltinExchangeType exchangeType,
-                                      String queueName, String bindingKey, 
-                                      Map<String,Object> exchangeArgs) 
-   throws TapisQueueException
-  {
-      // Establish a durable exchange for the tenant.
-      // Create the durable, non-autodelete topic exchange.
-      boolean durable = true;
-      boolean autodelete = false;
-      try {channel.exchangeDeclare(exchangeName, exchangeType, durable, autodelete, exchangeArgs);}
-          catch (IOException e) {
-              String msg = MsgUtils.getMsg("QMGR_XCHG_TENANT_ERROR", tenantId, 
-                                            getInConnectionName(), channel.getChannelNumber(), 
-                                            e.getMessage());
-              _log.error(msg, e);
-              throw new TapisQueueException(msg, e);
-          }
-      
-      // Worker processes create and bind their own queues using their runtime 
-      // name parameter.  In these cases, there's no more work to do.
-      if (queueName == null) return;
-      
-      // Create the durable queue or topic with a well-known name.
-      durable = true;
-      boolean exclusive = false;
-      boolean autoDelete = false;
-      try {channel.queueDeclare(queueName, durable, exclusive, autoDelete, null);}
-          catch (IOException e) {
-              String msg = MsgUtils.getMsg("QMGR_Q_DECLARE_ERROR", exchangeType.getType(), 
-                                           queueName, getInConnectionName(), 
-                                           channel.getChannelNumber(), e.getMessage());
-              _log.error(msg, e);
-              throw new TapisQueueException(msg, e);
-          }
-      
-      // Bind the queue/topic to the exchange with the binding key.
-      try {channel.queueBind(queueName, exchangeName, bindingKey);}
-          catch (IOException e) {
-              String msg = MsgUtils.getMsg("QMGR_Q_BIND_ERROR", exchangeType.getType(), 
-                                           bindingKey, queueName, getInConnectionName(), 
-                                           channel.getChannelNumber(), e.getMessage());
-              _log.error(msg, e);
-              throw new TapisQueueException(msg, e);
-          }
-  }
-  
-  /* ---------------------------------------------------------------------- */
-  /* createAndBindQueue:                                                    */
-  /* ---------------------------------------------------------------------- */
-  /** Create a tenant queue and bind it to the specified direct exchange.
-   * The binding key is the queue name. 
-   * 
-   * @param channel the channel used to post to the queue
-   * @param exchangeName the target exchange
-   * @param queueName the queue to be posted
-   * @throws JobQueueException on error
-   */
-  private void createAndBindQueue(Channel channel, String exchangeName, String queueName)
-    throws TapisQueueException
-  {
-      // Set the standard queue/topic options.
-      boolean durable = true;
-      boolean exclusive = false;
-      boolean autoDelete = false;
-      
-      // Create the queue with the configured name.
-      createAndBindQueue(channel, exchangeName, queueName, null, durable, exclusive, autoDelete);
   }
   
   /* ---------------------------------------------------------------------- */

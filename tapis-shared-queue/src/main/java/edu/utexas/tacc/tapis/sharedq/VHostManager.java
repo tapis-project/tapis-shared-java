@@ -67,6 +67,7 @@ public class VHostManager
      * 
      * @param vhost the new vhost to be created
      * @param user the admin user for that vhost
+     * @param the user's password
      */
     public void initVHost(String vhost, String user, String userPassword)
      throws Exception

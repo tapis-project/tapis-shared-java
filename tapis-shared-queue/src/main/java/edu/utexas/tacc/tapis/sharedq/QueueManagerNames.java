@@ -9,16 +9,15 @@ class QueueManagerNames
   /* ********************************************************************** */
   // ----- RabbitMQ naming constants.
   // The prefix to all queuing components for the jobs service.
-  public  static final String TAPIS_QUEUE_PREFIX = "tapis.";
-  public  static final String ALL_TENANTS_NAME   = "AllTenants";
+  private static final String TAPIS_QUEUE_PREFIX = "tapis.service.";
   
   // Alternate exchange and queue name components.
-  protected static final String MULTI_TENANT_ALT_EXCHANGE_SUFFIX = ".alt.Exchange";
-  private static final String MULTI_TENANT_ALT_QUEUE_SUFFIX = ".alt.Queue";
+  private static final String ALT_EXCHANGE_NAME = TAPIS_QUEUE_PREFIX + "alt.Exchange";
+  private static final String ALT_QUEUE_NAME    = TAPIS_QUEUE_PREFIX + "alt.Queue";
   
   // Dead letter exchange and queue name components.
-  private static final String MULTI_TENANT_DEADLETTER_EXCHANGE_SUFFIX = ".dead.Exchange";
-  private static final String MULTI_TENANT_DEADLETTER_QUEUE_SUFFIX = ".dead.Queue";
+  private static final String DEADLETTER_EXCHANGE_NAME = TAPIS_QUEUE_PREFIX + "dead.Exchange";
+  private static final String DEADLETTER_QUEUE_NAME    = TAPIS_QUEUE_PREFIX + "dead.Queue";
   
   // ----- RabbitMQ naming constants.
   // Used to build connection names.
@@ -64,32 +63,32 @@ class QueueManagerNames
   }
   
   /* ---------------------------------------------------------------------- */
-  /* getAllTenantAltQueueName:                                              */
+  /* getAltQueueName:                                                       */
   /* ---------------------------------------------------------------------- */
   /** Create the multi-tenant queue name used to access unrouteable messages.
    * 
    * @return the tenant alternate route queue name
    */
-  public String getAllTenantAltQueueName()
+  public String getAltQueueName()
   {
-    return TAPIS_QUEUE_PREFIX + ALL_TENANTS_NAME + MULTI_TENANT_ALT_QUEUE_SUFFIX;
+    return ALT_QUEUE_NAME;
   }
   
   /* ---------------------------------------------------------------------- */
-  /* getAllTenantDeadLetterQueueName:                                       */
+  /* getDeadLetterQueueName:                                                */
   /* ---------------------------------------------------------------------- */
   /** Create the multi-tenant topic queue name used to access dead letter
    * messages.
    * 
    * @return the tenant dead letter queue name
    */
-  public String getAllTenantDeadLetterQueueName()
+  public String getDeadLetterQueueName()
   {
-    return TAPIS_QUEUE_PREFIX + ALL_TENANTS_NAME + MULTI_TENANT_DEADLETTER_QUEUE_SUFFIX;
+    return DEADLETTER_QUEUE_NAME;
   }
   
   /* ---------------------------------------------------------------------- */
-  /* getAllTenantAltExchangeName:                                           */
+  /* getAltExchangeName:                                                    */
   /* ---------------------------------------------------------------------- */
   /** Create the multi-tenant exchange name used to communicate with
    * the tenant's alternate exchange queue.  This exchange captures
@@ -97,13 +96,13 @@ class QueueManagerNames
    * 
    * @return the tenant alternate exchange name
    */
-  public String getAllTenantAltExchangeName()
+  public String getAltExchangeName()
   {
-    return TAPIS_QUEUE_PREFIX + ALL_TENANTS_NAME + MULTI_TENANT_ALT_EXCHANGE_SUFFIX;
+    return ALT_EXCHANGE_NAME;
   }
   
   /* ---------------------------------------------------------------------- */
-  /* getAllTenantDeadLetterExchangeName:                                    */
+  /* getDeadLetterExchangeName:                                             */
   /* ---------------------------------------------------------------------- */
   /** Create the multi-tenant exchange name used to communicate with
    * the tenant's dead letter queue.  This exchanges captures messages that
@@ -115,9 +114,9 @@ class QueueManagerNames
    * 
    * @return the tenant dead letter exchange name
    */
-  public String getAllTenantDeadLetterExchangeName()
+  public String getDeadLetterExchangeName()
   {
-    return TAPIS_QUEUE_PREFIX + ALL_TENANTS_NAME + MULTI_TENANT_DEADLETTER_EXCHANGE_SUFFIX;
+    return DEADLETTER_EXCHANGE_NAME;
   }
   
 }
