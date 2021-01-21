@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>edu.utexas.tacc.tapis</groupId>
   <artifactId>tapis-shared-searchlib</artifactId>
-  <version>1.11.57</version>
+  <version>1.11.58</version>
   <name>Tapis Search Facility</name>
   <description>Tapis search library</description>
   <url>https://github.com/tapis-project/tapis-shared-java/tapis-shared-searchlib</url>
@@ -145,7 +145,7 @@
     <activemq-client.version>5.16.0</activemq-client.version>
     <jackson.version>2.10.1</jackson.version>
     <jargon-core.version>4.3.0.1-RELEASE</jargon-core.version>
-    <maven-compiler-plugin-release>13</maven-compiler-plugin-release>
+    <maven-compiler-plugin-release>15</maven-compiler-plugin-release>
     <jakarta.el.version>3.0.3</jakarta.el.version>
     <nexus-staging-maven-plugin.version>1.6.7</nexus-staging-maven-plugin.version>
     <maven-jar-plugin.version>3.2.0</maven-jar-plugin.version>
@@ -171,7 +171,7 @@
     <commons-io.version>2.6</commons-io.version>
     <javax.validation.version>2.0.1.Final</javax.validation.version>
     <amqp-client.version>5.10.0</amqp-client.version>
-    <timestamp>1610722789513</timestamp>
+    <timestamp>1611254146200</timestamp>
     <metrics-core.version>3.2.3</metrics-core.version>
     <threetenbp.version>1.3.5</threetenbp.version>
     <snakeyaml.version>1.26</snakeyaml.version>
@@ -180,14 +180,14 @@
     <swagger-jaxrs2.version>2.0.10</swagger-jaxrs2.version>
     <undertow.version>2.2.2.Final</undertow.version>
     <commons-math3.version>3.6.1</commons-math3.version>
-    <buildNumber>a2b9f0d9</buildNumber>
-    <reactor-core.version>3.3.11.RELEASE</reactor-core.version>
+    <buildNumber>4da1fee8</buildNumber>
+    <reactor-core.version>3.4.1</reactor-core.version>
     <software.amazon.awssdk.version>2.13.11</software.amazon.awssdk.version>
     <testng.version>6.14.3</testng.version>
     <commons-lang3.version>3.9</commons-lang3.version>
     <junit.version>4.12</junit.version>
     <javacc.version>7.0.6</javacc.version>
-    <rabbitmq.version>3.6.11</rabbitmq.version>
+    <rabbitmq.version>5.10.0</rabbitmq.version>
     <javax.mail.version>1.6.2</javax.mail.version>
     <reactor-test.version>3.2.3.RELEASE</reactor-test.version>
     <jaxb-api.version>2.3.1</jaxb-api.version>
@@ -211,7 +211,7 @@
     <maven-shade-plugin.version>3.2.1</maven-shade-plugin.version>
     <mockito-core.version>3.0.0</mockito-core.version>
     <javax.websocket-api.version>1.1</javax.websocket-api.version>
-    <build.timestamp>2021-01-15T14:58:05Z</build.timestamp>
+    <build.timestamp>2021-01-21T18:35:07Z</build.timestamp>
     <statefulj.version>3.0</statefulj.version>
     <java-source.version>1.15</java-source.version>
     <reactor-rabbitmq.version>1.4.4.RELEASE</reactor-rabbitmq.version>
@@ -421,61 +421,61 @@
     <dependency>
       <groupId>edu.utexas.tacc.tapis</groupId>
       <artifactId>apps-client</artifactId>
-      <version>1.11.37</version>
+      <version>1.11.38</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>edu.utexas.tacc.tapis</groupId>
       <artifactId>auth-client</artifactId>
-      <version>1.11.37</version>
+      <version>1.11.38</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>edu.utexas.tacc.tapis</groupId>
       <artifactId>files-client</artifactId>
-      <version>1.11.37</version>
+      <version>1.11.38</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>edu.utexas.tacc.tapis</groupId>
       <artifactId>meta-client</artifactId>
-      <version>1.11.37</version>
+      <version>1.11.38</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>edu.utexas.tacc.tapis</groupId>
       <artifactId>security-client</artifactId>
-      <version>1.11.37</version>
+      <version>1.11.38</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>edu.utexas.tacc.tapis</groupId>
       <artifactId>shared</artifactId>
-      <version>1.11.37</version>
+      <version>1.11.38</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>edu.utexas.tacc.tapis</groupId>
       <artifactId>systems-client</artifactId>
-      <version>1.11.37</version>
+      <version>1.11.38</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>edu.utexas.tacc.tapis</groupId>
       <artifactId>tapis-shared-lib</artifactId>
-      <version>1.11.57</version>
+      <version>1.11.58</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>edu.utexas.tacc.tapis</groupId>
       <artifactId>tenants-client</artifactId>
-      <version>1.11.37</version>
+      <version>1.11.38</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>edu.utexas.tacc.tapis</groupId>
       <artifactId>tokens-client</artifactId>
-      <version>1.11.37</version>
+      <version>1.11.38</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
