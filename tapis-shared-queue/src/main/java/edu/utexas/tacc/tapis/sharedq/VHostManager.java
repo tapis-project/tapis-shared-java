@@ -322,7 +322,7 @@ public class VHostManager
     private String makeHttpCmdPrefix() 
     {
         if (_cmdPrefix == null)
-            _cmdPrefix = "http://" + _parms.getHost() + ":" + _parms.getPort() + "/api/";
+            _cmdPrefix = "http://" + _parms.getHost() + ":" + _parms.getAdminPort() + "/api/";
         return _cmdPrefix;
     }
     

@@ -1,8 +1,6 @@
 package edu.utexas.tacc.tapis.sharedq;
 
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import edu.utexas.tacc.tapis.shared.exceptions.runtime.TapisRuntimeException;
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
@@ -43,7 +41,7 @@ public class QueueManagerParms
             String msg = MsgUtils.getMsg("TAPIS_NULL_PARAMETER", "validate", "queueHost");
             throw new TapisRuntimeException(msg);
         }
-        if (queuePort == 0) {
+        if (queuePort <= 0) {
             String msg = MsgUtils.getMsg("TAPIS_INVALID_PARAMETER", "validate", "queuePort", 
                                          queuePort);
             throw new TapisRuntimeException(msg);

@@ -21,7 +21,6 @@ import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
 import edu.utexas.tacc.tapis.sharedq.exceptions.TapisQueueException;
 
 public abstract class AbstractQueueManager 
-  extends QueueManagerNames
 {
   /* ********************************************************************** */
   /*                               Constants                                */
@@ -71,13 +70,6 @@ public abstract class AbstractQueueManager
       
       // Set the parms for the singleton.
       _parms = parms;
-      
-      // Create the multi-tenant queues.
-      try {createStandardQueues();}
-      catch (Exception e) {
-          String msg = MsgUtils.getMsg("QMGR_INIT_ERROR", _parms.getService());
-          _log.error(msg, e);
-      }
   }
   
   /* ********************************************************************** */
@@ -154,8 +146,8 @@ public abstract class AbstractQueueManager
     throws TapisQueueException
   {
     // Get the exchange and queuenames.
-    String queueName    = getDeadLetterQueueName();
-    String exchangeName = getDeadLetterExchangeName(); 
+    String queueName    = QueueManagerNames.getDeadLetterQueueName();
+    String exchangeName = QueueManagerNames.getDeadLetterExchangeName(); 
     
     // Create a temporary channel.
     Channel channel = null;
@@ -164,14 +156,13 @@ public abstract class AbstractQueueManager
       // Create a temporary channel.
       try {channel = getNewOutChannel();}
         catch (Exception e) {
-          String msg = MsgUtils.getMsg("QMGR_CHANNEL_SERVICE_ERROR", _parms.getService());
           throw e;
         }
     
       // Publish the message to the queue.
       try {
         // Write the job to the tenant recovery queue.
-        channel.basicPublish(exchangeName, DEFAULT_BINDING_KEY, AbstractQueueManager.PERSISTENT_TEXT, 
+        channel.basicPublish(exchangeName, DEFAULT_BINDING_KEY, QueueManagerNames.PERSISTENT_TEXT, 
                              message.getBytes("UTF-8"));
         
         // Tracing.
@@ -366,6 +357,53 @@ public abstract class AbstractQueueManager
   /*                           Protected Methods                            */
   /* ********************************************************************** */
   /* ---------------------------------------------------------------------- */
+  /* createStandardQueues:                                                  */
+  /* ---------------------------------------------------------------------- */
+  /** Create the exchanges and queues service all tenants in an installation.
+   * @throws TapisQueueException
+   */
+  @SuppressWarnings("unchecked")
+  protected void createStandardQueues()
+   throws TapisQueueException
+  {
+      String service = _parms.getService();
+      Channel channel = null;
+      try {
+          // Create a temporary channel.
+          try {channel = getNewInChannel();}
+            catch (Exception e) {
+              String msg = MsgUtils.getMsg("QMGR_CHANNEL_SERVICE_ERROR", service);
+              _log.error(msg, e);
+              throw e;
+            }
+          
+          // Create the dead letter exchange and queue and bind them together.
+          createExchangeAndQueue(channel, service, 
+                                 QueueManagerNames.getDeadLetterExchangeName(), BuiltinExchangeType.FANOUT, 
+                                 QueueManagerNames.getDeadLetterQueueName(), DEFAULT_BINDING_KEY, null);
+          
+          // Create the alternate exchange and queue and bind them together.  
+          // Configure the dead letter queue on this exchange.
+          HashMap<String,Object> exchangeArgs = new HashMap<>();
+          exchangeArgs.put("x-dead-letter-exchange", QueueManagerNames.getDeadLetterExchangeName());
+          createExchangeAndQueue(channel, service, 
+                                 QueueManagerNames.getAltExchangeName(), BuiltinExchangeType.FANOUT, 
+                                 QueueManagerNames.getAltQueueName(), DEFAULT_BINDING_KEY, 
+                                 (HashMap<String,Object>) exchangeArgs.clone());
+      }
+      finally {
+          // Close the channel if it exists and hasn't already been aborted.
+          if (channel != null)
+            try {channel.close();} 
+                catch (Exception e1){
+                String msg = MsgUtils.getMsg("QMGR_CHANNEL_CLOSE_ERROR", 
+                                             channel.getChannelNumber(), e1.getMessage());
+                _log.warn(msg, e1);
+            }
+        }
+  }
+  
+  /* ---------------------------------------------------------------------- */
   /* createExchangeAndQueue:                                                */
   /* ---------------------------------------------------------------------- */
   /** Create the named exchange, the named queue, and bind them.
@@ -528,54 +566,6 @@ public abstract class AbstractQueueManager
   }
 
   /* ---------------------------------------------------------------------- */
-  /* createStandardQueues:                                                  */
-  /* ---------------------------------------------------------------------- */
-  /** Create the exchanges and queues service all tenants in an installation.
-   * 
-   * @throws TapisQueueException
-   */
-  @SuppressWarnings("unchecked")
-  private void createStandardQueues()
-   throws TapisQueueException
-  {
-      String service = _parms.getService();
-      Channel channel = null;
-      try {
-          // Create a temporary channel.
-          try {channel = getNewInChannel();}
-            catch (Exception e) {
-              String msg = MsgUtils.getMsg("QMGR_CHANNEL_SERVICE_ERROR", service);
-              _log.error(msg, e);
-              throw e;
-            }
-          
-          // Create the dead letter exchange and queue and bind them together.
-          createExchangeAndQueue(channel, service, 
-                                 getDeadLetterExchangeName(), BuiltinExchangeType.FANOUT, 
-                                 getDeadLetterQueueName(), DEFAULT_BINDING_KEY, null);
-          
-          // Create the alternate exchange and queue and bind them together.  
-          // Configure the dead letter queue on this exchange.
-          HashMap<String,Object> exchangeArgs = new HashMap<>();
-          exchangeArgs.put("x-dead-letter-exchange", getDeadLetterExchangeName());
-          createExchangeAndQueue(channel, service, 
-                                 getAltExchangeName(), BuiltinExchangeType.FANOUT, 
-                                 getAltQueueName(), DEFAULT_BINDING_KEY, 
-                                 (HashMap<String,Object>) exchangeArgs.clone());
-      }
-      finally {
-          // Close the channel if it exists and hasn't already been aborted.
-          if (channel != null)
-            try {channel.close();} 
-                catch (Exception e1){
-                String msg = MsgUtils.getMsg("QMGR_CHANNEL_CLOSE_ERROR", 
-                                             channel.getChannelNumber(), e1.getMessage());
-                _log.warn(msg, e1);
-            }
-        }
-  }
-  
-  /* ---------------------------------------------------------------------- */
   /* createAndBindQueue:                                                    */
   /* ---------------------------------------------------------------------- */
   /** Create a tenant queue and bind it to the specified direct exchange.
@@ -621,11 +611,11 @@ public abstract class AbstractQueueManager
   /* getOutConnectionName:                                                  */
   /* ---------------------------------------------------------------------- */
   public String getOutConnectionName()
-  {return getOutConnectionName(_parms.getInstanceName());}
+  {return QueueManagerNames.getOutConnectionName(_parms.getInstanceName());}
   
   /* ---------------------------------------------------------------------- */
   /* getInConnectionName:                                                   */
   /* ---------------------------------------------------------------------- */
   public String getInConnectionName()
-  {return getInConnectionName(_parms.getInstanceName());}
+  {return QueueManagerNames.getInConnectionName(_parms.getInstanceName());}
 }

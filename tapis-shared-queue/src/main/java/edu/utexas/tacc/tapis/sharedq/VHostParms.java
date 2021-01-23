@@ -12,7 +12,7 @@ public class VHostParms
     
     // Fields
     private final String _host;          // RabbitMQ host
-    private final int    _port;          // Management API port on host
+    private final int    _adminPort;     // Management API port on host
     private final String _adminUser;     // Administrator user id in default vhost
     private final String _adminPassword; // Administrator password 
     
@@ -37,16 +37,16 @@ public class VHostParms
         _host = host;
         _adminUser = adminUser;
         _adminPassword = adminPassword;
-        if (port <= 0) _port = DEFAULT_MANAGEMENT_PORT;
-          else _port = port;
+        if (port <= 0) _adminPort = DEFAULT_MANAGEMENT_PORT;
+          else _adminPort = port;
     }
     
     // Accessors.
     public String getHost() {
         return _host;
     }
-    public int getPort() {
-        return _port;
+    public int getAdminPort() {
+        return _adminPort;
     }
     public String getAdminUser() {
         return _adminUser;

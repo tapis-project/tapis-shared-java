@@ -2,7 +2,7 @@ package edu.utexas.tacc.tapis.sharedq;
 
 import com.rabbitmq.client.AMQP.BasicProperties;
 
-class QueueManagerNames 
+public class QueueManagerNames 
 {
   /* ********************************************************************** */
   /*                               Constants                                */
@@ -49,7 +49,7 @@ class QueueManagerNames
   /* ---------------------------------------------------------------------- */
   /* getOutConnectionName:                                                  */
   /* ---------------------------------------------------------------------- */
-  public String getOutConnectionName(String instanceName)
+  public static String getOutConnectionName(String instanceName)
   {
       return instanceName + OUT_CONNECTION_SUFFIX;
   }
@@ -57,7 +57,7 @@ class QueueManagerNames
   /* ---------------------------------------------------------------------- */
   /* getInConnectionName:                                                   */
   /* ---------------------------------------------------------------------- */
-  public String getInConnectionName(String instanceName)
+  public static String getInConnectionName(String instanceName)
   {
       return instanceName + IN_CONNECTION_SUFFIX;
   }
@@ -69,7 +69,7 @@ class QueueManagerNames
    * 
    * @return the tenant alternate route queue name
    */
-  public String getAltQueueName()
+  public static String getAltQueueName()
   {
     return ALT_QUEUE_NAME;
   }
@@ -82,7 +82,7 @@ class QueueManagerNames
    * 
    * @return the tenant dead letter queue name
    */
-  public String getDeadLetterQueueName()
+  public static String getDeadLetterQueueName()
   {
     return DEADLETTER_QUEUE_NAME;
   }
@@ -96,7 +96,7 @@ class QueueManagerNames
    * 
    * @return the tenant alternate exchange name
    */
-  public String getAltExchangeName()
+  public static String getAltExchangeName()
   {
     return ALT_EXCHANGE_NAME;
   }
@@ -114,7 +114,7 @@ class QueueManagerNames
    * 
    * @return the tenant dead letter exchange name
    */
-  public String getDeadLetterExchangeName()
+  public static String getDeadLetterExchangeName()
   {
     return DEADLETTER_EXCHANGE_NAME;
   }

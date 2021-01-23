@@ -114,6 +114,21 @@ public class TapisEnv
 	  
 	  // ------------------- RabbitMQ Parameters -----------------------
 	  // guest/guest is commonly used in non-production environments.
+	  //
+	  // These are the rabbitmq superuser credentials, the credentials
+	  // established at installation time with administrator privileges
+	  // in the default vhost (/).  These credentials should only be 
+	  // used to create new vhosts and their users.  They should not
+	  // be used by services to perform their normal runtime functions.
+      TAPIS_QUEUE_ADMIN_USER("tapis.queue.admin.user"),
+      TAPIS_QUEUE_ADMIN_PASSWORD("tapis.queue.admin.password"),
+      
+      // Default is 15672 for non-ssl, 15671 for ssl.
+      TAPIS_QUEUE_ADMIN_PORT("tapis.queue.admin.port"),
+      
+      // These are the credentials that services use at runtime.
+      // They should allow the minimum required access rights
+      // for the service to execute in their vhost.
       TAPIS_QUEUE_USER("tapis.queue.user"),
       TAPIS_QUEUE_PASSWORD("tapis.queue.password"),
     
