@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>edu.utexas.tacc.tapis</groupId>
   <artifactId>tapis-shared-searchlib</artifactId>
-  <version>1.11.58</version>
+  <version>1.11.59</version>
   <name>Tapis Search Facility</name>
   <description>Tapis search library</description>
   <url>https://github.com/tapis-project/tapis-shared-java/tapis-shared-searchlib</url>
@@ -171,7 +171,7 @@
     <commons-io.version>2.6</commons-io.version>
     <javax.validation.version>2.0.1.Final</javax.validation.version>
     <amqp-client.version>5.10.0</amqp-client.version>
-    <timestamp>1611254146200</timestamp>
+    <timestamp>1611424964763</timestamp>
     <metrics-core.version>3.2.3</metrics-core.version>
     <threetenbp.version>1.3.5</threetenbp.version>
     <snakeyaml.version>1.26</snakeyaml.version>
@@ -180,7 +180,7 @@
     <swagger-jaxrs2.version>2.0.10</swagger-jaxrs2.version>
     <undertow.version>2.2.2.Final</undertow.version>
     <commons-math3.version>3.6.1</commons-math3.version>
-    <buildNumber>4da1fee8</buildNumber>
+    <buildNumber>aa0e715c</buildNumber>
     <reactor-core.version>3.4.1</reactor-core.version>
     <software.amazon.awssdk.version>2.13.11</software.amazon.awssdk.version>
     <testng.version>6.14.3</testng.version>
@@ -211,7 +211,7 @@
     <maven-shade-plugin.version>3.2.1</maven-shade-plugin.version>
     <mockito-core.version>3.0.0</mockito-core.version>
     <javax.websocket-api.version>1.1</javax.websocket-api.version>
-    <build.timestamp>2021-01-21T18:35:07Z</build.timestamp>
+    <build.timestamp>2021-01-23T18:01:09Z</build.timestamp>
     <statefulj.version>3.0</statefulj.version>
     <java-source.version>1.15</java-source.version>
     <reactor-rabbitmq.version>1.4.4.RELEASE</reactor-rabbitmq.version>
@@ -224,7 +224,7 @@
     <logback-classic.version>1.2.3</logback-classic.version>
     <shiro.version>1.4.1</shiro.version>
     <maven-javadoc-plugin.version>3.0.0</maven-javadoc-plugin.version>
-    <jersey-container-servlet.version>2.30</jersey-container-servlet.version>
+    <jersey-container-servlet.version>2.33</jersey-container-servlet.version>
     <javax.activation.activation.version>1.1.1</javax.activation.activation.version>
     <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
     <org.everit.json.schema.version>1.12.1</org.everit.json.schema.version>
@@ -371,12 +371,6 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>com.sun.activation</groupId>
-      <artifactId>jakarta.activation</artifactId>
-      <version>1.2.1</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
       <groupId>com.sun.mail</groupId>
       <artifactId>javax.mail</artifactId>
       <version>1.6.2</version>
@@ -463,7 +457,7 @@
     <dependency>
       <groupId>edu.utexas.tacc.tapis</groupId>
       <artifactId>tapis-shared-lib</artifactId>
-      <version>1.11.58</version>
+      <version>1.11.59</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
@@ -619,7 +613,7 @@
     <dependency>
       <groupId>org.glassfish.jersey.core</groupId>
       <artifactId>jersey-common</artifactId>
-      <version>2.30</version>
+      <version>2.33</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
