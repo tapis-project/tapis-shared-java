@@ -17,6 +17,7 @@ import com.google.common.cache.LoadingCache;
 import edu.utexas.tacc.tapis.apps.client.AppsClient;
 import edu.utexas.tacc.tapis.auth.client.AuthClient;
 import edu.utexas.tacc.tapis.files.client.FilesClient;
+import edu.utexas.tacc.tapis.jobs.client.JobsClient;
 import edu.utexas.tacc.tapis.meta.client.MetaClient;
 import edu.utexas.tacc.tapis.security.client.SKClient;
 import edu.utexas.tacc.tapis.shared.TapisConstants;
@@ -259,7 +260,10 @@ public class ServiceClients
             }
                 
             case TapisConstants.SERVICE_NAME_JOBS: {
-//              var clt = new JobsClient(router.getServiceBaseUrl(), router.getAccessJWT());
+                var clt = new JobsClient(router.getServiceBaseUrl(), router.getAccessJWT());
+                clt.addDefaultHeader("X-Tapis-User", user);
+                clt.addDefaultHeader("X-Tapis-Tenant", tenant);
+                client = clt;
                 break;
             }
                 
