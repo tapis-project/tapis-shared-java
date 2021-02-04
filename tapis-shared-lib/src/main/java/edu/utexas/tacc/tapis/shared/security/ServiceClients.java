@@ -353,6 +353,7 @@ public class ServiceClients
 		map.put(TokensClient.class, TapisConstants.SERVICE_NAME_TOKENS);
 		map.put(MetaClient.class, TapisConstants.SERVICE_NAME_META);
 		map.put(FilesClient.class, TapisConstants.SERVICE_NAME_FILES);
+		map.put(JobsClient.class, TapisConstants.SERVICE_NAME_JOBS);
 		
 		return map;
 	}
