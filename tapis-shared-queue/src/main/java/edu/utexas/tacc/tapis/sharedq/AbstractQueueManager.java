@@ -29,7 +29,7 @@ public abstract class AbstractQueueManager
   private static final Logger _log = LoggerFactory.getLogger(AbstractQueueManager.class);
     
   // Binding key to use with fanout exchanges.
-  public static final String DEFAULT_BINDING_KEY = "";
+  public static final String DEFAULT_BINDING_KEY = QueueManagerNames.DEFAULT_BINDING_KEY;
   
   // Default timeout in milliseconds to close a connection.
   public static final int DEFAULT_CONN_CLOSE_TIMEOUT_MS = 1000;

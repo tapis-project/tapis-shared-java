@@ -8,6 +8,9 @@ public class QueueManagerNames
   /*                               Constants                                */
   /* ********************************************************************** */
   // ----- RabbitMQ naming constants.
+  // Binding key to use with fanout exchanges.
+  public static final String DEFAULT_BINDING_KEY = "";
+  
   // The prefix to all queuing components for the jobs service.
   private static final String TAPIS_QUEUE_PREFIX = "tapis.service.";
   

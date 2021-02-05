@@ -113,7 +113,7 @@ public class ServiceClients
 	 * @param tenant the tenant of the service
 	 * @param user the user on behalf of whom the service is being called
 	 * @param cls the service's client class type
-	 * @return
+	 * @return the target service's strongly-typed client
 	 * @throws RuntimeException
 	 * @throws TapisException
 	 * @throws ExecutionException 
