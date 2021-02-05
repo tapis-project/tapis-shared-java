@@ -34,6 +34,7 @@ public final class TapisThreadContext
     // Information that is extracted from query parameters
     private boolean prettyPrint = false;
     private boolean computeTotal = false;
+    private List<String> filterList;
     private List<String> searchList;
     private int limit;
     private String sortBy;
@@ -98,6 +99,8 @@ public final class TapisThreadContext
     public void setPrettyPrint(boolean b) { prettyPrint = b; }
     public boolean getComputeTotal() { return computeTotal; }
     public void setComputeTotal(boolean b) { computeTotal = b; }
+    public List<String> getFilterList() { return filterList; }
+    public void setFilterList(List<String> fl) { filterList = fl; }
     public List<String> getSearchList() { return searchList; }
     public void setSearchList(List<String> sl) { searchList = sl; }
     public int getLimit() { return limit; }

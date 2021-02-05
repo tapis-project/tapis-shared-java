@@ -32,10 +32,6 @@ import static edu.utexas.tacc.tapis.search.SearchUtils.*;
  *
  *  NOTE: Process "pretty" here because it is a parameter for all endpoints and
  *        is not needed for the java client or the back-end (tapis-systemslib)
- *  NOTE: Returning selected attributes in returned results is provided by Jersey's
- *        dynamic filtering (SelectableEntityFilteringFeature). See SystemsApplication.java
- *        So no need to process here. Downside is it is therefore not available in
- *        the java client or calls by some some other front-end to the back-end.
  */
 @Provider
 @Priority(TapisConstants.JAXRS_FILTER_PRIORITY_AFTER_AUTHENTICATION)
@@ -49,6 +45,7 @@ public class QueryParametersRequestFilter implements ContainerRequestFilter
 
   // Query parameter names
   private static final String PARM_PRETTY = "pretty";
+  private static final String PARM_FILTER = "fields";
   private static final String PARM_SEARCH = "search";
   private static final String PARM_LIMIT = "limit";
   private static final String PARM_SORTBY = "sortBy";
@@ -120,6 +117,25 @@ public class QueryParametersRequestFilter implements ContainerRequestFilter
       {
         threadContext.setComputeTotal(Boolean.parseBoolean(parmValueComputeTotal));
       }
+    }
+
+    // Look for and extract filter query parameter.
+    // This parameter is used to select which result fields are included in a response.
+    if (invalidParm(threadContext, requestContext, PARM_FILTER)) { return; }
+    String parmValueFields = getQueryParm(queryParameters, PARM_FILTER);
+    // Extract and validate the fields.
+    try
+    {
+      List<String> filterList = SearchUtils.getValueList(parmValueFields);
+      threadContext.setFilterList(filterList);
+    }
+    catch (Exception e)
+    {
+      String msg = MsgUtils.getMsg("FILTER_LIST_ERROR", threadContext.getJwtTenantId(), threadContext.getJwtUser(),
+              threadContext.getOboTenantId(), threadContext.getOboUser(), e.getMessage());
+      _log.error(msg, e);
+      requestContext.abortWith(Response.status(Response.Status.BAD_REQUEST).entity(msg).build());
+      return;
     }
 
     // Look for and extract search query parameter.
