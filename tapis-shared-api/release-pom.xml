@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>edu.utexas.tacc.tapis</groupId>
   <artifactId>tapis-shared-api</artifactId>
-  <version>1.11.61</version>
+  <version>1.11.62</version>
   <name>Tapis Shared Front-End Library</name>
   <description>Shared library for front end Tapis code</description>
   <url>https://github.com/tapis-project/tapis-shared-java/tapis-shared-api</url>
@@ -141,6 +141,7 @@
     </snapshotRepository>
   </distributionManagement>
   <properties>
+    <jersey-entity-filtering.version>2.33</jersey-entity-filtering.version>
     <maven-gpg-plugin.version>1.6</maven-gpg-plugin.version>
     <activemq-client.version>5.16.0</activemq-client.version>
     <jackson.version>2.10.1</jackson.version>
@@ -209,7 +210,7 @@
     <maven-shade-plugin.version>3.2.1</maven-shade-plugin.version>
     <mockito-core.version>3.0.0</mockito-core.version>
     <javax.websocket-api.version>1.1</javax.websocket-api.version>
-    <build.timestamp>2021-01-29T14:28:54Z</build.timestamp>
+    <build.timestamp>2021-02-10T20:12:26Z</build.timestamp>
     <statefulj.version>3.0</statefulj.version>
     <java-source.version>1.15</java-source.version>
     <reactor-rabbitmq.version>1.4.4.RELEASE</reactor-rabbitmq.version>
@@ -460,73 +461,73 @@
     <dependency>
       <groupId>edu.utexas.tacc.tapis</groupId>
       <artifactId>apps-client</artifactId>
-      <version>1.11.40</version>
+      <version>1.11.43</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>edu.utexas.tacc.tapis</groupId>
       <artifactId>auth-client</artifactId>
-      <version>1.11.40</version>
+      <version>1.11.43</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>edu.utexas.tacc.tapis</groupId>
       <artifactId>files-client</artifactId>
-      <version>1.11.40</version>
+      <version>1.11.43</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>edu.utexas.tacc.tapis</groupId>
       <artifactId>jobs-client</artifactId>
-      <version>1.11.40</version>
+      <version>1.11.43</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>edu.utexas.tacc.tapis</groupId>
       <artifactId>meta-client</artifactId>
-      <version>1.11.40</version>
+      <version>1.11.43</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>edu.utexas.tacc.tapis</groupId>
       <artifactId>security-client</artifactId>
-      <version>1.11.40</version>
+      <version>1.11.43</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>edu.utexas.tacc.tapis</groupId>
       <artifactId>shared</artifactId>
-      <version>1.11.40</version>
+      <version>1.11.43</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>edu.utexas.tacc.tapis</groupId>
       <artifactId>systems-client</artifactId>
-      <version>1.11.40</version>
+      <version>1.11.43</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>edu.utexas.tacc.tapis</groupId>
       <artifactId>tapis-shared-lib</artifactId>
-      <version>1.11.61</version>
+      <version>1.11.62</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>edu.utexas.tacc.tapis</groupId>
       <artifactId>tapis-shared-searchlib</artifactId>
-      <version>1.11.61</version>
+      <version>1.11.62</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>edu.utexas.tacc.tapis</groupId>
       <artifactId>tenants-client</artifactId>
-      <version>1.11.40</version>
+      <version>1.11.43</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>edu.utexas.tacc.tapis</groupId>
       <artifactId>tokens-client</artifactId>
-      <version>1.11.40</version>
+      <version>1.11.43</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
