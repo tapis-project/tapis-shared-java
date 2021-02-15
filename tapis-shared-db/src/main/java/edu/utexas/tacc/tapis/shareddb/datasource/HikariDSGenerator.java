@@ -48,8 +48,6 @@ public class HikariDSGenerator
   public static final String  TAPIS_DB_NAME = "tapisdb";
   public static final String  TAPIS_SCHEMA_NAME = "public";
   public static final String  TAPIS_SEC_SCHEMA_NAME = "public";
-  public static final String  TAPIS_SYS_DB_NAME = "tapissysdb";
-  public static final String  TAPIS_SYS_SCHEMA_NAME = "public";
   
   // Other database defaults.
   public static final String  DEFAULT_DBMS_NAME = "postgresql";
@@ -205,8 +203,8 @@ public class HikariDSGenerator
    */
   public HikariDSGenerator setReliabilityOptions(HikariDataSource ds)
   {
-  	// Configure the MariaDB driver for logging.  
-   	// See https://mariadb.com/kb/en/mariadb/about-mariadb-connector-j.
+    // This property controls the amount of time that a connection can be out of 
+    // the pool before a message is logged indicating a possible connection leak.
     ds.setLeakDetectionThreshold(1200000);  // 20 minutes
    	return this;
   }
