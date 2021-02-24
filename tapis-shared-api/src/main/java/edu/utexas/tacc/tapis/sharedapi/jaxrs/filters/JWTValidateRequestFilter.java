@@ -62,13 +62,13 @@ import io.jsonwebtoken.Jwts;
  *      - Assigns claim values to their thread-local fields.
  *      - Assigns security related header values to their thread-local fields.
  *  
- * This class caches tenant public keys after it decodes them the first time.  
- * It inspects the TenantManager's last update time to determine if is cache
- * might be stale and, if so, clears the caches.  Tenant information rarely 
+ * This class caches tenant public keys after it decodes them the first time.
+ * It inspects the TenantManager's last update time to determine if the cache
+ * might be stale and, if so, clears the caches. Tenant information rarely
  * changes, but the information cached in this class automatically stays in
  * sync with the TenantManager, no restarts or manual intervention required.
  *      
- * The test parameter filter run after this filter and may override the values
+ * The test parameter filter is run after this filter and may override the values
  * set by this filter.
  * 
  * @author rcardone
@@ -152,8 +152,8 @@ public class JWTValidateRequestFilter
      * any mock tenant manager they would like by calling this constructor.
      * 
      * Attempting to put an Inject annotation on this constructor causes JAX-RS
-     * to get throw numerous exceptions, so it's up to the caller to integrate
-     * this constructor into their test harness.  
+     * to throw numerous exceptions, so it's up to the caller to integrate
+     * this constructor into their test harness.
      * 
      * @param tenantManager a mock object
      */
@@ -348,7 +348,7 @@ public class JWTValidateRequestFilter
             String delegationTenant = delegator.substring(delegator.indexOf('@') + 1);
             
             // Check that the jwt tenant is allowed to act on behalf of the delegation tenant.
-            // If false if returned, the called method has already modified the context to 
+            // If false returned, the called method has already modified the context to
             // abort the request, in which case we immediately return from here.
             if (!allowTenant(requestContext, jwtUser, jwtTenant, delegationTenant)) return;
         }
@@ -380,11 +380,11 @@ public class JWTValidateRequestFilter
             }
             
             // Check that the jwt tenant is allowed to act on behalf of the header tenant.
-            // If false if returned, the called method has already modified the context to 
+            // If false returned, the called method has already modified the context to
             // abort the request, in which case we immediately return from here.
             if (!allowTenant(requestContext, jwtUser, jwtTenant, oboTenantId)) return;
             
-            // Verify the site and tenant information.  If false if returned, the called 
+            // Verify the site and tenant information.  If false returned, the called
             // method has already modified the context to abort the request, in which case 
             // we immediately return from here.
             String jwtSite = (String)claims.get(CLAIM_SITE);
@@ -699,7 +699,7 @@ public class JWTValidateRequestFilter
     /* ---------------------------------------------------------------------- */
     /* validateSite:                                                          */
     /* ---------------------------------------------------------------------- */
-    /** Validate site, tenant and serviceinformation from the JWT and request 
+    /** Validate site, tenant and service information from the JWT and request
      * headers in the context of this web application.  If any check fails, the 
      * request context is updated with an error condition, the problem is logged  
      * and false is returned.  Success is indicated with a true result.

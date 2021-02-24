@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import edu.utexas.tacc.tapis.shared.TapisConstants;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -341,7 +342,19 @@ public class TenantManager
 			baseUrl = targetSite.getTenantBaseUrlTemplate().replace(BASEURL_PLACEHOLDER, tenantId);
 		else 
 			baseUrl = tenant.getBaseUrl();
-		
+
+        // TODO: remove special handling for SK, Jobs and Meta
+        // TODO:
+        // TODO: For some services we need to add /v3
+        // TODO: Fixing this in each service will be a major effort
+        // TODO:   so for now add the /v3 as needed.
+        if (TapisConstants.SERVICE_NAME_SECURITY.equals(service) ||
+            TapisConstants.SERVICE_NAME_JOBS.equals(service) ||
+            TapisConstants.SERVICE_NAME_META.equals(service))
+        {
+          baseUrl = baseUrl + "/v3";
+        }
+
 		// Package up the results.
 		return new RequestRoutingInfo(tenantId, service, baseUrl, targetSite.getSiteId());
     }
