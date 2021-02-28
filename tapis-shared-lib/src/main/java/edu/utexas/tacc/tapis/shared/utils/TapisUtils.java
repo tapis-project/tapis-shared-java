@@ -37,7 +37,6 @@ import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import edu.utexas.tacc.tapis.client.shared.exceptions.TapisClientException;
 import edu.utexas.tacc.tapis.security.client.SKClient;
 import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
 import edu.utexas.tacc.tapis.shared.exceptions.recoverable.TapisRecoverableException;
@@ -45,7 +44,6 @@ import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
 import edu.utexas.tacc.tapis.shared.security.ServiceClients;
 import edu.utexas.tacc.tapis.shared.threadlocal.TapisThreadLocal;
 import edu.utexas.tacc.tapis.shared.uri.TapisUrl;
-import edu.utexas.tacc.tapis.systems.client.SystemsClient;
 
 public class TapisUtils
 {
@@ -790,6 +788,32 @@ public class TapisUtils
       }
       
       // No match in exception chain.
+      return null;
+  }
+  
+  /* ---------------------------------------------------------------------------- */
+  /* findFirstMatchingException:                                                  */
+  /* ---------------------------------------------------------------------------- */
+  /** Traverse the exception chain starting with the given Throwable and looking for
+   * an exception whose class name begins with the prefix string.  The traversal 
+   * ends at the last exception in the chain, the exception that does not have a
+   * cause exception.
+   * 
+   * @param e a throwable
+   * @param classNamePrefix the prefix class name to be matched
+   * @return the first exception from the top for which there is a match or null for no match
+   */
+  public static Throwable findFirstMatchingException(Throwable e, String classNamePrefix)
+  {
+      // Look through the exception chain for the first one whose
+      // class name starts with the prefix.
+      while (e != null) {
+          if (e.getClass().getName().startsWith(classNamePrefix)) return e;
+          e = e.getCause();
+      }
+      
+      // The prefix string does not match any class 
+      // name in the exception chain. 
       return null;
   }
   
