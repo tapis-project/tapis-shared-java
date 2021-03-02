@@ -44,6 +44,9 @@ public class TapisConstants
 	// Convenience definition.
 	public static final String EMPTY_JSON = "{}";
 	
+    // Class name prefix for java network exceptions.
+    public static final String CONNECTION_EXCEPTION_PREFIX = "java.net.";
+    
     // Specified in a Settings file in the orginal Agave code.
 	public static final String PUBLIC_USER_USERNAME = "public";
 	public static final String WORLD_USER_USERNAME  = "world";

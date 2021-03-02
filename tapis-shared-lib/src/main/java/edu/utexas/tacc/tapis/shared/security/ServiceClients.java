@@ -19,6 +19,7 @@ import edu.utexas.tacc.tapis.auth.client.AuthClient;
 import edu.utexas.tacc.tapis.files.client.FilesClient;
 import edu.utexas.tacc.tapis.jobs.client.JobsClient;
 import edu.utexas.tacc.tapis.meta.client.MetaClient;
+import edu.utexas.tacc.tapis.notifications.client.NotificationsClient;
 import edu.utexas.tacc.tapis.security.client.SKClient;
 import edu.utexas.tacc.tapis.shared.TapisConstants;
 import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
@@ -54,6 +55,9 @@ public class ServiceClients
 	// Separator character used in keys.
 	private static final String SEP = "|";
 	
+	// Initial map capacity.
+	private static final int MAP_BUCKETS = 19;
+	
 	// Cache constraints.
 	private static final int MAX_CLIENTS = 150;
 	private static final int MAX_MINUTES = 10;
@@ -67,6 +71,11 @@ public class ServiceClients
 	// Mapping of service client classes to service names.  The map needs to be
 	// manually updated when a new client is added.
 	private final HashMap<Class<?>,String> _class2ServiceMap = initClass2ServiceMap();
+	
+	// Reverse of the previous map where the keys are service names and the 
+	// values are the client classes.  This map does NOT have to be updated when
+	// a new client is added.
+	private final HashMap<String,Class<?>> _service2ClassMap = initService2ClassMap();
 	
 	// This is a cache of client objects that are specific to each user/tenant
 	// combination.  Clients are site specific via their base URL setting.
@@ -161,6 +170,19 @@ public class ServiceClients
 		// See if we already have the client.
 		String key = getCacheKey(user, tenant, service);
 		return _clientCache.get(key);
+	}
+	
+    /* ---------------------------------------------------------------------- */
+    /* getClientClass:                                                        */
+    /* ---------------------------------------------------------------------- */
+	/** Return the client class object given a service name.
+	 * 
+	 * @param serviceName the service whose client class is requested
+	 * @return the service's client class or null
+	 */
+	public Class<?> getClientClass(String serviceName)
+	{
+	    return _service2ClassMap.get(serviceName);
 	}
 	
 	/* ---------------------------------------------------------------------- */
@@ -334,17 +356,17 @@ public class ServiceClients
     }
     
 	/* ---------------------------------------------------------------------- */
-	/* initClass2ServiceMap :                                                 */
+	/* initClass2ServiceMap:                                                  */
 	/* ---------------------------------------------------------------------- */
 	/** Return the mapping of service client classes to service names.
 	 * 
 	 * Make sure to add new clients to this map as they become available.
 	 * 
-	 * @return the service associated with this client.
+	 * @return map of client classes to service names
 	 */
 	private HashMap<Class<?>,String> initClass2ServiceMap()
 	{
-		var map = new HashMap<Class<?>,String>(19);
+		var map = new HashMap<Class<?>,String>(MAP_BUCKETS);
 		map.put(AppsClient.class, TapisConstants.SERVICE_NAME_APPS);
 		map.put(SKClient.class, TapisConstants.SERVICE_NAME_SECURITY);
 		map.put(SystemsClient.class, TapisConstants.SERVICE_NAME_SYSTEMS);
@@ -354,7 +376,25 @@ public class ServiceClients
 		map.put(MetaClient.class, TapisConstants.SERVICE_NAME_META);
 		map.put(FilesClient.class, TapisConstants.SERVICE_NAME_FILES);
 		map.put(JobsClient.class, TapisConstants.SERVICE_NAME_JOBS);
+		map.put(NotificationsClient.class, TapisConstants.SERVICE_NAME_NOTIFICATIONS);
 		
 		return map;
+	}
+	
+    /* ---------------------------------------------------------------------- */
+    /* initService2ClassMap:                                                  */
+    /* ---------------------------------------------------------------------- */
+    /** Return the mapping of service names to client classes based on the
+     * reverse mapping that must already have been initialized.
+     * 
+     * @return map of service names to client classes
+     */
+	private HashMap<String,Class<?>> initService2ClassMap()
+	{
+	    var map = new HashMap<String,Class<?>>(MAP_BUCKETS);
+	    for (var entry : _class2ServiceMap.entrySet()) 
+	        map.put(entry.getValue(), entry.getKey());
+	    
+	    return map;
 	}
 }
