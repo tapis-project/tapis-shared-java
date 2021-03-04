@@ -77,6 +77,7 @@ public class ASTParserTest
     validCaseInputs.put( 20,new CaseData(2, "owner IN ('jdoe')"));
     validCaseInputs.put( 21,new CaseData(2, "owner IN ('a','b','c')"));
     validCaseInputs.put( 22,new CaseData(2, "owner IN ('jdoe','msmith','jsmith','mdoe','a','b','c')"));
+    validCaseInputs.put( 23,new CaseData(2, "host = 'my.host.org'"));
     validCaseInputs.put(101,new CaseData(4, "host = 'stampede2.tacc.utexas.edu' AND owner = 'jdoe'"));
     validCaseInputs.put(102,new CaseData(4, "host = 'stampede2.tacc.utexas.edu' OR owner = 'jdoe'"));
     validCaseInputs.put(103,new CaseData(6, "enabled = 'true' AND (owner = 'jdoe' OR proxy_port > 1024)"));

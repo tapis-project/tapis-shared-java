@@ -292,7 +292,8 @@ public class SearchUtils
    */
   public static List<String> getValueList(String valStr)
   {
-    return Arrays.asList(valStr.split("(?<!\\\\),"));
+    if (StringUtils.isBlank(valStr)) return new ArrayList<>();
+    else return Arrays.asList(valStr.split("(?<!\\\\),"));
   }
 
   /**
