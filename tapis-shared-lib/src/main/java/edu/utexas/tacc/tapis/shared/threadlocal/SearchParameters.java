@@ -12,7 +12,7 @@ import java.util.List;
  *    computeTotal - Boolean indicating if total count should be computed. Default is false.
  *    filter - String indicating which attributes (i.e. fields) to include when retrieving results
  */
-public class SearchParameters
+public final class SearchParameters
 {
   private boolean computeTotal = false;
   private List<String> filterList;

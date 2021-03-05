@@ -153,6 +153,7 @@ public class SearchUtils
   {
     var searchList = new ArrayList<String>();
     if (StringUtils.isBlank(searchListStr)) return searchList;
+    // TODO: remove
     _log.trace("Parsing SearchList: " + searchListStr);
     // Parse search string into a list of conditions using a regex pattern to split
     // Set delimiter as ~ and escape as \
@@ -211,6 +212,7 @@ public class SearchUtils
    */
   public static void validateSearchConditionForm(String cond) throws IllegalArgumentException
   {
+    // TODO remove
     _log.trace("Validating form for search condition: " + cond);
     // A blank string is OK at this point and means we are done
     if (StringUtils.isBlank(cond)) return;
