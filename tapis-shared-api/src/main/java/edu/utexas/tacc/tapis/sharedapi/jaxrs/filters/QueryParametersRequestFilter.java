@@ -3,6 +3,7 @@ package edu.utexas.tacc.tapis.sharedapi.jaxrs.filters;
 import edu.utexas.tacc.tapis.search.SearchUtils;
 import edu.utexas.tacc.tapis.shared.TapisConstants;
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
+import edu.utexas.tacc.tapis.shared.threadlocal.SearchParameters;
 import edu.utexas.tacc.tapis.shared.threadlocal.TapisThreadContext;
 import edu.utexas.tacc.tapis.shared.threadlocal.TapisThreadLocal;
 import org.apache.commons.lang3.StringUtils;
@@ -20,18 +21,15 @@ import java.util.List;
 import static edu.utexas.tacc.tapis.search.SearchUtils.*;
 
 /*
- *  jax-rs filter to intercept various query parameters and set values in the thread context.
+ *  jax-rs filter to intercept various search, sort and filter query parameters and set values in the thread context.
  *  Parameters:
- *    pretty - Boolean indicating if response should be pretty printed. Default is false.
  *    search - String indicating search conditions to use when retrieving results
  *    limit - Integer indicating maximum number of results to be included, -1 for unlimited
  *    sortBy - e.g. sortBy=owner(asc), sortBy=created(desc)
  *    skip - number of results to skip
  *    startAfter - e.g. systems?limit=10&sortBy=id(asc)&startAfter=101
  *    computeTotal - Boolean indicating if total count should be computed. Default is false.
- *
- *  NOTE: Process "pretty" here because it is a parameter for all endpoints and
- *        is not needed for the java client or the back-end (tapis-systemslib)
+ *    filter - String indicating which attributes (i.e. fields) to include when retrieving results
  */
 @Provider
 @Priority(TapisConstants.JAXRS_FILTER_PRIORITY_AFTER_AUTHENTICATION)
@@ -44,14 +42,13 @@ public class QueryParametersRequestFilter implements ContainerRequestFilter
   private static final Logger _log = LoggerFactory.getLogger(QueryParametersRequestFilter.class);
 
   // Query parameter names
-  private static final String PARM_PRETTY = "pretty";
-  private static final String PARM_FILTER = "fields";
   private static final String PARM_SEARCH = "search";
   private static final String PARM_LIMIT = "limit";
   private static final String PARM_SORTBY = "sortBy";
   private static final String PARM_SKIP = "skip";
   private static final String PARM_STARTAFTER = "startAfter";
   private static final String PARM_COMPUTETOTAL = "computeTotal";
+  private static final String PARM_FILTER = "fields";
 
   /* ********************************************************************** */
   /*                            Public Methods                              */
@@ -70,64 +67,46 @@ public class QueryParametersRequestFilter implements ContainerRequestFilter
     TapisThreadContext threadContext = TapisThreadLocal.tapisThreadContext.get();
 
     // Set default sort and paginate options
-    threadContext.setLimit(DEFAULT_LIMIT);
-    threadContext.setSortBy(DEFAULT_SORTBY);
-    threadContext.setSortByDirection(DEFAULT_SORTBY_DIRECTION);
-    threadContext.setSkip(DEFAULT_SKIP);
-    threadContext.setStartAfter(DEFAULT_STARTAFTER);
-    threadContext.setComputeTotal(DEFAULT_COMPUTETOTAL);
+    SearchParameters searchParms = new SearchParameters();
+    searchParms.setLimit(DEFAULT_LIMIT);
+    searchParms.setSortBy(DEFAULT_SORTBY);
+    searchParms.setSortByDirection(DEFAULT_SORTBY_DIRECTION);
+    searchParms.setSkip(DEFAULT_SKIP);
+    searchParms.setStartAfter(DEFAULT_STARTAFTER);
+    searchParms.setComputeTotal(DEFAULT_COMPUTETOTAL);
+
+    threadContext.setSearchParameters(searchParms);
 
     // Retrieve all query parameters. If none we are done.
     MultivaluedMap<String, String> queryParameters = requestContext.getUriInfo().getQueryParameters();
     if (queryParameters == null || queryParameters.isEmpty()) return;
 
-    // Look for and extract pretty print query parameter.
-    // Common checks for query parameters
-    if (invalidParm(threadContext, requestContext, PARM_PRETTY)) { return; }
-    String parmValuePretty = getQueryParm(queryParameters, PARM_PRETTY);
-    if (!StringUtils.isBlank(parmValuePretty))
-    {
-      // Provided parameter is valid. Set as boolean
-      if (!"true".equalsIgnoreCase(parmValuePretty) && !"false".equalsIgnoreCase(parmValuePretty))
-      {
-        String msg = MsgUtils.getMsg("TAPIS_QUERY_PARAM_NOTBOOL", threadContext.getJwtTenantId(), threadContext.getJwtUser(),
-                threadContext.getOboTenantId(), threadContext.getOboUser(), PARM_PRETTY, parmValuePretty);
-        _log.warn(msg);
-      }
-      else
-      {
-        threadContext.setPrettyPrint(Boolean.parseBoolean(parmValuePretty));
-      }
-    }
-
     // Look for and extract computeTotal query parameter.
     // Common checks for query parameters
-    if (invalidParm(threadContext, requestContext, PARM_COMPUTETOTAL)) { return; }
+    if (invalidParm(threadContext, requestContext, queryParameters, PARM_COMPUTETOTAL)) { return; }
     String parmValueComputeTotal = getQueryParm(queryParameters, PARM_COMPUTETOTAL);
     if (!StringUtils.isBlank(parmValueComputeTotal))
     {
       // Provided parameter is valid. Set as boolean
-      if (!"true".equalsIgnoreCase(parmValueComputeTotal) && !"false".equalsIgnoreCase(parmValueComputeTotal))
+      if ("true".equalsIgnoreCase(parmValueComputeTotal)) searchParms.setComputeTotal(true);
+      else if ("false".equalsIgnoreCase(parmValueComputeTotal)) searchParms.setComputeTotal(false);
+      else
       {
         String msg = MsgUtils.getMsg("TAPIS_QUERY_PARAM_NOTBOOL", threadContext.getJwtTenantId(), threadContext.getJwtUser(),
                 threadContext.getOboTenantId(), threadContext.getOboUser(), PARM_COMPUTETOTAL, parmValueComputeTotal);
         _log.warn(msg);
       }
-      else
-      {
-        threadContext.setComputeTotal(Boolean.parseBoolean(parmValueComputeTotal));
-      }
     }
 
     // Look for and extract filter query parameter.
     // This parameter is used to select which result fields are included in a response.
-    if (invalidParm(threadContext, requestContext, PARM_FILTER)) { return; }
+    if (invalidParm(threadContext, requestContext, queryParameters, PARM_FILTER)) { return; }
     String parmValueFields = getQueryParm(queryParameters, PARM_FILTER);
     // Extract and validate the fields.
     try
     {
       List<String> filterList = SearchUtils.getValueList(parmValueFields);
-      threadContext.setFilterList(filterList);
+      searchParms.setFilterList(filterList);
     }
     catch (Exception e)
     {
@@ -139,14 +118,14 @@ public class QueryParametersRequestFilter implements ContainerRequestFilter
     }
 
     // Look for and extract search query parameter.
-    if (invalidParm(threadContext, requestContext, PARM_SEARCH)) { return; }
+    if (invalidParm(threadContext, requestContext, queryParameters, PARM_SEARCH)) { return; }
     String parmValueSearch = getQueryParm(queryParameters, PARM_SEARCH);
     // Extract the search conditions and validate their form. Back end will handle translating LIKE wildcard
     //   characters (* and !) and dealing with special characters in values.
     try
     {
       List<String> searchList = SearchUtils.extractAndValidateSearchList(parmValueSearch);
-      threadContext.setSearchList(searchList);
+      searchParms.setSearchList(searchList);
     }
     catch (Exception e)
     {
@@ -158,11 +137,11 @@ public class QueryParametersRequestFilter implements ContainerRequestFilter
     }
 
     // Look for and extract limit query parameter.
-    if (invalidParm(threadContext, requestContext, PARM_LIMIT)) { return; }
+    if (invalidParm(threadContext, requestContext, queryParameters, PARM_LIMIT)) { return; }
     String parmValueLimit = getQueryParm(queryParameters, PARM_LIMIT);
     if (!StringUtils.isBlank(parmValueLimit))
     {
-      int limit = DEFAULT_LIMIT;
+      int limit;
       // Check that it is an integer
       try { limit = Integer.parseInt(parmValueLimit); }
       catch (NumberFormatException e)
@@ -173,11 +152,11 @@ public class QueryParametersRequestFilter implements ContainerRequestFilter
         requestContext.abortWith(Response.status(Response.Status.BAD_REQUEST).entity(msg).build());
         return;
       }
-      threadContext.setLimit(limit);
+      searchParms.setLimit(limit);
     }
 
     // Look for and extract sortBy query parameter.
-    if (invalidParm(threadContext, requestContext, PARM_SORTBY)) { return; }
+    if (invalidParm(threadContext, requestContext, queryParameters, PARM_SORTBY)) { return; }
     String parmValueSortBy = getQueryParm(queryParameters, PARM_SORTBY);
     if (!StringUtils.isBlank(parmValueSortBy))
     {
@@ -192,12 +171,12 @@ public class QueryParametersRequestFilter implements ContainerRequestFilter
         requestContext.abortWith(Response.status(Response.Status.BAD_REQUEST).entity(msg).build());
         return;
       }
-      threadContext.setSortBy(SearchUtils.getSortByColumn(parmValueSortBy));
-      threadContext.setSortByDirection(SearchUtils.getSortByDirection(parmValueSortBy));
+      searchParms.setSortBy(SearchUtils.getSortByColumn(parmValueSortBy));
+      searchParms.setSortByDirection(SearchUtils.getSortByDirection(parmValueSortBy));
     }
 
     // Look for and extract skip query parameter.
-    if (invalidParm(threadContext, requestContext, PARM_SKIP)) { return; }
+    if (invalidParm(threadContext, requestContext, queryParameters, PARM_SKIP)) { return; }
     String parmValueSkip = getQueryParm(queryParameters, PARM_SKIP);
     if (!StringUtils.isBlank(parmValueSkip))
     {
@@ -212,17 +191,17 @@ public class QueryParametersRequestFilter implements ContainerRequestFilter
         requestContext.abortWith(Response.status(Response.Status.BAD_REQUEST).entity(msg).build());
         return;
       }
-      threadContext.setSkip(skip);
+      searchParms.setSkip(skip);
     }
 
     // Look for and extract startAfter query parameter.
-    if (invalidParm(threadContext, requestContext, PARM_STARTAFTER)) { return; }
+    if (invalidParm(threadContext, requestContext, queryParameters, PARM_STARTAFTER)) { return; }
     String parmValueStartAfter = getQueryParm(queryParameters, PARM_STARTAFTER);
-    if (!StringUtils.isBlank(parmValueStartAfter)) threadContext.setStartAfter(parmValueStartAfter);
+    if (!StringUtils.isBlank(parmValueStartAfter)) searchParms.setStartAfter(parmValueStartAfter);
 
     // Check constraints
     // Specifying startAfter without sortBy is an invalid combination
-    if (!StringUtils.isBlank(threadContext.getStartAfter()) && StringUtils.isBlank(threadContext.getSortBy()))
+    if (!StringUtils.isBlank(searchParms.getStartAfter()) && StringUtils.isBlank(searchParms.getSortBy()))
     {
       String msg = MsgUtils.getMsg("TAPIS_QUERY_PARAM_INVALID_PAIR1", threadContext.getJwtTenantId(), threadContext.getJwtUser(),
               threadContext.getOboTenantId(), threadContext.getOboUser(), PARM_STARTAFTER, PARM_SORTBY);
@@ -231,7 +210,7 @@ public class QueryParametersRequestFilter implements ContainerRequestFilter
       return;
     }
     // Specifying startAfter and skip is an invalid combination
-    if (!StringUtils.isBlank(threadContext.getStartAfter()) && !StringUtils.isBlank(parmValueSkip))
+    if (!StringUtils.isBlank(searchParms.getStartAfter()) && !StringUtils.isBlank(parmValueSkip))
     {
       String msg = MsgUtils.getMsg("TAPIS_QUERY_PARAM_INVALID_PAIR2", threadContext.getJwtTenantId(), threadContext.getJwtUser(),
               threadContext.getOboTenantId(), threadContext.getOboUser(), PARM_STARTAFTER, PARM_SKIP);
@@ -239,6 +218,9 @@ public class QueryParametersRequestFilter implements ContainerRequestFilter
       requestContext.abortWith(Response.status(Response.Status.BAD_REQUEST).entity(msg).build());
       return;
     }
+
+    // Update parameter set in thread context
+    threadContext.setSearchParameters(searchParms);
   }
 
   /**
@@ -248,9 +230,9 @@ public class QueryParametersRequestFilter implements ContainerRequestFilter
    * @param parmName - parameter to check
    * @return true if invalid, false if valid
    */
-  private static boolean invalidParm(TapisThreadContext threadContext, ContainerRequestContext requestContext, String parmName)
+  private static boolean invalidParm(TapisThreadContext threadContext, ContainerRequestContext requestContext,
+                                     MultivaluedMap<String, String> queryParameters, String parmName)
   {
-    MultivaluedMap<String, String> queryParameters = requestContext.getUriInfo().getQueryParameters();
     // Check that it is a single value
     if (queryParameters.containsKey(parmName) && queryParameters.get(parmName).size() != 1)
     {

@@ -56,11 +56,20 @@ public class SearchUtils
   public static final String DEFAULT_STARTAFTER = "";
   public static final boolean DEFAULT_COMPUTETOTAL = false;
 
-  // Regex for parsing (<attr1>.<op>.<val1>)~(<attr2>.<op>.<val2>) ... See validateAndExtractSearchList
-  private static final String SEARCH_REGEX = "(?:\\\\.|[^~\\\\]++)+";
-
   // Our special characters. These must be escaped when appearing in a value
   private static final List<Character> SEARCH_VAL_SPECIAL_CHARS = Arrays.asList('~', ',', '(', ')');
+
+  // Use static compiled regex patterns for performance
+  // Regex for parsing (<attr1>.<op>.<val1>)~(<attr2>.<op>.<val2>) ... See validateAndExtractSearchList
+  private static final Pattern SEARCH_PATTERN = Pattern.compile("(?:\\\\.|[^~\\\\]++)+");
+
+  // Regex for splitting a string containing a comma delimited list
+  //   Match "," but not "\," (i.e. match only an unescaped comma)
+  private static final Pattern COMMASPLIT_PATTERN = Pattern.compile("(?<!\\\\),");
+
+  // Regex for valid attribute name
+  // <attr> must start with [a-zA-Z] and contain only [a-zA-Z0-9_]
+  private static final Pattern VALIDATTR_PATTERN = Pattern.compile("^[a-zA-Z][a-zA-Z0-9_]*$");
 
   // ************************************************************************
   // *********************** Enums ******************************************
@@ -155,8 +164,7 @@ public class SearchUtils
     //        "[^" + delimiter + escape + "]++" + // match any char except delim or escape, possessive match
     //        ")" +          // end a match group
     //        "+";           // repeat any number of times, ignoring empty results. Use * instead of + to include empty results
-    Pattern regexPattern = Pattern.compile(SEARCH_REGEX);
-    Matcher regexMatcher = regexPattern.matcher(searchListStr);
+    Matcher regexMatcher = SEARCH_PATTERN.matcher(searchListStr);
     while (regexMatcher.find()) { searchList.add(regexMatcher.group()); }
     // If we found only one match the searchList string may be a single condition that may or may not
     // be surrounded by parentheses. So handle that case.
@@ -293,7 +301,8 @@ public class SearchUtils
   public static List<String> getValueList(String valStr)
   {
     if (StringUtils.isBlank(valStr)) return new ArrayList<>();
-    else return Arrays.asList(valStr.split("(?<!\\\\),"));
+    else return Arrays.asList(COMMASPLIT_PATTERN.split(valStr));
+
   }
 
   /**
@@ -423,7 +432,7 @@ public class SearchUtils
       }
     }
     // Check that column name is valid
-    if (!validAttributeName(sortByAttr)) return "Invalid attribute name. sortBy value: " + sortByQueryParam;
+    if (invalidAttributeName(sortByAttr)) return "Invalid attribute name. sortBy value: " + sortByQueryParam;
     return null;
   }
 
@@ -472,12 +481,11 @@ public class SearchUtils
     // When put together full string must be a valid SQL-like where clause. This will be validated in the service call.
     // Not all SQL syntax is supported. See SqlParser.jj in tapis-shared-searchlib.
     StringJoiner sj = new StringJoiner(" ");
-    if (req != null & req.search != null)
+    if (req != null && req.search != null)
     {
       for (String s : req.search) { sj.add(s); }
     }
-    String searchStr = sj.toString();
-    return searchStr;
+    return sj.toString();
   }
 
   /**
@@ -582,12 +590,11 @@ public class SearchUtils
    * @param attrStr value to check
    * @return true if valid, else false
    */
-  private static boolean validAttributeName(String attrStr)
+  private static boolean invalidAttributeName(String attrStr)
   {
     // <attr> must start with [a-zA-Z] and contain only [a-zA-Z0-9_]
-    Matcher m = (Pattern.compile("^[a-zA-Z][a-zA-Z0-9_]*$")).matcher(attrStr);
-    if (!m.find()) return false;
-    return true;
+    // Turn the pattern into a matcher and make sure attrStr matches
+    return !VALIDATTR_PATTERN.matcher(attrStr).find();
   }
 
   /**
@@ -708,7 +715,7 @@ public class SearchUtils
     }
 
     // Validate <attr>
-    if (!validAttributeName(attr))
+    if (invalidAttributeName(attr))
     {
       String errMsg = MsgUtils.getMsg("SEARCH_COND_INVALID_ATTR", condStr);
       throw new IllegalArgumentException(errMsg);
