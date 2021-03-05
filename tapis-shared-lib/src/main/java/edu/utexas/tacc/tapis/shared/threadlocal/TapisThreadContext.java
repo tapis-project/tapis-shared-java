@@ -2,8 +2,6 @@ package edu.utexas.tacc.tapis.shared.threadlocal;
 
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.List;
-
 public final class TapisThreadContext 
  implements Cloneable
 {
@@ -31,17 +29,6 @@ public final class TapisThreadContext
     // This service's site.
     private String siteId;
     
-    // Information that is extracted from query parameters
-    private boolean prettyPrint = false;
-    private boolean computeTotal = false;
-    private List<String> filterList;
-    private List<String> searchList;
-    private int limit;
-    private String sortBy;
-    private String sortByDirection;
-    private int skip;
-    private String startAfter;
-
     // Account type also cannot be null.  The delegator subject is either null when
     // no delegation has occurred or in the 'user@tenant' format when there is 
     // delegation.
@@ -54,8 +41,11 @@ public final class TapisThreadContext
 	// The execution context is set at a certain point in request processing, 
 	// usually well after processing has begun.
 	private TapisExecutionContext executionContext = null;
-	
-    /* **************************************************************************** */
+
+    // Search, sort and filter parameters
+    private SearchParameters searchParameters;
+
+  /* **************************************************************************** */
     /*                                Public Methods                                */
     /* **************************************************************************** */
 	@Override
@@ -95,24 +85,6 @@ public final class TapisThreadContext
 	/* **************************************************************************** */
 	/*                                   Accessors                                  */
 	/* **************************************************************************** */
-    public boolean getPrettyPrint() { return prettyPrint; }
-    public void setPrettyPrint(boolean b) { prettyPrint = b; }
-    public boolean getComputeTotal() { return computeTotal; }
-    public void setComputeTotal(boolean b) { computeTotal = b; }
-    public List<String> getFilterList() { return filterList; }
-    public void setFilterList(List<String> fl) { filterList = fl; }
-    public List<String> getSearchList() { return searchList; }
-    public void setSearchList(List<String> sl) { searchList = sl; }
-    public int getLimit() { return limit; }
-    public void setLimit(int i) { limit = i; }
-    public String getSortBy() { return sortBy; }
-    public void setSortBy(String s) { sortBy = s; }
-    public String getSortByDirection() { return sortByDirection; }
-    public void setSortByDirection(String s) { sortByDirection = s; }
-    public int getSkip() { return skip; }
-    public void setSkip(int i) { skip = i; }
-    public String getStartAfter() { return startAfter; }
-    public void setStartAfter(String s) { startAfter = s; }
 	public String getJwtTenantId(){return jwtTenantId;}
 	public void setJwtTenantId(String tenantId) {
 		if (!StringUtils.isBlank(tenantId)) this.jwtTenantId = tenantId;
@@ -158,4 +130,11 @@ public final class TapisThreadContext
     public void setUserJwtHash(String userJwtHash) {
         UserJwtHash = userJwtHash;
     }
+
+    public SearchParameters getSearchParameters() {
+    return searchParameters;
+  }
+    public void setSearchParameters(SearchParameters searchParameters) {
+    this.searchParameters = searchParameters;
+  }
 }
