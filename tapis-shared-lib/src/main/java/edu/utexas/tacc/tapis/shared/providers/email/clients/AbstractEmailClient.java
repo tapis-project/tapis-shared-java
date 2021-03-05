@@ -55,27 +55,22 @@ public abstract class AbstractEmailClient
     {
         if (StringUtils.isBlank(recipientName)) {
             String msg = MsgUtils.getMsg("TAPIS_NULL_PARAMETER", "validateSendParms", "recipientName");
-            _log.error(msg);
             throw new TapisException(msg);
         }
         if (StringUtils.isBlank(recipientAddress)) {
             String msg = MsgUtils.getMsg("TAPIS_NULL_PARAMETER", "validateSendParms", "recipientAddress");
-            _log.error(msg);
             throw new TapisException(msg);
         }
         if (StringUtils.isBlank(body)) {
             String msg = MsgUtils.getMsg("TAPIS_NULL_PARAMETER", "validateSendParms", "body");
-            _log.error(msg);
             throw new TapisException(msg);
         }
         if (StringUtils.isBlank(htmlBody)) {
             String msg = MsgUtils.getMsg("TAPIS_NULL_PARAMETER", "validateSendParms", "htmlBody");
-            _log.error(msg);
             throw new TapisException(msg);
         }
         if (StringUtils.isBlank(subject)) {
             String msg = MsgUtils.getMsg("TAPIS_NULL_PARAMETER", "validateSendParms", "subject");
-            _log.error(msg);
             throw new TapisException(msg);
         }
     }
