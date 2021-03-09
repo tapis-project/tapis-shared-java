@@ -337,12 +337,21 @@ public class ServiceClients
                 break;
             }   
                 
-            case TapisConstants.SERVICE_NAME_FILES:
+            case TapisConstants.SERVICE_NAME_FILES: {
                 var clt = new FilesClient(router.getServiceBaseUrl(), router.getAccessJWT());
                 clt.addDefaultHeader("X-Tapis-User", user);
                 clt.addDefaultHeader("X-Tapis-Tenant", tenant);
                 client = clt;
                 break;
+            }
+                
+            case TapisConstants.SERVICE_NAME_NOTIFICATIONS: {
+                var clt = new NotificationsClient(router.getServiceBaseUrl(), router.getAccessJWT());
+                clt.addDefaultHeader("X-Tapis-User", user);
+                clt.addDefaultHeader("X-Tapis-Tenant", tenant);
+                client = clt;
+                break;
+            }
                 
             default:    
         }
