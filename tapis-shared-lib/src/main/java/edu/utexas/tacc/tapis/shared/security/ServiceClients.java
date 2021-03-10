@@ -277,6 +277,7 @@ public class ServiceClients
                 var clt = new AppsClient(router.getServiceBaseUrl(), router.getAccessJWT());
                 clt.addDefaultHeader("X-Tapis-User", user);
                 clt.addDefaultHeader("X-Tapis-Tenant", tenant);
+                clt.addDefaultHeader("Content-Type", "application/json");
                 client = clt;
                 break;
             }
@@ -285,6 +286,7 @@ public class ServiceClients
                 var clt = new JobsClient(router.getServiceBaseUrl(), router.getAccessJWT());
                 clt.addDefaultHeader("X-Tapis-User", user);
                 clt.addDefaultHeader("X-Tapis-Tenant", tenant);
+                clt.addDefaultHeader("Content-Type", "application/json");
                 client = clt;
                 break;
             }
@@ -293,6 +295,7 @@ public class ServiceClients
                 var clt = new SKClient(router.getServiceBaseUrl(), router.getAccessJWT());
                 clt.addDefaultHeader("X-Tapis-User", user);
                 clt.addDefaultHeader("X-Tapis-Tenant", tenant);
+                clt.addDefaultHeader("Content-Type", "application/json");
                 client = clt;
                 break;
             }
@@ -301,6 +304,7 @@ public class ServiceClients
                 var clt = new SystemsClient(router.getServiceBaseUrl(), router.getAccessJWT());
                 clt.addDefaultHeader("X-Tapis-User", user);
                 clt.addDefaultHeader("X-Tapis-Tenant", tenant);
+                clt.addDefaultHeader("Content-Type", "application/json");
                 client = clt;
                 break;
             }
@@ -309,6 +313,7 @@ public class ServiceClients
                 var clt = new AuthClient(router.getServiceBaseUrl());
                 clt.addDefaultHeader("X-Tapis-User", user);
                 clt.addDefaultHeader("X-Tapis-Tenant", tenant);
+                clt.addDefaultHeader("Content-Type", "application/json");
                 client = clt;
                 break;
             }
@@ -317,6 +322,7 @@ public class ServiceClients
                 var clt = new TenantsClient(router.getServiceBaseUrl());
                 clt.addDefaultHeader("X-Tapis-User", user);
                 clt.addDefaultHeader("X-Tapis-Tenant", tenant);
+                clt.addDefaultHeader("Content-Type", "application/json");
                 client = clt;
                 break;
             }
@@ -325,6 +331,7 @@ public class ServiceClients
                 var clt = new TokensClient(router.getServiceBaseUrl());
                 clt.addDefaultHeader("X-Tapis-User", user);
                 clt.addDefaultHeader("X-Tapis-Tenant", tenant);
+                clt.addDefaultHeader("Content-Type", "application/json");
                 client = clt;
                 break;
             }
@@ -333,6 +340,7 @@ public class ServiceClients
                 var clt = new MetaClient(router.getServiceBaseUrl(), router.getAccessJWT());
                 clt.addDefaultHeader("X-Tapis-User", user);
                 clt.addDefaultHeader("X-Tapis-Tenant", tenant);
+                clt.addDefaultHeader("Content-Type", "application/json");
                 client = clt;
                 break;
             }   
@@ -341,6 +349,7 @@ public class ServiceClients
                 var clt = new FilesClient(router.getServiceBaseUrl(), router.getAccessJWT());
                 clt.addDefaultHeader("X-Tapis-User", user);
                 clt.addDefaultHeader("X-Tapis-Tenant", tenant);
+                clt.addDefaultHeader("Content-Type", "application/json");
                 client = clt;
                 break;
             }
@@ -349,6 +358,7 @@ public class ServiceClients
                 var clt = new NotificationsClient(router.getServiceBaseUrl(), router.getAccessJWT());
                 clt.addDefaultHeader("X-Tapis-User", user);
                 clt.addDefaultHeader("X-Tapis-Tenant", tenant);
+                clt.addDefaultHeader("Content-Type", "application/json");
                 client = clt;
                 break;
             }
