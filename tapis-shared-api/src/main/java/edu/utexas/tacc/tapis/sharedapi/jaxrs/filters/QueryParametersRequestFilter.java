@@ -21,8 +21,8 @@ import java.util.List;
 import static edu.utexas.tacc.tapis.search.SearchUtils.DEFAULT_COMPUTETOTAL;
 import static edu.utexas.tacc.tapis.search.SearchUtils.DEFAULT_LIMIT;
 import static edu.utexas.tacc.tapis.search.SearchUtils.DEFAULT_SKIP;
-import static edu.utexas.tacc.tapis.search.SearchUtils.DEFAULT_SORTBY;
-import static edu.utexas.tacc.tapis.search.SearchUtils.DEFAULT_SORTBY_DIRECTION;
+import static edu.utexas.tacc.tapis.search.SearchUtils.DEFAULT_ORDERBY;
+import static edu.utexas.tacc.tapis.search.SearchUtils.DEFAULT_ORDERBY_DIRECTION;
 import static edu.utexas.tacc.tapis.search.SearchUtils.DEFAULT_STARTAFTER;
 
 /*
@@ -30,9 +30,9 @@ import static edu.utexas.tacc.tapis.search.SearchUtils.DEFAULT_STARTAFTER;
  *  Parameters:
  *    search - String indicating search conditions to use when retrieving results
  *    limit - Integer indicating maximum number of results to be included, -1 for unlimited
- *    sortBy - e.g. sortBy=owner(asc), sortBy=created(desc)
+ *    orderBy - e.g. orderBy=owner(asc), orderBy=created(desc)
  *    skip - number of results to skip
- *    startAfter - e.g. systems?limit=10&sortBy=id(asc)&startAfter=101
+ *    startAfter - e.g. systems?limit=10&orderBy=id(asc)&startAfter=101
  *    computeTotal - Boolean indicating if total count should be computed. Default is false.
  *    filter - String indicating which attributes (i.e. fields) to include when retrieving results
  */
@@ -49,7 +49,7 @@ public class QueryParametersRequestFilter implements ContainerRequestFilter
   // Query parameter names
   private static final String PARM_SEARCH = "search";
   private static final String PARM_LIMIT = "limit";
-  private static final String PARM_SORTBY = "sortBy";
+  private static final String PARM_ORDERBY = "orderBy";
   private static final String PARM_SKIP = "skip";
   private static final String PARM_STARTAFTER = "startAfter";
   private static final String PARM_COMPUTETOTAL = "computeTotal";
@@ -74,8 +74,8 @@ public class QueryParametersRequestFilter implements ContainerRequestFilter
     // Set default sort and paginate options
     SearchParameters searchParms = new SearchParameters();
     searchParms.setLimit(DEFAULT_LIMIT);
-    searchParms.setSortBy(DEFAULT_SORTBY);
-    searchParms.setSortByDirection(DEFAULT_SORTBY_DIRECTION);
+    searchParms.setOrderBy(DEFAULT_ORDERBY);
+    searchParms.setOrderByDirection(DEFAULT_ORDERBY_DIRECTION);
     searchParms.setSkip(DEFAULT_SKIP);
     searchParms.setStartAfter(DEFAULT_STARTAFTER);
     searchParms.setComputeTotal(DEFAULT_COMPUTETOTAL);
@@ -160,24 +160,24 @@ public class QueryParametersRequestFilter implements ContainerRequestFilter
       searchParms.setLimit(limit);
     }
 
-    // Look for and extract sortBy query parameter.
-    if (invalidParm(threadContext, requestContext, queryParameters, PARM_SORTBY)) { return; }
-    String parmValueSortBy = getQueryParm(queryParameters, PARM_SORTBY);
-    if (!StringUtils.isBlank(parmValueSortBy))
+    // Look for and extract orderBy query parameter.
+    if (invalidParm(threadContext, requestContext, queryParameters, PARM_ORDERBY)) { return; }
+    String parmValueOrderBy = getQueryParm(queryParameters, PARM_ORDERBY);
+    if (!StringUtils.isBlank(parmValueOrderBy))
     {
-      // Validate and process sortBy which must be in the form <col_name>(<dir>)
+      // Validate and process orderBy which must be in the form <col_name>(<dir>)
       //   where (<dir>) is optional and <dir> = "asc" or "desc"
-      String errMsg = SearchUtils.checkSortByQueryParam(parmValueSortBy);
+      String errMsg = SearchUtils.checkOrderByQueryParam(parmValueOrderBy);
       if (errMsg != null)
       {
-        String msg = MsgUtils.getMsg("TAPIS_QUERY_PARAM_SORTBY_ERROR", threadContext.getJwtTenantId(), threadContext.getJwtUser(),
+        String msg = MsgUtils.getMsg("TAPIS_QUERY_PARAM_ORDERBY_ERROR", threadContext.getJwtTenantId(), threadContext.getJwtUser(),
                                      threadContext.getOboTenantId(), threadContext.getOboUser(), errMsg);
         _log.error(msg);
         requestContext.abortWith(Response.status(Response.Status.BAD_REQUEST).entity(msg).build());
         return;
       }
-      searchParms.setSortBy(SearchUtils.getSortByColumn(parmValueSortBy));
-      searchParms.setSortByDirection(SearchUtils.getSortByDirection(parmValueSortBy));
+      searchParms.setOrderBy(SearchUtils.getOrderByColumn(parmValueOrderBy));
+      searchParms.setOrderByDirection(SearchUtils.getOrderByDirection(parmValueOrderBy));
     }
 
     // Look for and extract skip query parameter.
@@ -205,11 +205,11 @@ public class QueryParametersRequestFilter implements ContainerRequestFilter
     if (!StringUtils.isBlank(parmValueStartAfter)) searchParms.setStartAfter(parmValueStartAfter);
 
     // Check constraints
-    // Specifying startAfter without sortBy is an invalid combination
-    if (!StringUtils.isBlank(searchParms.getStartAfter()) && StringUtils.isBlank(searchParms.getSortBy()))
+    // Specifying startAfter without orderBy is an invalid combination
+    if (!StringUtils.isBlank(searchParms.getStartAfter()) && StringUtils.isBlank(searchParms.getOrderBy()))
     {
       String msg = MsgUtils.getMsg("TAPIS_QUERY_PARAM_INVALID_PAIR1", threadContext.getJwtTenantId(), threadContext.getJwtUser(),
-              threadContext.getOboTenantId(), threadContext.getOboUser(), PARM_STARTAFTER, PARM_SORTBY);
+              threadContext.getOboTenantId(), threadContext.getOboUser(), PARM_STARTAFTER, PARM_ORDERBY);
       _log.error(msg);
       requestContext.abortWith(Response.status(Response.Status.BAD_REQUEST).entity(msg).build());
       return;

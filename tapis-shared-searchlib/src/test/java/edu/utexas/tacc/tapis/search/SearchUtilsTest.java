@@ -410,40 +410,40 @@ public class SearchUtilsTest
   }
 
   /*
-   * Test method that validates sortBy query parameter value
+   * Test method that validates orderBy query parameter value
    */
   @Test(groups={"unit"})
-  public void testSortByQueryParam()
+  public void testOrderByQueryParam()
   {
     // Check valid cases
-    assertNull(SearchUtils.checkSortByQueryParam("name"));
-    assertNull(SearchUtils.checkSortByQueryParam("name(asc)"));
-    assertNull(SearchUtils.checkSortByQueryParam("name(desc)"));
-    assertNull(SearchUtils.checkSortByQueryParam("name(ASC)"));
-    assertNull(SearchUtils.checkSortByQueryParam("name(DESC)"));
+    assertNull(SearchUtils.checkOrderByQueryParam("name"));
+    assertNull(SearchUtils.checkOrderByQueryParam("name(asc)"));
+    assertNull(SearchUtils.checkOrderByQueryParam("name(desc)"));
+    assertNull(SearchUtils.checkOrderByQueryParam("name(ASC)"));
+    assertNull(SearchUtils.checkOrderByQueryParam("name(DESC)"));
     // Check invalid cases
-    assertEquals("Empty", SearchUtils.checkSortByQueryParam(""));
-    assertEquals("Empty", SearchUtils.checkSortByQueryParam(" "));
-    assertTrue(SearchUtils.checkSortByQueryParam("name(").startsWith("Unmatched parentheses"));
-    assertTrue(SearchUtils.checkSortByQueryParam("name(asc").startsWith("Unmatched parentheses"));
-    assertTrue(SearchUtils.checkSortByQueryParam("(asc)").startsWith("sortBy attribute name not found"));
-    assertTrue(SearchUtils.checkSortByQueryParam("name()").startsWith("Sort direction was blank"));
-    assertTrue(SearchUtils.checkSortByQueryParam("name(UP)").startsWith("Invalid sort direction"));
-    assertTrue(SearchUtils.checkSortByQueryParam("invalid?col").startsWith("Invalid attribute name"));
-    assertTrue(SearchUtils.checkSortByQueryParam("1invalidcol").startsWith("Invalid attribute name"));
-    assertTrue(SearchUtils.checkSortByQueryParam("invalid-col").startsWith("Invalid attribute name"));
+    assertEquals("Empty", SearchUtils.checkOrderByQueryParam(""));
+    assertEquals("Empty", SearchUtils.checkOrderByQueryParam(" "));
+    assertTrue(SearchUtils.checkOrderByQueryParam("name(").startsWith("Unmatched parentheses"));
+    assertTrue(SearchUtils.checkOrderByQueryParam("name(asc").startsWith("Unmatched parentheses"));
+    assertTrue(SearchUtils.checkOrderByQueryParam("(asc)").startsWith("orderBy attribute name not found"));
+    assertTrue(SearchUtils.checkOrderByQueryParam("name()").startsWith("Sort direction was blank"));
+    assertTrue(SearchUtils.checkOrderByQueryParam("name(UP)").startsWith("Invalid sort direction"));
+    assertTrue(SearchUtils.checkOrderByQueryParam("invalid?col").startsWith("Invalid attribute name"));
+    assertTrue(SearchUtils.checkOrderByQueryParam("1invalidcol").startsWith("Invalid attribute name"));
+    assertTrue(SearchUtils.checkOrderByQueryParam("invalid-col").startsWith("Invalid attribute name"));
 
     // Check extract of column name and sort direction
-    assertEquals("name", SearchUtils.getSortByColumn("name"));
-    assertEquals("name", SearchUtils.getSortByColumn("name(asc)"));
-    assertEquals("name", SearchUtils.getSortByColumn("name(desc)"));
-    assertEquals("ASC",  SearchUtils.getSortByDirection("name"));
-    assertEquals("ASC",  SearchUtils.getSortByDirection("name(asc)"));
-    assertEquals("ASC",  SearchUtils.getSortByDirection("name(ASC)"));
-    assertEquals("ASC",  SearchUtils.getSortByDirection("name(Asc)"));
-    assertEquals("DESC", SearchUtils.getSortByDirection("name(desc)"));
-    assertEquals("DESC", SearchUtils.getSortByDirection("name(DESC)"));
-    assertEquals("DESC", SearchUtils.getSortByDirection("name(Desc)"));
+    assertEquals("name", SearchUtils.getOrderByColumn("name"));
+    assertEquals("name", SearchUtils.getOrderByColumn("name(asc)"));
+    assertEquals("name", SearchUtils.getOrderByColumn("name(desc)"));
+    assertEquals("ASC",  SearchUtils.getOrderByDirection("name"));
+    assertEquals("ASC",  SearchUtils.getOrderByDirection("name(asc)"));
+    assertEquals("ASC",  SearchUtils.getOrderByDirection("name(ASC)"));
+    assertEquals("ASC",  SearchUtils.getOrderByDirection("name(Asc)"));
+    assertEquals("DESC", SearchUtils.getOrderByDirection("name(desc)"));
+    assertEquals("DESC", SearchUtils.getOrderByDirection("name(DESC)"));
+    assertEquals("DESC", SearchUtils.getOrderByDirection("name(Desc)"));
   }
 
   // ************************************************************************
