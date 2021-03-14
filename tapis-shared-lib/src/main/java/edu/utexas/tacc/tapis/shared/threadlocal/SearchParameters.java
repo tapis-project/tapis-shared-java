@@ -14,15 +14,34 @@ import java.util.List;
  */
 public final class SearchParameters
 {
-  private boolean computeTotal = false;
+  // ************************************************************************
+  // *********************** Constants **************************************
+  // ************************************************************************
+  public static final String ORDERBY_DIRECTION_ASC = "ASC";
+  public static final String ORDERBY_DIRECTION_DESC = "DESC";
+
+  public static final int DEFAULT_LIMIT = -1;
+  public static final String DEFAULT_ORDERBY = "";
+  public static final String DEFAULT_ORDERBY_DIRECTION = ORDERBY_DIRECTION_ASC;
+  public static final int DEFAULT_SKIP = -1;
+  public static final String DEFAULT_STARTAFTER = "";
+  public static final boolean DEFAULT_COMPUTETOTAL = false;
+
+  // ************************************************************************
+  // *********************** Fields *****************************************
+  // ************************************************************************
+  private boolean computeTotal = DEFAULT_COMPUTETOTAL;
   private List<String> filterList;
   private List<String> searchList;
-  private int limit;
-  private String orderBy;
-  private String orderByDirection;
-  private int skip;
-  private String startAfter;
+  private int limit = DEFAULT_LIMIT;
+  private String orderBy = DEFAULT_ORDERBY;
+  private String orderByDirection = DEFAULT_ORDERBY_DIRECTION;
+  private int skip = DEFAULT_SKIP;
+  private String startAfter = DEFAULT_STARTAFTER;
 
+  // ************************************************************************
+  // *********************** Accessors **************************************
+  // ************************************************************************
   public boolean getComputeTotal() { return computeTotal; }
   public void setComputeTotal(boolean b) { computeTotal = b; }
   public List<String> getFilterList() { return filterList; }

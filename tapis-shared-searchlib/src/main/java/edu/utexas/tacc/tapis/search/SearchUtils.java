@@ -29,6 +29,10 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static edu.utexas.tacc.tapis.shared.threadlocal.SearchParameters.DEFAULT_ORDERBY_DIRECTION;
+import static edu.utexas.tacc.tapis.shared.threadlocal.SearchParameters.ORDERBY_DIRECTION_ASC;
+import static edu.utexas.tacc.tapis.shared.threadlocal.SearchParameters.ORDERBY_DIRECTION_DESC;
+
 /**
  * Utility methods for search, sort and limit related requirements.
  * For operations using dedicated endpoints and existing endpoints.
@@ -46,16 +50,6 @@ public class SearchUtils
 
   // Local logger.
   private static final Logger _log = LoggerFactory.getLogger(SearchUtils.class);
-
-  public static final String ORDERBY_DIRECTION_ASC = "ASC";
-  public static final String ORDERBY_DIRECTION_DESC = "DESC";
-
-  public static final int DEFAULT_LIMIT = -1;
-  public static final String DEFAULT_ORDERBY = "";
-  public static final String DEFAULT_ORDERBY_DIRECTION = ORDERBY_DIRECTION_ASC;
-  public static final int DEFAULT_SKIP = -1;
-  public static final String DEFAULT_STARTAFTER = "";
-  public static final boolean DEFAULT_COMPUTETOTAL = false;
 
   // Our special characters. These must be escaped when appearing in a value
   private static final List<Character> SEARCH_VAL_SPECIAL_CHARS = Arrays.asList('~', ',', '(', ')');

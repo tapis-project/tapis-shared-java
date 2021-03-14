@@ -18,12 +18,12 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.Provider;
 import java.util.List;
 
-import static edu.utexas.tacc.tapis.search.SearchUtils.DEFAULT_COMPUTETOTAL;
-import static edu.utexas.tacc.tapis.search.SearchUtils.DEFAULT_LIMIT;
-import static edu.utexas.tacc.tapis.search.SearchUtils.DEFAULT_SKIP;
-import static edu.utexas.tacc.tapis.search.SearchUtils.DEFAULT_ORDERBY;
-import static edu.utexas.tacc.tapis.search.SearchUtils.DEFAULT_ORDERBY_DIRECTION;
-import static edu.utexas.tacc.tapis.search.SearchUtils.DEFAULT_STARTAFTER;
+import static edu.utexas.tacc.tapis.shared.threadlocal.SearchParameters.DEFAULT_COMPUTETOTAL;
+import static edu.utexas.tacc.tapis.shared.threadlocal.SearchParameters.DEFAULT_LIMIT;
+import static edu.utexas.tacc.tapis.shared.threadlocal.SearchParameters.DEFAULT_ORDERBY;
+import static edu.utexas.tacc.tapis.shared.threadlocal.SearchParameters.DEFAULT_ORDERBY_DIRECTION;
+import static edu.utexas.tacc.tapis.shared.threadlocal.SearchParameters.DEFAULT_SKIP;
+import static edu.utexas.tacc.tapis.shared.threadlocal.SearchParameters.DEFAULT_STARTAFTER;
 
 /*
  *  jax-rs filter to intercept various search, sort and filter query parameters and set values in the thread context.

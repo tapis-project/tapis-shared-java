@@ -131,10 +131,13 @@ public final class TapisThreadContext
         UserJwtHash = userJwtHash;
     }
 
-    public SearchParameters getSearchParameters() {
-    return searchParameters;
-  }
-    public void setSearchParameters(SearchParameters searchParameters) {
-    this.searchParameters = searchParameters;
-  }
+    public SearchParameters getSearchParameters()
+    {
+      if (searchParameters == null) searchParameters = new SearchParameters();
+      return searchParameters;
+    }
+    public void setSearchParameters(SearchParameters searchParameters)
+    {
+      this.searchParameters = searchParameters;
+    }
 }
