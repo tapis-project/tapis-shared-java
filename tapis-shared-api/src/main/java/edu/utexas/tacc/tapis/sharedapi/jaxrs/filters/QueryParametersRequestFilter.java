@@ -19,11 +19,8 @@ import javax.ws.rs.ext.Provider;
 import java.util.List;
 
 import static edu.utexas.tacc.tapis.shared.threadlocal.SearchParameters.DEFAULT_COMPUTETOTAL;
-import static edu.utexas.tacc.tapis.shared.threadlocal.SearchParameters.DEFAULT_LIMIT;
-import static edu.utexas.tacc.tapis.shared.threadlocal.SearchParameters.DEFAULT_ORDERBY;
 import static edu.utexas.tacc.tapis.shared.threadlocal.SearchParameters.DEFAULT_ORDERBY_DIRECTION;
 import static edu.utexas.tacc.tapis.shared.threadlocal.SearchParameters.DEFAULT_SKIP;
-import static edu.utexas.tacc.tapis.shared.threadlocal.SearchParameters.DEFAULT_STARTAFTER;
 
 /*
  *  jax-rs filter to intercept various search, sort and filter query parameters and set values in the thread context.
@@ -73,11 +70,8 @@ public class QueryParametersRequestFilter implements ContainerRequestFilter
 
     // Set default sort and paginate options
     SearchParameters searchParms = new SearchParameters();
-    searchParms.setLimit(DEFAULT_LIMIT);
-    searchParms.setOrderBy(DEFAULT_ORDERBY);
     searchParms.setOrderByDirection(DEFAULT_ORDERBY_DIRECTION);
     searchParms.setSkip(DEFAULT_SKIP);
-    searchParms.setStartAfter(DEFAULT_STARTAFTER);
     searchParms.setComputeTotal(DEFAULT_COMPUTETOTAL);
 
     threadContext.setSearchParameters(searchParms);
@@ -142,6 +136,7 @@ public class QueryParametersRequestFilter implements ContainerRequestFilter
     }
 
     // Look for and extract limit query parameter.
+    // SearchParameters initialized limit to null so users of this class can determine if value is set on incoming request.
     if (invalidParm(threadContext, requestContext, queryParameters, PARM_LIMIT)) { return; }
     String parmValueLimit = getQueryParm(queryParameters, PARM_LIMIT);
     if (!StringUtils.isBlank(parmValueLimit))

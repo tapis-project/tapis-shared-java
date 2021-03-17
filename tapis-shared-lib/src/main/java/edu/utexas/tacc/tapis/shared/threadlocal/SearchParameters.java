@@ -20,24 +20,22 @@ public final class SearchParameters
   public static final String ORDERBY_DIRECTION_ASC = "ASC";
   public static final String ORDERBY_DIRECTION_DESC = "DESC";
 
-  public static final int DEFAULT_LIMIT = -1;
-  public static final String DEFAULT_ORDERBY = "";
   public static final String DEFAULT_ORDERBY_DIRECTION = ORDERBY_DIRECTION_ASC;
-  public static final int DEFAULT_SKIP = -1;
-  public static final String DEFAULT_STARTAFTER = "";
+  public static final int DEFAULT_LIMIT = 100;
+  public static final int DEFAULT_SKIP = 0;
   public static final boolean DEFAULT_COMPUTETOTAL = false;
 
   // ************************************************************************
   // *********************** Fields *****************************************
   // ************************************************************************
   private boolean computeTotal = DEFAULT_COMPUTETOTAL;
-  private List<String> filterList;
-  private List<String> searchList;
-  private int limit = DEFAULT_LIMIT;
-  private String orderBy = DEFAULT_ORDERBY;
+  private List<String> filterList = null;
+  private List<String> searchList = null;
+  private Integer limit = null;  // Set to null so users of this class can determine if value is set on incoming request.
+  private String orderBy = null;
   private String orderByDirection = DEFAULT_ORDERBY_DIRECTION;
-  private int skip = DEFAULT_SKIP;
-  private String startAfter = DEFAULT_STARTAFTER;
+  private Integer skip = DEFAULT_SKIP;
+  private String startAfter = null;
 
   // ************************************************************************
   // *********************** Accessors **************************************
@@ -48,14 +46,14 @@ public final class SearchParameters
   public void setFilterList(List<String> fl) { filterList = fl; }
   public List<String> getSearchList() { return searchList; }
   public void setSearchList(List<String> sl) { searchList = sl; }
-  public int getLimit() { return limit; }
-  public void setLimit(int i) { limit = i; }
+  public Integer getLimit() { return limit; }
+  public void setLimit(Integer i) { limit = i; }
   public String getOrderBy() { return orderBy; }
   public void setOrderBy(String s) { orderBy = s; }
   public String getOrderByDirection() { return orderByDirection; }
   public void setOrderByDirection(String s) { orderByDirection = s; }
-  public int getSkip() { return skip; }
-  public void setSkip(int i) { skip = i; }
+  public Integer getSkip() { return skip; }
+  public void setSkip(Integer i) { skip = i; }
   public String getStartAfter() { return startAfter; }
   public void setStartAfter(String s) { startAfter = s; }
 }
