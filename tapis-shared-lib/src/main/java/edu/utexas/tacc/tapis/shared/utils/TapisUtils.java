@@ -911,7 +911,7 @@ public class TapisUtils
   /* extractFilename:                                                             */
   /* ---------------------------------------------------------------------------- */
   /** Extract the last path segment from a tapis or non-tapis url string.  The string
-   * may contains unresolved macros and other characters that are invalid in URLs or
+   * may contain unresolved macros and other characters that are invalid in URLs or
    * URIs, so we have to do the parsing ourselves without relying on standard classes.
    * 
    * This method always returns a string of length zero or more.  The last path 
