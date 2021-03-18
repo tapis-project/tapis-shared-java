@@ -1,5 +1,6 @@
 package edu.utexas.tacc.tapis.shared.threadlocal;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -29,11 +30,11 @@ public final class SearchParameters
   // *********************** Fields *****************************************
   // ************************************************************************
   private boolean computeTotal = DEFAULT_COMPUTETOTAL;
-  private List<String> filterList = null;
-  private List<String> searchList = null;
+  private List<String> filterList = new ArrayList<>();
+  private List<String> searchList = new ArrayList<>();
   private Integer limit = null;  // Set to null so users of this class can determine if value is set on incoming request.
-  private String orderBy = null;
-  private String orderByDirection = DEFAULT_ORDERBY_DIRECTION;
+  private List<String> orderByAttrList = new ArrayList<>();
+  private List<String> orderByDirList = new ArrayList<>();
   private Integer skip = DEFAULT_SKIP;
   private String startAfter = null;
 
@@ -42,16 +43,16 @@ public final class SearchParameters
   // ************************************************************************
   public boolean getComputeTotal() { return computeTotal; }
   public void setComputeTotal(boolean b) { computeTotal = b; }
-  public List<String> getFilterList() { return filterList; }
+  public List<String> getFilterList() { return (filterList == null ? new ArrayList<>() : filterList); }
   public void setFilterList(List<String> fl) { filterList = fl; }
-  public List<String> getSearchList() { return searchList; }
+  public List<String> getSearchList() { return (searchList == null ? new ArrayList<>() : searchList); }
   public void setSearchList(List<String> sl) { searchList = sl; }
   public Integer getLimit() { return limit; }
   public void setLimit(Integer i) { limit = i; }
-  public String getOrderBy() { return orderBy; }
-  public void setOrderBy(String s) { orderBy = s; }
-  public String getOrderByDirection() { return orderByDirection; }
-  public void setOrderByDirection(String s) { orderByDirection = s; }
+  public List<String> getOrderByAttrList() { return (orderByAttrList == null ? new ArrayList<>() : orderByAttrList); }
+  public void setOrderByAttrList(List<String> sl) { orderByAttrList = sl; }
+  public List<String> getOrderByDirList() { return (orderByDirList == null ? new ArrayList<>() : orderByDirList); }
+  public void setOrderByDirList(List<String> sl) { orderByDirList = sl; }
   public Integer getSkip() { return skip; }
   public void setSkip(Integer i) { skip = i; }
   public String getStartAfter() { return startAfter; }

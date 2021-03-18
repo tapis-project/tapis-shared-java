@@ -408,33 +408,76 @@ public class SearchUtils
   }
 
   /**
-   * Check validity of orderBy query parameter which must be in the form <attr_name>(<dir>)
-   *   where (<dir>) is optional and <dir> = "asc" or "desc"
-   * @param orderByQueryParam - string value of orderBy query parameter
+   * Check validity of orderBy query parameter which must be a comma separated list of items in
+   *   the form <attr_name>(<dir>) where (<dir>) is optional and <dir> = "asc" or "desc"
+   * @param orderByQueryParamListStr - string value of orderBy query parameter
    * @return an error message if invalid else return null.
    */
-  public static String checkOrderByQueryParam(String orderByQueryParam)
+  public static String checkOrderByQueryParam(String orderByQueryParamListStr, List<String> items)
   {
     // Must not be empty
-    if (StringUtils.isBlank(orderByQueryParam)) return "Empty";
-    String orderByAttr = orderByQueryParam;
-    // If left paren then must be matching right paren at end and string between must be a direction
-    int sortDirStart = orderByQueryParam.indexOf('(');
-    if (sortDirStart == 0) return "orderBy attribute name not found. orderBy value: " + orderByQueryParam;
-    if (sortDirStart > 0)
+    if (StringUtils.isBlank(orderByQueryParamListStr) || items == null || items.isEmpty()) return "Empty";
+    for (String item: items)
     {
-      if (!orderByQueryParam.endsWith(")")) return "Unmatched parentheses. orderBy value: " + orderByQueryParam;
-      orderByAttr =  orderByQueryParam.substring(0,orderByQueryParam.indexOf('('));
-      String sortDirection = orderByQueryParam.substring(sortDirStart+1, orderByQueryParam.length()-1);
-      if (StringUtils.isBlank(sortDirection)) return "Sort direction was blank";
-      if (!ORDERBY_DIRECTION_ASC.equalsIgnoreCase(sortDirection) && !ORDERBY_DIRECTION_DESC.equalsIgnoreCase(sortDirection))
+      String orderByAttr = item;
+      // If left paren then must be matching right paren at end and string between must be a direction
+      int sortDirStart = item.indexOf('(');
+      if (sortDirStart == 0)
+        return "orderBy attribute name not found for item: " + item + ". OrderBy list: " + orderByQueryParamListStr;
+      if (sortDirStart > 0)
       {
-        return "Invalid sort direction: " + sortDirection;
+        if (!item.endsWith(")"))
+          return "Unmatched parentheses for item: " + item + ". OrderBy list: " +  orderByQueryParamListStr;
+        orderByAttr = item.substring(0, item.indexOf('('));
+        String sortDirection = item.substring(sortDirStart + 1, item.length() - 1);
+        if (StringUtils.isBlank(sortDirection))
+          return "Sort direction was blank for item: " + item + ". OrderBy list: " +  orderByQueryParamListStr;
+        if (!ORDERBY_DIRECTION_ASC.equalsIgnoreCase(sortDirection) && !ORDERBY_DIRECTION_DESC.equalsIgnoreCase(sortDirection))
+        {
+          return "Invalid sort direction: " + sortDirection +  ". For item: " + item + ". OrderBy list: " +  orderByQueryParamListStr;
+        }
       }
+      // Check that column name is valid
+      if (invalidAttributeName(orderByAttr))
+        return "Invalid attribute name for item: " + item + ". OrderBy list: " + orderByQueryParamListStr;
     }
-    // Check that column name is valid
-    if (invalidAttributeName(orderByAttr)) return "Invalid attribute name. orderBy value: " + orderByQueryParam;
     return null;
+  }
+
+  /**
+   * Extract attributes from orderBy query parameter which must be a comma separated list of items in
+   *   the form <attr_name>(<dir>) where (<dir>) is optional and <dir> = "asc" or "desc"
+   * @param orderByQueryParamListStr - string value of orderBy query parameter
+   * @return list of orderBy attributes.
+   */
+  public static List<String> buildOrderByAttrList(String orderByQueryParamListStr, List<String> items)
+  {
+    var retList = new ArrayList<String>();
+    // if empty return empty list
+    if (StringUtils.isBlank(orderByQueryParamListStr)) return retList;
+    for (String item: items)
+    {
+      retList.add(item.substring(0, item.indexOf('(')));
+    }
+    return retList;
+  }
+
+  /**
+   * Extract sort directions from orderBy query parameter which must be a comma separated list of items in
+   *   the form <attr_name>(<dir>) where (<dir>) is optional and <dir> = "asc" or "desc"
+   * @param orderByQueryParamListStr - string value of orderBy query parameter
+   * @return list of orderBy sort directions.
+   */
+  public static List<String> buildOrderByDirList(String orderByQueryParamListStr, List<String> items)
+  {
+    var retList = new ArrayList<String>();
+    // if empty return empty list
+    if (StringUtils.isBlank(orderByQueryParamListStr)) return retList;
+    for (String item: items)
+    {
+      retList.add(getOrderByDirection(item));
+    }
+    return retList;
   }
 
   /**

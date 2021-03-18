@@ -70,7 +70,6 @@ public class QueryParametersRequestFilter implements ContainerRequestFilter
 
     // Set default sort and paginate options
     SearchParameters searchParms = new SearchParameters();
-    searchParms.setOrderByDirection(DEFAULT_ORDERBY_DIRECTION);
     searchParms.setSkip(DEFAULT_SKIP);
     searchParms.setComputeTotal(DEFAULT_COMPUTETOTAL);
 
@@ -160,9 +159,11 @@ public class QueryParametersRequestFilter implements ContainerRequestFilter
     String parmValueOrderBy = getQueryParm(queryParameters, PARM_ORDERBY);
     if (!StringUtils.isBlank(parmValueOrderBy))
     {
-      // Validate and process orderBy which must be in the form <col_name>(<dir>)
-      //   where (<dir>) is optional and <dir> = "asc" or "desc"
-      String errMsg = SearchUtils.checkOrderByQueryParam(parmValueOrderBy);
+      // Only do the split once and pass it in to the utility methods
+      var items = SearchUtils.getValueList(parmValueOrderBy);
+      // Validate and process orderBy which must be a comma separated list where each item has
+      //   the form <col_name>(<dir>) where (<dir>) is optional and <dir> = "asc" or "desc"
+      String errMsg = SearchUtils.checkOrderByQueryParam(parmValueOrderBy, items);
       if (errMsg != null)
       {
         String msg = MsgUtils.getMsg("TAPIS_QUERY_PARAM_ORDERBY_ERROR", threadContext.getJwtTenantId(), threadContext.getJwtUser(),
@@ -171,8 +172,8 @@ public class QueryParametersRequestFilter implements ContainerRequestFilter
         requestContext.abortWith(Response.status(Response.Status.BAD_REQUEST).entity(msg).build());
         return;
       }
-      searchParms.setOrderBy(SearchUtils.getOrderByColumn(parmValueOrderBy));
-      searchParms.setOrderByDirection(SearchUtils.getOrderByDirection(parmValueOrderBy));
+      searchParms.setOrderByAttrList(SearchUtils.buildOrderByAttrList(parmValueOrderBy, items));
+      searchParms.setOrderByDirList(SearchUtils.buildOrderByDirList(parmValueOrderBy, items));
     }
 
     // Look for and extract skip query parameter.
@@ -201,7 +202,7 @@ public class QueryParametersRequestFilter implements ContainerRequestFilter
 
     // Check constraints
     // Specifying startAfter without orderBy is an invalid combination
-    if (!StringUtils.isBlank(searchParms.getStartAfter()) && StringUtils.isBlank(searchParms.getOrderBy()))
+    if (!StringUtils.isBlank(searchParms.getStartAfter()) && searchParms.getOrderByAttrList().isEmpty())
     {
       String msg = MsgUtils.getMsg("TAPIS_QUERY_PARAM_INVALID_PAIR1", threadContext.getJwtTenantId(), threadContext.getJwtUser(),
               threadContext.getOboTenantId(), threadContext.getOboUser(), PARM_STARTAFTER, PARM_ORDERBY);
