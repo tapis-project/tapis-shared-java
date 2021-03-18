@@ -7,7 +7,7 @@ import java.util.List;
  * Parameters related to search, sort and filter
  *    search - String indicating search conditions to use when retrieving results
  *    limit - Integer indicating maximum number of results to be included, -1 for unlimited
- *    orderBy - e.g. orderBy=owner(asc), orderBy=created(desc)
+ *    orderBy - e.g. orderBy=owner(asc), orderBy=created(desc), orderBy=name,created(desc)
  *    skip - number of results to skip
  *    startAfter - e.g. systems?limit=10&orderBy=id(asc)&startAfter=101
  *    computeTotal - Boolean indicating if total count should be computed. Default is false.
@@ -33,6 +33,7 @@ public final class SearchParameters
   private List<String> filterList = new ArrayList<>();
   private List<String> searchList = new ArrayList<>();
   private Integer limit = null;  // Set to null so users of this class can determine if value is set on incoming request.
+  private String orderBy = null;
   private List<String> orderByAttrList = new ArrayList<>();
   private List<String> orderByDirList = new ArrayList<>();
   private Integer skip = DEFAULT_SKIP;
@@ -49,6 +50,8 @@ public final class SearchParameters
   public void setSearchList(List<String> sl) { searchList = sl; }
   public Integer getLimit() { return limit; }
   public void setLimit(Integer i) { limit = i; }
+  public String getOrderBy() { return orderBy; }
+  public void setOrderBy(String s) { orderBy = s; }
   public List<String> getOrderByAttrList() { return (orderByAttrList == null ? new ArrayList<>() : orderByAttrList); }
   public void setOrderByAttrList(List<String> sl) { orderByAttrList = sl; }
   public List<String> getOrderByDirList() { return (orderByDirList == null ? new ArrayList<>() : orderByDirList); }

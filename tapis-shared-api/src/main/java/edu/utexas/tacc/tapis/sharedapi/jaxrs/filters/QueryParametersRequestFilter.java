@@ -172,6 +172,7 @@ public class QueryParametersRequestFilter implements ContainerRequestFilter
         requestContext.abortWith(Response.status(Response.Status.BAD_REQUEST).entity(msg).build());
         return;
       }
+      searchParms.setOrderBy(parmValueOrderBy);
       searchParms.setOrderByAttrList(SearchUtils.buildOrderByAttrList(parmValueOrderBy, items));
       searchParms.setOrderByDirList(SearchUtils.buildOrderByDirList(parmValueOrderBy, items));
     }
