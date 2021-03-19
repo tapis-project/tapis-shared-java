@@ -19,7 +19,6 @@ import javax.ws.rs.ext.Provider;
 import java.util.List;
 
 import static edu.utexas.tacc.tapis.shared.threadlocal.SearchParameters.DEFAULT_COMPUTETOTAL;
-import static edu.utexas.tacc.tapis.shared.threadlocal.SearchParameters.DEFAULT_ORDERBY_DIRECTION;
 import static edu.utexas.tacc.tapis.shared.threadlocal.SearchParameters.DEFAULT_SKIP;
 
 /*
@@ -172,9 +171,8 @@ public class QueryParametersRequestFilter implements ContainerRequestFilter
         requestContext.abortWith(Response.status(Response.Status.BAD_REQUEST).entity(msg).build());
         return;
       }
+      searchParms.setOrderByList(SearchUtils.buildOrderByList(parmValueOrderBy, items));
       searchParms.setOrderBy(parmValueOrderBy);
-      searchParms.setOrderByAttrList(SearchUtils.buildOrderByAttrList(parmValueOrderBy, items));
-      searchParms.setOrderByDirList(SearchUtils.buildOrderByDirList(parmValueOrderBy, items));
     }
 
     // Look for and extract skip query parameter.
@@ -203,7 +201,7 @@ public class QueryParametersRequestFilter implements ContainerRequestFilter
 
     // Check constraints
     // Specifying startAfter without orderBy is an invalid combination
-    if (!StringUtils.isBlank(searchParms.getStartAfter()) && searchParms.getOrderByAttrList().isEmpty())
+    if (!StringUtils.isBlank(searchParms.getStartAfter()) && searchParms.getOrderByList().isEmpty())
     {
       String msg = MsgUtils.getMsg("TAPIS_QUERY_PARAM_INVALID_PAIR1", threadContext.getJwtTenantId(), threadContext.getJwtUser(),
               threadContext.getOboTenantId(), threadContext.getOboUser(), PARM_STARTAFTER, PARM_ORDERBY);

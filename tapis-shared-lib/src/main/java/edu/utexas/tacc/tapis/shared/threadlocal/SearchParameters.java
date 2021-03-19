@@ -8,6 +8,7 @@ import java.util.List;
  *    search - String indicating search conditions to use when retrieving results
  *    limit - Integer indicating maximum number of results to be included, -1 for unlimited
  *    orderBy - e.g. orderBy=owner(asc), orderBy=created(desc), orderBy=name,created(desc)
+ *    orderByList - List of orderBy entries, attr+direction
  *    skip - number of results to skip
  *    startAfter - e.g. systems?limit=10&orderBy=id(asc)&startAfter=101
  *    computeTotal - Boolean indicating if total count should be computed. Default is false.
@@ -18,10 +19,6 @@ public final class SearchParameters
   // ************************************************************************
   // *********************** Constants **************************************
   // ************************************************************************
-  public static final String ORDERBY_DIRECTION_ASC = "ASC";
-  public static final String ORDERBY_DIRECTION_DESC = "DESC";
-
-  public static final String DEFAULT_ORDERBY_DIRECTION = ORDERBY_DIRECTION_ASC;
   public static final int DEFAULT_LIMIT = 100;
   public static final int DEFAULT_SKIP = 0;
   public static final boolean DEFAULT_COMPUTETOTAL = false;
@@ -33,9 +30,8 @@ public final class SearchParameters
   private List<String> filterList = new ArrayList<>();
   private List<String> searchList = new ArrayList<>();
   private Integer limit = null;  // Set to null so users of this class can determine if value is set on incoming request.
-  private String orderBy = null;
-  private List<String> orderByAttrList = new ArrayList<>();
-  private List<String> orderByDirList = new ArrayList<>();
+  private String orderBy = null; // Maintain original query parameter for returning in response.
+  private List<OrderBy> orderByList = new ArrayList<>();
   private Integer skip = DEFAULT_SKIP;
   private String startAfter = null;
 
@@ -52,10 +48,8 @@ public final class SearchParameters
   public void setLimit(Integer i) { limit = i; }
   public String getOrderBy() { return orderBy; }
   public void setOrderBy(String s) { orderBy = s; }
-  public List<String> getOrderByAttrList() { return (orderByAttrList == null ? new ArrayList<>() : orderByAttrList); }
-  public void setOrderByAttrList(List<String> sl) { orderByAttrList = sl; }
-  public List<String> getOrderByDirList() { return (orderByDirList == null ? new ArrayList<>() : orderByDirList); }
-  public void setOrderByDirList(List<String> sl) { orderByDirList = sl; }
+  public List<OrderBy> getOrderByList() { return (orderByList == null ? new ArrayList<>() : orderByList); }
+  public void setOrderByList(List<OrderBy> ol) { orderByList = ol; }
   public Integer getSkip() { return skip; }
   public void setSkip(Integer i) { skip = i; }
   public String getStartAfter() { return startAfter; }

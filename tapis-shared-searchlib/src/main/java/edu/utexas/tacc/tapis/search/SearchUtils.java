@@ -4,6 +4,7 @@ import com.google.gson.JsonSyntaxException;
 import edu.utexas.tacc.tapis.search.requests.ReqMatch;
 import edu.utexas.tacc.tapis.search.requests.ReqSearch;
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
+import edu.utexas.tacc.tapis.shared.threadlocal.OrderBy;
 import edu.utexas.tacc.tapis.shared.utils.TapisGsonUtils;
 import edu.utexas.tacc.tapis.shared.utils.TapisUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -29,9 +30,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static edu.utexas.tacc.tapis.shared.threadlocal.SearchParameters.DEFAULT_ORDERBY_DIRECTION;
-import static edu.utexas.tacc.tapis.shared.threadlocal.SearchParameters.ORDERBY_DIRECTION_ASC;
-import static edu.utexas.tacc.tapis.shared.threadlocal.SearchParameters.ORDERBY_DIRECTION_DESC;
+import static edu.utexas.tacc.tapis.shared.threadlocal.OrderBy.DEFAULT_ORDERBY_DIRECTION;
+import static edu.utexas.tacc.tapis.shared.threadlocal.OrderBy.OrderByDir;
 
 /**
  * Utility methods for search, sort and limit related requirements.
@@ -432,7 +432,8 @@ public class SearchUtils
         String sortDirection = item.substring(sortDirStart + 1, item.length() - 1);
         if (StringUtils.isBlank(sortDirection))
           return "Sort direction was blank for item: " + item + ". OrderBy list: " +  orderByQueryParamListStr;
-        if (!ORDERBY_DIRECTION_ASC.equalsIgnoreCase(sortDirection) && !ORDERBY_DIRECTION_DESC.equalsIgnoreCase(sortDirection))
+        if (!OrderByDir.ASC.name().equalsIgnoreCase(sortDirection) &&
+            !OrderByDir.DESC.name().equalsIgnoreCase(sortDirection))
         {
           return "Invalid sort direction: " + sortDirection +  ". For item: " + item + ". OrderBy list: " +  orderByQueryParamListStr;
         }
@@ -448,34 +449,21 @@ public class SearchUtils
    * Extract attributes from orderBy query parameter which must be a comma separated list of items in
    *   the form <attr_name>(<dir>) where (<dir>) is optional and <dir> = "asc" or "desc"
    * @param orderByQueryParamListStr - string value of orderBy query parameter
-   * @return list of orderBy attributes.
+   * @return list of orderBy entries.
    */
-  public static List<String> buildOrderByAttrList(String orderByQueryParamListStr, List<String> items)
+  public static List<OrderBy> buildOrderByList(String orderByQueryParamListStr, List<String> items)
   {
-    var retList = new ArrayList<String>();
+    var retList = new ArrayList<OrderBy>();
     // if empty return empty list
     if (StringUtils.isBlank(orderByQueryParamListStr)) return retList;
     for (String item: items)
     {
-      retList.add(item.substring(0, item.indexOf('(')));
-    }
-    return retList;
-  }
-
-  /**
-   * Extract sort directions from orderBy query parameter which must be a comma separated list of items in
-   *   the form <attr_name>(<dir>) where (<dir>) is optional and <dir> = "asc" or "desc"
-   * @param orderByQueryParamListStr - string value of orderBy query parameter
-   * @return list of orderBy sort directions.
-   */
-  public static List<String> buildOrderByDirList(String orderByQueryParamListStr, List<String> items)
-  {
-    var retList = new ArrayList<String>();
-    // if empty return empty list
-    if (StringUtils.isBlank(orderByQueryParamListStr)) return retList;
-    for (String item: items)
-    {
-      retList.add(getOrderByDirection(item));
+      String attr = item.substring(0, item.indexOf('('));
+      // Validation of attr should have already happened, but just in case let's make sure it is safe to
+      //   use when constructing a new orderBy entry.
+      if (StringUtils.isBlank(attr)) continue;
+      OrderBy ob = new OrderBy(attr, getOrderByDirection(item));
+      retList.add(ob);
     }
     return retList;
   }
@@ -502,13 +490,13 @@ public class SearchUtils
    * @param orderByQueryParam - string value of orderBy query parameter
    * @return the orderBy direction or default value if direction not specified
    */
-  public static String getOrderByDirection(String orderByQueryParam)
+  public static OrderByDir getOrderByDirection(String orderByQueryParam)
   {
-    String sortDirection;
     int sortDirStart = orderByQueryParam.indexOf('(');
-    if (sortDirStart <= 0) sortDirection = DEFAULT_ORDERBY_DIRECTION;
-    else sortDirection = orderByQueryParam.substring(sortDirStart+1, orderByQueryParam.length()-1);
-    return sortDirection.toUpperCase();
+    if (sortDirStart <= 0) return DEFAULT_ORDERBY_DIRECTION;
+    OrderByDir sortDirection =
+            OrderByDir.valueOf(orderByQueryParam.substring(sortDirStart+1, orderByQueryParam.length()-1).toUpperCase());
+    return sortDirection;
   }
 
   /**

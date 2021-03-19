@@ -1,5 +1,6 @@
 package edu.utexas.tacc.tapis.search;
 
+import edu.utexas.tacc.tapis.shared.threadlocal.OrderBy;
 import org.testng.Assert;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
@@ -451,13 +452,13 @@ public class SearchUtilsTest
     assertEquals("name", SearchUtils.getOrderByColumn("name"));
     assertEquals("name", SearchUtils.getOrderByColumn("name(asc)"));
     assertEquals("name", SearchUtils.getOrderByColumn("name(desc)"));
-    assertEquals("ASC",  SearchUtils.getOrderByDirection("name"));
-    assertEquals("ASC",  SearchUtils.getOrderByDirection("name(asc)"));
-    assertEquals("ASC",  SearchUtils.getOrderByDirection("name(ASC)"));
-    assertEquals("ASC",  SearchUtils.getOrderByDirection("name(Asc)"));
-    assertEquals("DESC", SearchUtils.getOrderByDirection("name(desc)"));
-    assertEquals("DESC", SearchUtils.getOrderByDirection("name(DESC)"));
-    assertEquals("DESC", SearchUtils.getOrderByDirection("name(Desc)"));
+    assertEquals(OrderBy.OrderByDir.ASC,  SearchUtils.getOrderByDirection("name"));
+    assertEquals(OrderBy.OrderByDir.ASC,  SearchUtils.getOrderByDirection("name(asc)"));
+    assertEquals(OrderBy.OrderByDir.ASC,  SearchUtils.getOrderByDirection("name(ASC)"));
+    assertEquals(OrderBy.OrderByDir.ASC,  SearchUtils.getOrderByDirection("name(Asc)"));
+    assertEquals(OrderBy.OrderByDir.DESC, SearchUtils.getOrderByDirection("name(desc)"));
+    assertEquals(OrderBy.OrderByDir.DESC, SearchUtils.getOrderByDirection("name(DESC)"));
+    assertEquals(OrderBy.OrderByDir.DESC, SearchUtils.getOrderByDirection("name(Desc)"));
   }
 
   // ************************************************************************
