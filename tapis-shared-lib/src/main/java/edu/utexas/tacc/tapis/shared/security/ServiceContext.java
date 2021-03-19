@@ -1,5 +1,6 @@
 package edu.utexas.tacc.tapis.shared.security;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Hashtable;
 
@@ -31,6 +32,7 @@ public class ServiceContext
 	// Set upon serviceJWT initialization.
 	private String     _siteId;
 	private ServiceJWT _serviceJWT;
+	private Instant    _lastServiceJWTRefresh;  // synchronized access
 	
 	// Cache populated as JWTs for services in a tenant are requested.
 	private final Hashtable<String,RequestRouter> _routerCache = new Hashtable<>();
@@ -137,6 +139,7 @@ public class ServiceContext
 		  
 		// Create the manager and complete initialization.
 		_serviceJWT = new ServiceJWT(jwtParms, servicePassword);
+		_lastServiceJWTRefresh = _serviceJWT.getLastRefreshTime();
 		_siteId = siteId;
 	}
 
@@ -172,6 +175,33 @@ public class ServiceContext
 		}
 		
 		return router;
+	}
+	
+    /* ---------------------------------------------------------------------- */
+    /* hasRefreshedTokens:                                                    */
+    /* ---------------------------------------------------------------------- */
+	/** Determine if the serviceJWT has refreshed its tokens since the last 
+	 * time this method was called.  If so, the new token refresh time is 
+	 * recorded and true is returned indicating to the call that any tokens it
+	 * has cache should be discarded.  If the last refresh time has not changed,
+	 * then false is returned and the caller can continue using any previously
+	 * acquired tokens.
+	 * 
+	 * This method is threadsafe so that only one thead at a time determines 
+	 * if the refresh time has changed.
+	 * 
+	 * @return true if the tokens have been refreshed, false otherwise
+	 */
+	public synchronized boolean hasRefreshedTokens()
+	{
+	    // See if a token refresh operation has occurred since we last checked.
+	    var curRefreshTime = _serviceJWT.getLastRefreshTime();
+	    if (_lastServiceJWTRefresh.equals(curRefreshTime)) return false;
+	    
+	    // Update the last update time and indicate to the caller that tokens 
+	    // have been refreshed and the new last update time has been recorded.
+	    _lastServiceJWTRefresh = curRefreshTime;
+	    return true;
 	}
 	
 	/* ---------------------------------------------------------------------- */

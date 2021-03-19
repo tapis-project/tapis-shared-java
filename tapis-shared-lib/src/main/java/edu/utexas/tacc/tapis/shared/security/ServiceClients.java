@@ -167,6 +167,10 @@ public class ServiceClients
         if (StringUtils.isBlank(service))
             throw new TapisException(MsgUtils.getMsg("TAPIS_NULL_PARAMETER", "getClient", "service"));
 	    
+        // If the jwts have been refreshed, then we need to discard all of our clients
+        // since they were possibly created with an expired jwt.
+        if (ServiceContext.getInstance().hasRefreshedTokens()) _clientCache.invalidateAll();
+        
 		// See if we already have the client.
 		String key = getCacheKey(user, tenant, service);
 		return _clientCache.get(key);

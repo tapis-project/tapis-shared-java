@@ -76,8 +76,10 @@ public class ServiceJWT
     private final List<String> _targetSites;
     
     // Generated tokens. We use unsynchronized accessors to read contents since
-    // once the field is assign all threads only read its values.  Upon refresh,
+    // once the field is assigned all threads only read its values.  Upon refresh,
     // the JVM guarantees that the field reference is atomically assigned.
+    // The keys are site ids and values are tokens object containing the access
+    // and refresh tokens for this instance's service@tenant.
     private volatile HashMap<String,TokenResponsePackage> _tokPkgMap;
     
     // Fields that get updated on each successful refresh cycle.
@@ -247,11 +249,14 @@ public class ServiceJWT
      * @param password the service password.
      * @return a new, populated map
      */
-    HashMap<String,TokenResponsePackage> createServiceJWTMap(String password)
+    private HashMap<String,TokenResponsePackage> createServiceJWTMap(String password)
      throws TapisException, TapisClientException
     {
     	// Create a new map.
     	var map = new HashMap<String,TokenResponsePackage>(1+_targetSites.size()*2);
+    	
+    	// Optimistically set the last refresh time before creating the tokens.
+    	_lastRefreshTime = Instant.now();
     	
     	// Create JWT for each target site.
     	for (String site : _targetSites) {
