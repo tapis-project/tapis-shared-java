@@ -422,6 +422,7 @@ public class SearchUtilsTest
     assertNull(SearchUtils.checkOrderByQueryParam("name(desc)", Collections.singletonList("name(desc)")));
     assertNull(SearchUtils.checkOrderByQueryParam("name(ASC)", Collections.singletonList("name(ASC)")));
     assertNull(SearchUtils.checkOrderByQueryParam("name(DESC)", Collections.singletonList("name(DESC)")));
+    assertNull(SearchUtils.checkOrderByQueryParam("name()", Collections.singletonList("name()")));
     assertNull(SearchUtils.checkOrderByQueryParam("name(asc),created(desc)", Arrays.asList("name(asc)","created(desc)")));
     assertNull(SearchUtils.checkOrderByQueryParam("name(asc),created", Arrays.asList("name(asc)","created")));
     assertNull(SearchUtils.checkOrderByQueryParam("name,created(desc)", Arrays.asList("name","created(desc)")));
@@ -432,15 +433,13 @@ public class SearchUtilsTest
     assertEquals(SearchUtils.checkOrderByQueryParam(" ", Collections.emptyList()), "Empty");
     assertEquals(SearchUtils.checkOrderByQueryParam(",", Collections.emptyList()), "Empty");
     assertTrue(SearchUtils.checkOrderByQueryParam("name(", Collections.singletonList("name("))
-            .startsWith("Unmatched parentheses"));
+            .startsWith("orderBy entry invalid"));
     assertTrue(SearchUtils.checkOrderByQueryParam("name(asc", Collections.singletonList("name(asc"))
-            .startsWith("Unmatched parentheses"));
+            .startsWith("orderBy entry invalid"));
     assertTrue(SearchUtils.checkOrderByQueryParam("(asc)", Collections.singletonList("(asc)"))
-            .startsWith("orderBy attribute name not found"));
-    assertTrue(SearchUtils.checkOrderByQueryParam("name()", Collections.singletonList("name()"))
-            .startsWith("Sort direction was blank"));
+            .startsWith("orderBy entry invalid"));
     assertTrue(SearchUtils.checkOrderByQueryParam("name(UP)", Collections.singletonList("name(UP)"))
-            .startsWith("Invalid sort direction"));
+            .startsWith("orderBy entry invalid"));
     assertTrue(SearchUtils.checkOrderByQueryParam("invalid?col", Collections.singletonList("invalid?col"))
             .startsWith("Invalid attribute name"));
     assertTrue(SearchUtils.checkOrderByQueryParam("1invalidcol", Collections.singletonList("1invalidcol"))
@@ -449,10 +448,12 @@ public class SearchUtilsTest
             .startsWith("Invalid attribute name"));
 
     // Check extract of column name and sort direction
-    assertEquals("name", SearchUtils.getOrderByColumn("name"));
-    assertEquals("name", SearchUtils.getOrderByColumn("name(asc)"));
-    assertEquals("name", SearchUtils.getOrderByColumn("name(desc)"));
+    assertEquals("name", SearchUtils.getOrderByAttribute("name"));
+    assertEquals("name", SearchUtils.getOrderByAttribute("name()"));
+    assertEquals("name", SearchUtils.getOrderByAttribute("name(asc)"));
+    assertEquals("name", SearchUtils.getOrderByAttribute("name(desc)"));
     assertEquals(OrderBy.OrderByDir.ASC,  SearchUtils.getOrderByDirection("name"));
+    assertEquals(OrderBy.OrderByDir.ASC,  SearchUtils.getOrderByDirection("name()"));
     assertEquals(OrderBy.OrderByDir.ASC,  SearchUtils.getOrderByDirection("name(asc)"));
     assertEquals(OrderBy.OrderByDir.ASC,  SearchUtils.getOrderByDirection("name(ASC)"));
     assertEquals(OrderBy.OrderByDir.ASC,  SearchUtils.getOrderByDirection("name(Asc)"));

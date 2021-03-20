@@ -419,27 +419,14 @@ public class SearchUtils
     if (StringUtils.isBlank(orderByQueryParamListStr) || items == null || items.isEmpty()) return "Empty";
     for (String item: items)
     {
-      String orderByAttr = item;
-      // If left paren then must be matching right paren at end and string between must be a direction
-      int sortDirStart = item.indexOf('(');
-      if (sortDirStart == 0)
-        return "orderBy attribute name not found for item: " + item + ". OrderBy list: " + orderByQueryParamListStr;
-      if (sortDirStart > 0)
+      // Check format of entry
+      try { OrderBy.fromString(item); }
+      catch (IllegalArgumentException e)
       {
-        if (!item.endsWith(")"))
-          return "Unmatched parentheses for item: " + item + ". OrderBy list: " +  orderByQueryParamListStr;
-        orderByAttr = item.substring(0, item.indexOf('('));
-        String sortDirection = item.substring(sortDirStart + 1, item.length() - 1);
-        if (StringUtils.isBlank(sortDirection))
-          return "Sort direction was blank for item: " + item + ". OrderBy list: " +  orderByQueryParamListStr;
-        if (!OrderByDir.ASC.name().equalsIgnoreCase(sortDirection) &&
-            !OrderByDir.DESC.name().equalsIgnoreCase(sortDirection))
-        {
-          return "Invalid sort direction: " + sortDirection +  ". For item: " + item + ". OrderBy list: " +  orderByQueryParamListStr;
-        }
+        return "orderBy entry invalid. Entry: " + item + ". OrderBy list: " + orderByQueryParamListStr;
       }
       // Check that column name is valid
-      if (invalidAttributeName(orderByAttr))
+      if (invalidAttributeName(getOrderByAttribute(item)))
         return "Invalid attribute name for item: " + item + ". OrderBy list: " + orderByQueryParamListStr;
     }
     return null;
@@ -462,41 +449,44 @@ public class SearchUtils
       // Validation of attr should have already happened, but just in case let's make sure it is safe to
       //   use when constructing a new orderBy entry.
       if (StringUtils.isBlank(attr)) continue;
-      OrderBy ob = new OrderBy(attr, getOrderByDirection(item));
+      OrderBy ob = OrderBy.valueOf(attr, getOrderByDirection(item));
       retList.add(ob);
     }
     return retList;
   }
 
   /**
-   * Extract column name from orderBy query parameter which must be in the form <col_name>(<dir>)
+   * Extract attribute name from orderBy query parameter which must be in the form <col_name>(<dir>)
    *   where (<dir>) is optional and <dir> = "asc" or "desc"
    * NOTE: This method assumes that value has been checked using checkOrderByQueryParam
-   * @param orderByQueryParam - string value of orderBy query parameter
-   * @return the orderBy column name or null if not found
+   * @param orderByStr - string value of orderBy entry
+   * @return the orderBy attribute name or null if not found
    */
-  public static String getOrderByColumn(String orderByQueryParam)
+  public static String getOrderByAttribute(String orderByStr)
   {
-    if (StringUtils.isBlank(orderByQueryParam)) return null;
-    String colName = orderByQueryParam;
-    if (orderByQueryParam.indexOf('(') >= 0) colName =  orderByQueryParam.substring(0,orderByQueryParam.indexOf('('));
-    return colName;
+    if (StringUtils.isBlank(orderByStr)) return null;
+    String attrName = orderByStr;
+    if (orderByStr.indexOf('(') >= 0) attrName =  orderByStr.substring(0,orderByStr.indexOf('('));
+    return attrName;
   }
 
   /**
-   * Extract direction from orderBy query parameter which must be in the form <col_name>(<dir>)
+   * Extract direction from orderBy entry which must be in the form <col_name>(<dir>)
    *   where (<dir>) is optional and <dir> = "asc" or "desc"
    * NOTE: This method assumes that value has been checked using checkOrderByQueryParam
-   * @param orderByQueryParam - string value of orderBy query parameter
+   * @param orderByStr - string value of orderBy entry
    * @return the orderBy direction or default value if direction not specified
    */
-  public static OrderByDir getOrderByDirection(String orderByQueryParam)
+  public static OrderByDir getOrderByDirection(String orderByStr)
   {
-    int sortDirStart = orderByQueryParam.indexOf('(');
-    if (sortDirStart <= 0) return DEFAULT_ORDERBY_DIRECTION;
-    OrderByDir sortDirection =
-            OrderByDir.valueOf(orderByQueryParam.substring(sortDirStart+1, orderByQueryParam.length()-1).toUpperCase());
-    return sortDirection;
+    OrderByDir orderByDir = DEFAULT_ORDERBY_DIRECTION;
+    int orderDirStart = orderByStr.indexOf('(');
+    if (orderDirStart > 0)
+    {
+      String orderDirStr = orderByStr.substring(orderDirStart+1, orderByStr.length()-1).toUpperCase();
+      if (!StringUtils.isBlank(orderDirStr)) orderByDir = OrderByDir.valueOf(orderDirStr);
+    }
+    return orderByDir;
   }
 
   /**
