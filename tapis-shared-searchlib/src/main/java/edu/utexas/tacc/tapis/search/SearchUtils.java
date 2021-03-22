@@ -441,11 +441,14 @@ public class SearchUtils
   public static List<OrderBy> buildOrderByList(String orderByQueryParamListStr, List<String> items)
   {
     var retList = new ArrayList<OrderBy>();
+    String attr = "";
     // if empty return empty list
     if (StringUtils.isBlank(orderByQueryParamListStr)) return retList;
     for (String item: items)
     {
-      String attr = item.substring(0, item.indexOf('('));
+      if(item.indexOf('(') != -1) {	
+    	 attr = item.substring(0, item.indexOf('('));
+      }
       // Validation of attr should have already happened, but just in case let's make sure it is safe to
       //   use when constructing a new orderBy entry.
       if (StringUtils.isBlank(attr)) continue;
