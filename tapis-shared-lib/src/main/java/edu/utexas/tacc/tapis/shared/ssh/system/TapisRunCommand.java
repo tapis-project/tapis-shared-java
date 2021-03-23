@@ -15,10 +15,10 @@ import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
 import edu.utexas.tacc.tapis.shared.exceptions.runtime.TapisRuntimeException;
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
 import edu.utexas.tacc.tapis.shared.ssh.SSHConnection;
-import edu.utexas.tacc.tapis.systems.client.gen.model.AuthnEnum;
 import edu.utexas.tacc.tapis.systems.client.gen.model.TSystem;
 
-public class TapisRunCommand 
+public final class TapisRunCommand 
+ extends TapisAbstractCommand
 {
     /* **************************************************************************** */
     /*                                   Constants                                  */
@@ -31,14 +31,11 @@ public class TapisRunCommand
     private static final int DEFAULT_READ_BUFFER_LEN = DEFAULT_RESULT_LEN;
     private static final int DEFAULT_ERR_BUFFER_LEN  = 2048;
     
-    
     /* **************************************************************************** */
     /*                                    Fields                                    */
     /* **************************************************************************** */
     // From constructor.
-    private final TSystem         _system;
     private final String          _command;
-    private ByteArrayOutputStream _err; 
     
     /* **************************************************************************** */
     /*                                Constructors                                  */
@@ -48,17 +45,13 @@ public class TapisRunCommand
     /* ---------------------------------------------------------------------------- */
     public TapisRunCommand(TSystem system, String command)
     {
-        // These errors should never happen.
-        if (system == null) {
-            String msg = MsgUtils.getMsg("TAPIS_NULL_PARAMETER", "TapisRunCommand", "system");
-            throw new TapisRuntimeException(msg);
-        }
+        // Save system in superclass.
+        super(system);
         if (StringUtils.isBlank(command)) {
             String msg = MsgUtils.getMsg("TAPIS_NULL_PARAMETER", "TapisRunCommand", "command");
             throw new TapisRuntimeException(msg);
         }
         
-        _system  = system;
         _command = command;
     }
 
@@ -92,7 +85,7 @@ public class TapisRunCommand
                 }
         
             // Issue command and read results; the channel is connected and disconnected.
-            try {result = sendCommand(channel);}
+            try {result = sendCommand(conn, channel);}
                 catch (Exception e) {
                     String msg = MsgUtils.getMsg("SYSTEMS_CMD_EXEC_ERROR", getSystemHostMessage(),
                                                  _system.getTenant(), e.getMessage(),
@@ -118,43 +111,6 @@ public class TapisRunCommand
     /*                               Private Methods                                */
     /* **************************************************************************** */
     /* ---------------------------------------------------------------------------- */
-    /* getConnection:                                                               */
-    /* ---------------------------------------------------------------------------- */
-    /** Get a ssh connection to the system using one of the supported authn connection
-     * methods.
-     * 
-     * @return the connection object
-     * @throws IOException when unable to get a connection
-     * @throws TapisException invalid or missing credentials
-     */
-    private SSHConnection getConnection() throws IOException, TapisException
-    {
-        // Determine which constructor to use based on the system credentials.
-        var cred = _system.getAuthnCredential();
-        if (cred == null) {
-            String msg = MsgUtils.getMsg("SYSTEMS_MISSING_CREDENTIALS", getSystemHostMessage(),
-                                         _system.getTenant());
-            throw new TapisException(msg);
-        }
-        
-        // We currently only use two types of authn for target systems.
-        SSHConnection conn = null;
-        if (_system.getDefaultAuthnMethod() == AuthnEnum.PASSWORD) 
-            conn = new SSHConnection(_system.getHost(), _system.getPort(), 
-                                     _system.getEffectiveUserId(), cred.getPassword());
-        else if (_system.getDefaultAuthnMethod() == AuthnEnum.PKI_KEYS)
-            conn = new SSHConnection(_system.getHost(), _system.getEffectiveUserId(), 
-                                     _system.getPort(), cred.getPublicKey(), cred.getPrivateKey());
-        else {
-            String msg = MsgUtils.getMsg("SYSTEMS_CMD_UNSUPPORTED_AUTHN_METHOD", getSystemHostMessage(),
-                                        _system.getTenant(), _system.getDefaultAuthnMethod());
-            throw new TapisException(msg);
-        }
-        
-        return conn;
-    }
-    
-    /* ---------------------------------------------------------------------------- */
     /* configureExecChannel:                                                        */
     /* ---------------------------------------------------------------------------- */
     private ChannelExec configureExecChannel(SSHConnection conn) throws IOException
@@ -171,7 +127,8 @@ public class TapisRunCommand
     /* ---------------------------------------------------------------------------- */
     /* sendCommand:                                                                 */
     /* ---------------------------------------------------------------------------- */
-    private String sendCommand(ChannelExec channel) throws IOException, JSchException
+    private String sendCommand(SSHConnection conn, ChannelExec channel) 
+     throws IOException, JSchException
     {
         // Initial the result string buffer.
         StringBuilder result = new StringBuilder(DEFAULT_RESULT_LEN);
@@ -198,24 +155,9 @@ public class TapisRunCommand
                     _log.warn(msg);
                 }
         }
-        finally {channel.disconnect();}
+        finally {conn.returnChannel(channel);}
         
         // The cumulative result string.
         return result.toString();
     }
-
-    /* ---------------------------------------------------------------------------- */
-    /* getErrorStreamMessage:                                                       */
-    /* ---------------------------------------------------------------------------- */
-    private String getErrorStreamMessage()
-    {
-        if (_err == null || _err.size() <= 0) return "";
-        return _err.toString();
-    }
-
-    /* ---------------------------------------------------------------------------- */
-    /* getSystemHostMessage:                                                        */
-    /* ---------------------------------------------------------------------------- */
-    private String getSystemHostMessage()
-    {return _system.getId() + " (" + _system.getHost() + ")";}
 }

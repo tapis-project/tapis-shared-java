@@ -148,16 +148,12 @@ public class SSHConnection implements ISSHConnection {
             }
             switch (channelType) {
                 case "sftp":
-                    channel = session.openChannel(channelType);
-                    break;
                 case "exec":
-                    channel = session.openChannel(channelType);
-                    break;
                 case "shell":
                     channel = session.openChannel(channelType);
                     break;
                 default:
-                    throw new IOException("Invalid channel type");
+                    throw new IOException("Invalid channel type: " + channelType);
             }
             channels.add(channel);
             return channel;
