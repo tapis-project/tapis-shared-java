@@ -128,6 +128,7 @@ public class SSHConnection implements ISSHConnection {
      */
     @Override
     public synchronized void returnChannel(Channel channel) {
+        if (channel == null) return;
         channels.remove(channel);
         channel.disconnect();
     }
@@ -169,6 +170,7 @@ public class SSHConnection implements ISSHConnection {
     public synchronized void closeSession() {
         if (session != null && session.isConnected()) {
             session.disconnect();
+            channels.clear();
         }
     }
 
