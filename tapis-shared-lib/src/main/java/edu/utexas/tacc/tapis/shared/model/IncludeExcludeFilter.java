@@ -7,6 +7,7 @@ public class IncludeExcludeFilter
 {
     private List<String> includes;
     private List<String> excludes;
+    private Boolean      includeLaunchFiles;
     
     // A simple way to make sure all fields are non-null.
     public void initAll()
@@ -26,5 +27,11 @@ public class IncludeExcludeFilter
     }
     public void setExcludes(List<String> excludes) {
         this.excludes = excludes;
+    }
+    public Boolean getIncludeLaunchFiles() {
+        return includeLaunchFiles;
+    }
+    public void setIncludeLaunchFiles(Boolean includeLaunchFiles) {
+        this.includeLaunchFiles = includeLaunchFiles;
     }
 }
