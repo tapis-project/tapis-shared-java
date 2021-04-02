@@ -1,5 +1,6 @@
 package edu.utexas.tacc.tapis.shared.ssh.system;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -121,6 +122,25 @@ public final class TapisSftp
     }
 
     /* ---------------------------------------------------------------------------- */
+    /* put:                                                                         */
+    /* ---------------------------------------------------------------------------- */
+    /** Copy the input file or directory's contents to the remote destination.  
+     * 
+     * @param src the input path name
+     * @param dest the destination path name
+     * @throws IOException
+     * @throws TapisException
+     * @throws SftpException
+     */
+    public void put(String src, String dest) 
+     throws IOException, TapisException, SftpException
+    {
+        // Initialize the connection if necessary.
+        var sftpChannel = getSftpChannel();
+        sftpChannel.put(src, dest, ChannelSftp.OVERWRITE);
+    }
+
+    /* ---------------------------------------------------------------------------- */
     /* chmod:                                                                       */
     /* ---------------------------------------------------------------------------- */
     /** Change the permission on a file or directory on a remote system.
@@ -139,6 +159,25 @@ public final class TapisSftp
         sftpChannel.chmod(mod, path);
     }
     
+    /* ---------------------------------------------------------------------------- */
+    /* ls :                                                                         */
+    /* ---------------------------------------------------------------------------- */
+    /** Copy the input file or directory's contents to the remote destination.  
+     * 
+     * @param src the input path name
+     * @param dest the destination path name
+     * @throws IOException
+     * @throws TapisException
+     * @throws SftpException
+     */
+    public void ls(String pathName) 
+     throws IOException, TapisException, SftpException
+    {
+        // Initialize the connection if necessary.
+        var sftpChannel = getSftpChannel();
+        sftpChannel.ls(pathName);
+    }
+
     /* **************************************************************************** */
     /*                               Private Methods                                */
     /* **************************************************************************** */

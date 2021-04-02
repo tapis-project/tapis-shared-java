@@ -149,6 +149,9 @@ public class SSHConnection implements ISSHConnection {
             }
             switch (channelType) {
                 case "sftp":
+                    channel = session.openChannel(channelType);
+                    channel.connect(); // needed to avoid "io_in" NPE
+                    break;
                 case "exec":
                 case "shell":
                     channel = session.openChannel(channelType);
@@ -169,6 +172,7 @@ public class SSHConnection implements ISSHConnection {
     @Override
     public synchronized void closeSession() {
         if (session != null && session.isConnected()) {
+            for (var c : channels) c.disconnect();
             session.disconnect();
             channels.clear();
         }
