@@ -37,6 +37,9 @@ public final class TapisRunCommand
     // Used by subclasses for capturing error information.
     private ByteArrayOutputStream _err; 
     
+    // Final exit status of command.
+    private int _exitStatus;
+    
     /* **************************************************************************** */
     /*                                Constructors                                  */
     /* **************************************************************************** */
@@ -132,6 +135,11 @@ public final class TapisRunCommand
         
         return result;
     }
+
+    /* ---------------------------------------------------------------------------- */
+    /* getExitStatus:                                                               */
+    /* ---------------------------------------------------------------------------- */
+    public int getExitStatus() {return _exitStatus;}
     
     /* **************************************************************************** */
     /*                               Private Methods                                */
@@ -173,8 +181,9 @@ public final class TapisRunCommand
         }
         
         // Check for an error if the channel got closed.
+        _exitStatus = channel.getExitStatus();
         if (channel.isClosed()) 
-            if (channel.getExitStatus() != 0) {
+            if (_exitStatus != 0) {
                 String msg = MsgUtils.getMsg("SYSTEMS_CHANNEL_EXIT_WARN", 
                                getSystemHostMessage(), _system.getTenant(), 
                                channel.getExitStatus(), command, getErrorStreamMessage());
