@@ -749,8 +749,7 @@ public class SearchUtils
   }
 
   /**
-   * Extract and validate operator in a condition having the forms- attr.op.value, attr.value
-   * In the form attr.value, op value defaults to eq (i.e, equality)
+   * Extract and validate operator in a condition having the form attr.op.value
    * NOTE: Make package-private for use in test code
    * @param condStr condition string
    * @return search operator from condition
@@ -764,14 +763,12 @@ public class SearchUtils
       throw new IllegalArgumentException(errMsg);
     }
     int dot2 = condStr.indexOf('.', dot1 + 1);
-    String op = "";
     if (dot2 < 0)
     {
-      op = "eq";	
-    	
-    } else {
-    	op = condStr.substring(dot1 + 1, dot2);
+      String errMsg = MsgUtils.getMsg("SEARCH_COND_INVALID_NOOPER", condStr);
+      throw new IllegalArgumentException(errMsg);
     }
+    String op = condStr.substring(dot1 + 1, dot2);
     // <op> must not be empty
     if (StringUtils.isBlank(op))
     {
@@ -790,8 +787,7 @@ public class SearchUtils
   }
 
   /**
-   * Extract and validate value in a condition having the form attr.op.value or attr.value
-   * In the form attr.value, op value defaults to eq (i.e, equality)
+   * Extract and validate value in a condition having the form attr.op.value
    * NOTE: Make package-private for use in test code
    * @param condStr condition string
    * @return full value string which may be a list
@@ -805,13 +801,12 @@ public class SearchUtils
       throw new IllegalArgumentException(errMsg);
     }
     int dot2 = condStr.indexOf('.', dot1 + 1);
-    String fullValueStr = "";
     if (dot2 < 0)
     {
-       fullValueStr = condStr.substring(dot1 + 1);	
-    }else {
-    	fullValueStr = condStr.substring(dot2 + 1);
+      String errMsg = MsgUtils.getMsg("SEARCH_COND_INVALID_NOVAL", condStr);
+      throw new IllegalArgumentException(errMsg);
     }
+    String fullValueStr = condStr.substring(dot2 + 1);
     // <val> must not be empty
     if (StringUtils.isBlank(fullValueStr))
     {
