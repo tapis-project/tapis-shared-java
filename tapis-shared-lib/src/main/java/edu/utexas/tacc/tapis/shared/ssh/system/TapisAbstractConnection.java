@@ -12,7 +12,7 @@ import edu.utexas.tacc.tapis.shared.exceptions.runtime.TapisRuntimeException;
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
 import edu.utexas.tacc.tapis.shared.ssh.SSHConnection;
 import edu.utexas.tacc.tapis.systems.client.gen.model.AuthnEnum;
-import edu.utexas.tacc.tapis.systems.client.gen.model.TSystem;
+import edu.utexas.tacc.tapis.systems.client.gen.model.ResultSystem;
 
 public abstract class TapisAbstractConnection 
 {
@@ -26,7 +26,7 @@ public abstract class TapisAbstractConnection
     /*                                    Fields                                    */
     /* **************************************************************************** */
     // From constructor.
-    protected final TSystem         _system;
+    protected final ResultSystem         _system;
     
     // Cached connection.
     private SSHConnection           _conn;
@@ -42,7 +42,7 @@ public abstract class TapisAbstractConnection
      * 
      * @param system the target system 
      */
-    protected TapisAbstractConnection(TSystem system) 
+    protected TapisAbstractConnection(ResultSystem system)
     {
         // This should never happen.
         if (system == null) {
@@ -64,7 +64,7 @@ public abstract class TapisAbstractConnection
      * @param system the target system
      * @param conn an existing connection to the target system 
      */
-    protected TapisAbstractConnection(TSystem system, SSHConnection conn) 
+    protected TapisAbstractConnection(ResultSystem system, SSHConnection conn)
     {
         this(system);
         _conn = conn;
@@ -112,7 +112,7 @@ public abstract class TapisAbstractConnection
     /* ---------------------------------------------------------------------------- */
     /* getSystem:                                                                   */
     /* ---------------------------------------------------------------------------- */
-    public TSystem getSystem() {return _system;}
+    public ResultSystem getSystem() {return _system;}
 
     /* ---------------------------------------------------------------------------- */
     /* createNewConnection:                                                         */
@@ -132,7 +132,7 @@ public abstract class TapisAbstractConnection
      * @throws IOException when unable to get a connection
      * @throws TapisException invalid or missing credentials
      */
-    public static SSHConnection createNewConnection(TSystem system) 
+    public static SSHConnection createNewConnection(ResultSystem system)
      throws IOException, TapisException
     {
         // Check input.
@@ -205,6 +205,6 @@ public abstract class TapisAbstractConnection
     /* ---------------------------------------------------------------------------- */
     /* getSystemHostMessage:                                                        */
     /* ---------------------------------------------------------------------------- */
-    private static String getSystemHostMessage(TSystem system)
+    private static String getSystemHostMessage(ResultSystem system)
     {return system.getId() + " (" + system.getHost() + ")";}
 }

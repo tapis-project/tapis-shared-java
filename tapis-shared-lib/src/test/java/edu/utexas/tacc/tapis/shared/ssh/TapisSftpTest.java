@@ -5,7 +5,7 @@ import java.io.InputStream;
 
 import edu.utexas.tacc.tapis.shared.ssh.system.TapisSftp;
 import edu.utexas.tacc.tapis.systems.client.SystemsClient;
-import edu.utexas.tacc.tapis.systems.client.gen.model.TSystem;
+import edu.utexas.tacc.tapis.systems.client.gen.model.ResultSystem;
 
 /** This test requires sshd to be running on the localhost and that a userid/password
  * be provided when prompted.  The goal is to provide a way to test command execution
@@ -39,7 +39,7 @@ public class TapisSftpTest
      throws Exception
     {
         // Get the system with credentials.
-        TSystem system = getSystem(baseUrl, systemId);
+        ResultSystem system = getSystem(baseUrl, systemId);
         var sftp = new TapisSftp(system);
         
         // Put a file onto the system.
@@ -51,7 +51,7 @@ public class TapisSftpTest
         System.out.println("DONE");
     }
     
-    private TSystem getSystem(String baseUrl, String systemId) 
+    private ResultSystem getSystem(String baseUrl, String systemId)
      throws Exception
     {
         // Get the system client information from the environment.

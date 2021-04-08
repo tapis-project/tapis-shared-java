@@ -1,6 +1,6 @@
 package edu.utexas.tacc.tapis.shared.ssh;
 
-import edu.utexas.tacc.tapis.systems.client.gen.model.TSystem;
+import edu.utexas.tacc.tapis.systems.client.gen.model.ResultSystem;
 
 import java.util.Objects;
 
@@ -11,15 +11,15 @@ import java.util.Objects;
  */
 public class SSHConnectionCacheKey {
 
-    private final TSystem system;
+    private final ResultSystem system;
     private final String username;
 
-    public SSHConnectionCacheKey(TSystem sys, String uname) {
+    public SSHConnectionCacheKey(ResultSystem sys, String uname) {
         system = sys;
         username = uname;
     }
 
-    public TSystem getSystem() {
+    public ResultSystem getSystem() {
         return system;
     }
 

@@ -12,7 +12,7 @@ import com.jcraft.jsch.SftpException;
 
 import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
 import edu.utexas.tacc.tapis.shared.ssh.SSHConnection;
-import edu.utexas.tacc.tapis.systems.client.gen.model.TSystem;
+import edu.utexas.tacc.tapis.systems.client.gen.model.ResultSystem;
 
 public final class TapisSftp 
  extends TapisAbstractConnection
@@ -43,7 +43,7 @@ public final class TapisSftp
     /* ---------------------------------------------------------------------------- */
     /* constructor:                                                                 */
     /* ---------------------------------------------------------------------------- */
-    public TapisSftp(TSystem system)
+    public TapisSftp(ResultSystem system)
     {
         // Save system in superclass.
         super(system);
@@ -52,7 +52,7 @@ public final class TapisSftp
     /* ---------------------------------------------------------------------------- */
     /* constructor:                                                                 */
     /* ---------------------------------------------------------------------------- */
-    public TapisSftp(TSystem system, SSHConnection conn)
+    public TapisSftp(ResultSystem system, SSHConnection conn)
     {
         // Save system and connection in superclass.
         super(system, conn);
