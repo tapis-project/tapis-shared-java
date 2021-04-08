@@ -15,7 +15,7 @@ import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
 import edu.utexas.tacc.tapis.shared.exceptions.runtime.TapisRuntimeException;
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
 import edu.utexas.tacc.tapis.shared.ssh.SSHConnection;
-import edu.utexas.tacc.tapis.systems.client.gen.model.ResultSystem;
+import edu.utexas.tacc.tapis.systems.client.gen.model.TapisSystem;
 
 public final class TapisRunCommand 
  extends TapisAbstractConnection
@@ -46,7 +46,7 @@ public final class TapisRunCommand
     /* ---------------------------------------------------------------------------- */
     /* constructor:                                                                 */
     /* ---------------------------------------------------------------------------- */
-    public TapisRunCommand(ResultSystem system)
+    public TapisRunCommand(TapisSystem system)
     {
         // Save system in superclass.
         super(system);
@@ -55,7 +55,7 @@ public final class TapisRunCommand
     /* ---------------------------------------------------------------------------- */
     /* constructor:                                                                 */
     /* ---------------------------------------------------------------------------- */
-    public TapisRunCommand(ResultSystem system, SSHConnection conn)
+    public TapisRunCommand(TapisSystem system, SSHConnection conn)
     {
         // Save system and connection in superclass.
         super(system, conn);

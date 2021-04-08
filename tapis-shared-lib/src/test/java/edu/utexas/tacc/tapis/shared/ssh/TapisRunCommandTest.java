@@ -2,7 +2,7 @@ package edu.utexas.tacc.tapis.shared.ssh;
 
 import edu.utexas.tacc.tapis.shared.ssh.system.TapisRunCommand;
 import edu.utexas.tacc.tapis.systems.client.SystemsClient;
-import edu.utexas.tacc.tapis.systems.client.gen.model.ResultSystem;
+import edu.utexas.tacc.tapis.systems.client.gen.model.TapisSystem;
 
 /** This test requires sshd to be running on the localhost and that a userid/password
  * be provided when prompted.  The goal is to provide a way to test command execution
@@ -35,7 +35,7 @@ public class TapisRunCommandTest
     private void tapisRunCommandTest(String baseUrl, String systemId) 
      throws Exception
     {
-        ResultSystem system = getSystem(baseUrl, systemId);
+        TapisSystem system = getSystem(baseUrl, systemId);
         var runCmd = new TapisRunCommand(system);
         String result = runCmd.execute(COMMAND, true); // closes connection
         
@@ -43,7 +43,7 @@ public class TapisRunCommandTest
         System.out.println("DONE");
     }
     
-    private ResultSystem getSystem(String baseUrl, String systemId)
+    private TapisSystem getSystem(String baseUrl, String systemId)
      throws Exception
     {
         // Get the system client information from the environment.

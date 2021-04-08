@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.cache.CacheLoader;
 
-import edu.utexas.tacc.tapis.systems.client.gen.model.ResultSystem;
+import edu.utexas.tacc.tapis.systems.client.gen.model.TapisSystem;
 
 public class SSHConnectionCacheLoader extends CacheLoader<SSHConnectionCacheKey, SSHConnection> {
 
@@ -16,7 +16,7 @@ public class SSHConnectionCacheLoader extends CacheLoader<SSHConnectionCacheKey,
 
     @Override
     public SSHConnection load(SSHConnectionCacheKey key) throws IOException, IllegalArgumentException {
-        ResultSystem system = key.getSystem();
+        TapisSystem system = key.getSystem();
         String username = key.getUsername();
         int port;
         SSHConnection sshConnection;

@@ -3,7 +3,7 @@ package edu.utexas.tacc.tapis.shared.ssh;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheStats;
 import com.google.common.cache.LoadingCache;
-import edu.utexas.tacc.tapis.systems.client.gen.model.ResultSystem;
+import edu.utexas.tacc.tapis.systems.client.gen.model.TapisSystem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,7 +77,7 @@ public class SSHConnectionCache implements ISSHConnectionCache {
      * create one and return it from the cache.
      * @throws IOException
      */
-    public SSHConnection getConnection(ResultSystem system, String username) throws IOException {
+    public SSHConnection getConnection(TapisSystem system, String username) throws IOException {
         SSHConnectionCacheKey key = new SSHConnectionCacheKey(system, username);
         try {
             return sessionCache.get(key);

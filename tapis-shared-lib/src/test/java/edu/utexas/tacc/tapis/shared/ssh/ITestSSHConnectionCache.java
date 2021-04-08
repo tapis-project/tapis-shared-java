@@ -15,19 +15,19 @@ import org.testng.annotations.Test;
 import com.jcraft.jsch.Channel;
 
 import edu.utexas.tacc.tapis.systems.client.gen.model.Credential;
-import edu.utexas.tacc.tapis.systems.client.gen.model.ResultSystem;
+import edu.utexas.tacc.tapis.systems.client.gen.model.TapisSystem;
 
 @Test(groups = {"integration"})
 public class ITestSSHConnectionCache {
 
-    ResultSystem testSystem;
+    TapisSystem testSystem;
 
     @BeforeTest
     public void setUp() {
         Credential creds = new Credential();
         creds.setAccessKey("testuser");
         creds.setPassword("password");
-        testSystem = new ResultSystem();
+        testSystem = new TapisSystem();
         testSystem.setAuthnCredential(creds);
         testSystem.setHost("localhost");
         testSystem.setPort(2222);
