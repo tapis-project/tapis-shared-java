@@ -12,7 +12,7 @@ import java.util.Objects;
 public class SSHConnectionCacheKey {
 
     private final TapisSystem system;
-    private final String username;
+    private final String      username;
 
     public SSHConnectionCacheKey(TapisSystem sys, String uname) {
         system = sys;

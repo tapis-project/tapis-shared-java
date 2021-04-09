@@ -26,7 +26,7 @@ public abstract class TapisAbstractConnection
     /*                                    Fields                                    */
     /* **************************************************************************** */
     // From constructor.
-    protected final TapisSystem         _system;
+    protected final TapisSystem     _system;
     
     // Cached connection.
     private SSHConnection           _conn;
