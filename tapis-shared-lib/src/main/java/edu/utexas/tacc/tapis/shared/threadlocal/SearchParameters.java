@@ -12,7 +12,7 @@ import java.util.List;
  *    skip - number of results to skip
  *    startAfter - e.g. systems?limit=10&orderBy=id(asc)&startAfter=101
  *    computeTotal - Boolean indicating if total count should be computed. Default is false.
- *    filter - String indicating which attributes (i.e. fields) to include when retrieving results
+ *    select - String indicating which attributes (i.e. fields) to include when retrieving results
  */
 public final class SearchParameters
 {
@@ -22,12 +22,14 @@ public final class SearchParameters
   public static final int DEFAULT_LIMIT = 100;
   public static final int DEFAULT_SKIP = 0;
   public static final boolean DEFAULT_COMPUTETOTAL = false;
+  public static final String DEFAULT_SELECT_ALL = "allAttributes";
+  public static final String DEFAULT_SELECT_SUMMARY = "summaryAttributes";
 
   // ************************************************************************
   // *********************** Fields *****************************************
   // ************************************************************************
   private boolean computeTotal = DEFAULT_COMPUTETOTAL;
-  private List<String> filterList = new ArrayList<>();
+  private List<String> selectList = new ArrayList<>();
   private List<String> searchList = new ArrayList<>();
   private Integer limit = null;  // Set to null so users of this class can determine if value is set on incoming request.
   private String orderBy = null; // Maintain original query parameter for returning in response.
@@ -40,8 +42,8 @@ public final class SearchParameters
   // ************************************************************************
   public boolean getComputeTotal() { return computeTotal; }
   public void setComputeTotal(boolean b) { computeTotal = b; }
-  public List<String> getFilterList() { return (filterList == null ? new ArrayList<>() : filterList); }
-  public void setFilterList(List<String> fl) { filterList = fl; }
+  public List<String> getSelectList() { return (selectList == null ? new ArrayList<>() : selectList); }
+  public void setSelectList(List<String> fl) { selectList = fl; }
   public List<String> getSearchList() { return (searchList == null ? new ArrayList<>() : searchList); }
   public void setSearchList(List<String> sl) { searchList = sl; }
   public Integer getLimit() { return limit; }

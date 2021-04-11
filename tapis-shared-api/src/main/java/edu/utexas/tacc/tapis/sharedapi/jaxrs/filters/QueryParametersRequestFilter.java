@@ -16,9 +16,11 @@ import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.Provider;
+import java.util.Collections;
 import java.util.List;
 
 import static edu.utexas.tacc.tapis.shared.threadlocal.SearchParameters.DEFAULT_COMPUTETOTAL;
+import static edu.utexas.tacc.tapis.shared.threadlocal.SearchParameters.DEFAULT_SELECT_SUMMARY;
 import static edu.utexas.tacc.tapis.shared.threadlocal.SearchParameters.DEFAULT_SKIP;
 
 /*
@@ -49,7 +51,7 @@ public class QueryParametersRequestFilter implements ContainerRequestFilter
   private static final String PARM_SKIP = "skip";
   private static final String PARM_STARTAFTER = "startAfter";
   private static final String PARM_COMPUTETOTAL = "computeTotal";
-  private static final String PARM_FILTER = "fields";
+  private static final String PARM_SELECT = "select";
 
   /* ********************************************************************** */
   /*                            Public Methods                              */
@@ -71,6 +73,7 @@ public class QueryParametersRequestFilter implements ContainerRequestFilter
     SearchParameters searchParms = new SearchParameters();
     searchParms.setSkip(DEFAULT_SKIP);
     searchParms.setComputeTotal(DEFAULT_COMPUTETOTAL);
+    searchParms.setSelectList(Collections.singletonList(DEFAULT_SELECT_SUMMARY));
 
     threadContext.setSearchParameters(searchParms);
 
@@ -95,20 +98,20 @@ public class QueryParametersRequestFilter implements ContainerRequestFilter
       }
     }
 
-    // Look for and extract filter query parameter.
+    // Look for and extract select query parameter.
     // This parameter is used to select which result fields are included in a response.
-    if (invalidParm(threadContext, requestContext, queryParameters, PARM_FILTER)) { return; }
-    String parmValueFields = getQueryParm(queryParameters, PARM_FILTER);
+    if (invalidParm(threadContext, requestContext, queryParameters, PARM_SELECT)) { return; }
+    String parmValueSelect = getQueryParm(queryParameters, PARM_SELECT);
     // Extract and validate the fields.
     try
     {
-      List<String> filterList = SearchUtils.getValueList(parmValueFields);
-      searchParms.setFilterList(filterList);
+      List<String> selectList = SearchUtils.getValueList(parmValueSelect);
+      searchParms.setSelectList(selectList);
     }
     catch (Exception e)
     {
-      String msg = MsgUtils.getMsg("FILTER_LIST_ERROR", threadContext.getJwtTenantId(), threadContext.getJwtUser(),
-              threadContext.getOboTenantId(), threadContext.getOboUser(), e.getMessage());
+      String msg = MsgUtils.getMsg("SELECT_LIST_ERROR", threadContext.getJwtTenantId(), threadContext.getJwtUser(),
+              threadContext.getOboTenantId(), threadContext.getOboUser(), parmValueSelect, e.getMessage());
       _log.error(msg, e);
       requestContext.abortWith(Response.status(Response.Status.BAD_REQUEST).entity(msg).build());
       return;
