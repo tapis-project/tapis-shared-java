@@ -55,6 +55,11 @@
             "type": "array",
             "items": {"type": "string"}
         },
+        "RuntimeOptionEnum": {
+            "$comment": "Runtime options or directives used during job execution",
+            "type": "string", 
+            "enum": ["SINGULARITY_START", "SINGULARITY_RUN"]
+        },
         "NotificationSubscription": {
             "$comment": "Define a notification service subscription",
             "type" : "object",
