@@ -3,7 +3,7 @@ package edu.utexas.tacc.tapis.sharedapi.responses.results;
 /*
  Class representing metadata about a list results returned when retrieving resources.
  */
-public final class ResultListMetadata
+public final class ResultListMetadata implements ResultMetadata
 {
   public int recordCount; // Number of records actually returned
   public int recordLimit; // Requested limit on number of records to be returned, -1 for unlimited. Default is unlimited.
