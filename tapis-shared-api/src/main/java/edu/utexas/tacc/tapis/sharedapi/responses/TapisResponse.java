@@ -39,7 +39,7 @@ public class TapisResponse<T> {
     private String message = "ok";
     private T result;
     private final String version = TapisUtils.getTapisVersion();
-    private final Object metadata = new Object();
+    private Object metadata = new Object();
 
     public String getStatus() {
         return status;
@@ -72,8 +72,12 @@ public class TapisResponse<T> {
     public Object getMetadata() {
     return metadata;
   }
+    public void setMetadata(Object metadata) {
+    this.metadata = metadata;
+  }
 
-    public static <T> TapisResponse<T> createSuccessResponse(String msg, T payload) {
+
+  public static <T> TapisResponse<T> createSuccessResponse(String msg, T payload) {
         TapisResponse<T> resp = new TapisResponse<>();
         resp.setResult(payload);
         resp.setMessage(msg);
