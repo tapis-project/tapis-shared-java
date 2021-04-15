@@ -9,5 +9,5 @@ public abstract class RespAbstract
     public String message;
     public String version;
     @JsonSerialize(using = JsonObjectSerializer.class)
-    public Object metadata;
+    public Object metadata = new Object();
 }
