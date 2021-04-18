@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 
 
 /**
- * This will catch any generic errors and return a 4 part Tapis response. This needs to be registered
+ * This will catch any generic errors and return a standard Tapis response. This needs to be registered
  * in the jersey application like register(TapisExceptionMapper.class)
  *
  */

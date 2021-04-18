@@ -8,7 +8,7 @@ import com.google.gson.JsonObject;
 import java.io.IOException;
 
 /*
- * Custom Jackson serializer for JsonObject attributes. For example use see attribute "notes" in model
+ * Custom Jackson serializer for JsonObject attribute. For example use see attribute "notes" in model
  * class TSystem from tapis-systems and model class App from tapis-apps.
  */
 public class JsonObjectSerializer extends JsonSerializer<JsonObject> {

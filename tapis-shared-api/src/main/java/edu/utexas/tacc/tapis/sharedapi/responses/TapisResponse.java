@@ -4,7 +4,7 @@ import edu.utexas.tacc.tapis.shared.utils.TapisUtils;
 
 
 /**
-   TapisResponse is a generic class representing the 4 part response that Tapis returns.
+   TapisResponse is a generic class representing the standard response that Tapis returns.
    The type <T> represents the type of the `result` field. It is necessary to extend this class with
    the response type given, the swagger OpenAPI annotations do NOT support having a generic as the return
    content.
@@ -29,7 +29,6 @@ import edu.utexas.tacc.tapis.shared.utils.TapisUtils;
    }
 
 
-
    This ensures that the return type of the `result` field will be an array of FileInfo objects and is properly
    picked up by the OpenAPI generators.
 
@@ -40,6 +39,7 @@ public class TapisResponse<T> {
     private String message = "ok";
     private T result;
     private final String version = TapisUtils.getTapisVersion();
+    private Object metadata = new Object();
 
     public String getStatus() {
         return status;
@@ -69,7 +69,15 @@ public class TapisResponse<T> {
         return  version;
     }
 
-    public static <T> TapisResponse<T> createSuccessResponse(String msg, T payload) {
+    public Object getMetadata() {
+    return metadata;
+  }
+    public void setMetadata(Object metadata) {
+    this.metadata = metadata;
+  }
+
+
+  public static <T> TapisResponse<T> createSuccessResponse(String msg, T payload) {
         TapisResponse<T> resp = new TapisResponse<>();
         resp.setResult(payload);
         resp.setMessage(msg);
@@ -88,5 +96,4 @@ public class TapisResponse<T> {
         resp.setMessage(msg);
         return resp;
     }
-
 }
