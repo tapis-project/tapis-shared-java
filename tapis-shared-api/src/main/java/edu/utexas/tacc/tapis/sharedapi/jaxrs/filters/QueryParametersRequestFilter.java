@@ -16,11 +16,9 @@ import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.Provider;
-import java.util.Collections;
 import java.util.List;
 
 import static edu.utexas.tacc.tapis.shared.threadlocal.SearchParameters.DEFAULT_COMPUTETOTAL;
-import static edu.utexas.tacc.tapis.shared.threadlocal.SearchParameters.DEFAULT_SELECT_SUMMARY;
 import static edu.utexas.tacc.tapis.shared.threadlocal.SearchParameters.DEFAULT_SKIP;
 
 /*
@@ -73,7 +71,6 @@ public class QueryParametersRequestFilter implements ContainerRequestFilter
     SearchParameters searchParms = new SearchParameters();
     searchParms.setSkip(DEFAULT_SKIP);
     searchParms.setComputeTotal(DEFAULT_COMPUTETOTAL);
-    searchParms.setSelectList(Collections.singletonList(DEFAULT_SELECT_SUMMARY));
 
     threadContext.setSearchParameters(searchParms);
 

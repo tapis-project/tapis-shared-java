@@ -114,10 +114,10 @@ public class SearchUtilsTest
             Map.entry(18, new CaseInputData(1, "port.nbetween.0,1024")),
             Map.entry(19, new CaseInputData(1, "description.in.MyTest\\,yes,YourTest\\,ok.")),
             Map.entry(20, new CaseInputData(2, "(host.eq.stampede2.tacc.utexas.edu)~(default_access_method.in.PKI_KEYS,ACCESS_KEY)")),
-            Map.entry(21, new CaseInputData(4, "(enabled.eq.true)~(owner.eq.jdoe)~(proxy_port.lt.7)~(system_type.in.OBJECT_STORE,LINUX)")),
-            Map.entry(22, new CaseInputData(4, "(enabled.eq.true)~(port.lt.7)~(system_type.in.OBJECT_STORE,LINUX)~(description.like.my\\~system)")), // ~ in value
-            Map.entry(23, new CaseInputData(4, "(enabled.eq.true)~(port.gte.7)~(description.like.my\\ system)~(system_type.in.OBJECT_STORE,LINUX)")), // space in value
-            Map.entry(24, new CaseInputData(3, "(description.like.my\\,\\(\\)\\~\\*\\!\\\\system)~(port.lte.7)~(system_type.in.OBJECT_STORE)")), // 7 special chars in value: ,()~*!\
+            Map.entry(21, new CaseInputData(4, "(enabled.eq.true)~(owner.eq.jdoe)~(proxy_port.lt.7)~(system_type.in.S3,LINUX)")),
+            Map.entry(22, new CaseInputData(4, "(enabled.eq.true)~(port.lt.7)~(system_type.in.S3,LINUX)~(description.like.my\\~system)")), // ~ in value
+            Map.entry(23, new CaseInputData(4, "(enabled.eq.true)~(port.gte.7)~(description.like.my\\ system)~(system_type.in.S3,LINUX)")), // space in value
+            Map.entry(24, new CaseInputData(3, "(description.like.my\\,\\(\\)\\~\\*\\!\\\\system)~(port.lte.7)~(system_type.in.S3)")), // 7 special chars in value: ,()~*!\
             Map.entry(25, new CaseInputData(2, "(description.like.my'\\\"system)~(port.lte.7)")), // more potentially problem chars ' "
             Map.entry(26, new CaseInputData(1, "description.like." + multiEscapeIn1)), // multiple escapes <1> <2> <2>
             Map.entry(27, new CaseInputData(1, "description.like." + multiEscapeIn2)), // multiple escapes <3> <1> <2> <4>
@@ -161,10 +161,10 @@ public class SearchUtilsTest
     Map.entry(18,new CaseOutputData(18, "port.NBETWEEN.0,1024")),
     Map.entry(19,new CaseOutputData(19, "description.IN.MyTest\\,yes,YourTest\\,ok.")),
     Map.entry(20,new CaseOutputData(20, "host.EQ.stampede2.tacc.utexas.edu", "default_access_method.IN.PKI_KEYS,ACCESS_KEY")),
-    Map.entry(21,new CaseOutputData(21, "enabled.EQ.true", "owner.EQ.jdoe", "proxy_port.LT.7", "system_type.IN.OBJECT_STORE,LINUX")),
-    Map.entry(22,new CaseOutputData(22, "enabled.EQ.true", "port.LT.7", "system_type.IN.OBJECT_STORE,LINUX", "description.LIKE.my\\~system")),
-    Map.entry(23,new CaseOutputData(23, "enabled.EQ.true", "port.GTE.7", "description.LIKE.my\\ system", "system_type.IN.OBJECT_STORE,LINUX")),
-    Map.entry(24,new CaseOutputData(24, "description.LIKE.my\\,\\(\\)\\~\\*\\!\\\\system", "port.LTE.7", "system_type.IN.OBJECT_STORE")),
+    Map.entry(21,new CaseOutputData(21, "enabled.EQ.true", "owner.EQ.jdoe", "proxy_port.LT.7", "system_type.IN.S3,LINUX")),
+    Map.entry(22,new CaseOutputData(22, "enabled.EQ.true", "port.LT.7", "system_type.IN.S3,LINUX", "description.LIKE.my\\~system")),
+    Map.entry(23,new CaseOutputData(23, "enabled.EQ.true", "port.GTE.7", "description.LIKE.my\\ system", "system_type.IN.S3,LINUX")),
+    Map.entry(24,new CaseOutputData(24, "description.LIKE.my\\,\\(\\)\\~\\*\\!\\\\system", "port.LTE.7", "system_type.IN.S3")),
     Map.entry(25,new CaseOutputData(25, "description.LIKE.my'\\\"system", "port.LTE.7")),
     Map.entry(26,new CaseOutputData(26, "description.LIKE." + multiEscapeIn1)),
     Map.entry(27,new CaseOutputData(27, "description.LIKE." + multiEscapeIn2)),
@@ -198,10 +198,10 @@ public class SearchUtilsTest
           "port.nbetween.1",
           "port.nbetween.1,2,3",
           "(host.eq.stampede2.tacc.utexas.edu)~default_access_method.in.PKI_KEYS,ACCESS_KEY",
-          "(enabled.eq.true)~owner.eq.jdoe)~(proxy_port.lt.7)~(system_type.in.OBJECT_STORE,LINUX)",
-          "(enabled.eq.true)~(~(system_type.in.OBJECT_STORE,LINUX)",
-          "(enabled.eq.true)~)~(system_type.in.OBJECT_STORE,LINUX)",
-          "(enabled.eq.tr)ue)~)~(system_type.in.OBJECT_STORE,LINUX)",
+          "(enabled.eq.true)~owner.eq.jdoe)~(proxy_port.lt.7)~(system_type.in.S3,LINUX)",
+          "(enabled.eq.true)~(~(system_type.in.S3,LINUX)",
+          "(enabled.eq.true)~)~(system_type.in.S3,LINUX)",
+          "(enabled.eq.tr)ue)~)~(system_type.in.S3,LINUX)",
           ".eq.true",
           "true",
           "enabled.true",
@@ -211,8 +211,8 @@ public class SearchUtilsTest
           "(port.l@t.7)",
           "(host.eq.myhost)~(default_access_method.in.)",
           "(enabled.eq.true)~(proxy_port.lt.7)~(system_type.in)",
-          "(enabled.eq.)~(proxy_port.lt.7)~(system_type.in.OBJECT_STORE,LINUX)",
-          "(enabled.eq.true)~(proxy_port.lt.)~(system_type.in.OBJECT_STORE,LINUX)"
+          "(enabled.eq.)~(proxy_port.lt.7)~(system_type.in.S3,LINUX)",
+          "(enabled.eq.true)~(proxy_port.lt.)~(system_type.in.S3,LINUX)"
   };
 
   @BeforeSuite
