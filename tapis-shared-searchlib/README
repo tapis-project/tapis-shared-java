@@ -28,9 +28,10 @@ Building
 After wasting an inordinate amount of time trying to get a single POM file to generate the parser 
 source files and then to compile those source files, I decided to go with a 2 step process:
 
-    1. Run pom-generate.xml to generate the parser source code.
+    1. Update the parent version in pom-generate.xml to match the version in use in pom.xml in this directory.
+    2. Run pom-generate.xml to generate the parser source code.
        mvn -f pom-generate.xml clean process-sources
-    2. Run pom.xml to compile the parser, run tests, and create the JAR.
+    3. Run pom.xml to compile the parser, run tests, and create the JAR.
        mvn clean install
     
 Executing pom-generate.xml creates source files in src/main/java/org/apache/activemq/selector.
@@ -63,7 +64,8 @@ AST Parser
 An alternate parser that provides access to the abstract syntax tree is also available. It is based on the parser
 discussed above. Not all SQL constructs are supported. Please see ASTParser.jj for more information.
 To generate source code files (which are tracked in git) from the grammar file:
-    mvn -f pom-generate-ast.xml clean process-sources
+ 1. Update the parent version in pom-generate-ast.xml to match the version in use in pom.xml in this directory.
+ 2. Run mvn -f pom-generate-ast.xml clean process-sources
 To build and run tests:
     mvn clean install
 

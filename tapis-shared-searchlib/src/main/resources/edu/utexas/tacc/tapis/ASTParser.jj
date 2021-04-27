@@ -208,6 +208,10 @@ public class ASTParser
   {
     return new ASTBinaryExpression("LIKE", l, new ASTLeaf(s));
   }
+  private ASTBinaryExpression createNLike(ASTNode l, String s)
+  {
+    return new ASTBinaryExpression("NLIKE", l, new ASTLeaf(s));
+  }
   private ASTBinaryExpression createNotLike(ASTNode l, String s)
   {
     return new ASTBinaryExpression("NLIKE", l, new ASTLeaf(s));
@@ -216,6 +220,11 @@ public class ASTParser
   {
     String s = low + "," + high;
     return new ASTBinaryExpression("BETWEEN", l, new ASTLeaf(s));
+  }
+  private ASTBinaryExpression createNBetween(ASTNode l, String low, String high)
+  {
+    String s = low + "," + high;
+    return new ASTBinaryExpression("NBETWEEN", l, new ASTLeaf(s));
   }
   private ASTBinaryExpression createNotBetween(ASTNode l, String low, String high)
   {
@@ -227,6 +236,12 @@ public class ASTParser
     StringJoiner sj = new StringJoiner(",");
     for (String s : list) { sj.add(s); }
     return new ASTBinaryExpression("IN", l, new ASTLeaf(sj.toString()));
+  }
+  private ASTBinaryExpression createNInList(ASTNode l, List<String> list)
+  {
+    StringJoiner sj = new StringJoiner(",");
+    for (String s : list) { sj.add(s); }
+    return new ASTBinaryExpression("NIN", l, new ASTLeaf(sj.toString()));
   }
   private ASTBinaryExpression createNotInList(ASTNode l, List<String> list)
   {
@@ -301,17 +316,20 @@ SKIP:
 /* Reserved Words */
 TOKEN [IGNORE_CASE] :
 {
-    <  NOT     : "NOT">
-  | <  AND     : "AND">
-  | <  OR      : "OR">
-  | <  BETWEEN : "BETWEEN">
-  | <  LIKE    : "LIKE">
-  | <  ESCAPE  : "ESCAPE">
-  | <  IN      : "IN">
-  | <  IS      : "IS">
-  | <  TRUE    : "TRUE" >
-  | <  FALSE   : "FALSE" >
-  | <  NULL    : "NULL" >
+    <  NOT      : "NOT">
+  | <  AND      : "AND">
+  | <  OR       : "OR">
+  | <  BETWEEN  : "BETWEEN">
+  | <  NBETWEEN : "NBETWEEN">
+  | <  LIKE     : "LIKE">
+  | <  NLIKE    : "NLIKE">
+  | <  ESCAPE   : "ESCAPE">
+  | <  IN       : "IN">
+  | <  NIN      : "NIN">
+  | <  IS       : "IS">
+  | <  TRUE     : "TRUE" >
+  | <  FALSE    : "FALSE" >
+  | <  NULL     : "NULL" >
 }
 
 /* Literals */
@@ -456,6 +474,11 @@ ASTNode comparisonExpression() :
                 left = createLike(left, t);
             }
        |
+            <NLIKE> t = stringLiteral()
+            {
+                left = createNLike(left, t);
+            }
+       |
             LOOKAHEAD(2)
             <NOT> <LIKE> t = stringLiteral()
             {
@@ -465,6 +488,11 @@ ASTNode comparisonExpression() :
             <BETWEEN> low = stringLiteral() <AND> high = stringLiteral()
             {
                 left = createBetween(left, low, high);
+            }
+        |
+            <NBETWEEN> low = stringLiteral() <AND> high = stringLiteral()
+            {
+                left = createNBetween(left, low, high);
             }
         |
             LOOKAHEAD(2)
@@ -491,6 +519,26 @@ ASTNode comparisonExpression() :
             ")"
             {
                left = createInList(left, list);
+            }
+        |
+            <NIN>
+            "("
+                t = stringLiteral()
+                {
+                    list = new ArrayList<>();
+                    list.add( t );
+                }
+                (
+                    ","
+                    t = stringLiteral()
+                    {
+                        list.add( t );
+                    }
+
+                )*
+            ")"
+            {
+               left = createNInList(left, list);
             }
         |
             LOOKAHEAD(2)
