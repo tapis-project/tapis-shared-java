@@ -1,15 +1,18 @@
 package edu.utexas.tacc.tapis.search.parser;
 
+import java.util.Locale;
+
 /*
  * Class representing nodes in the AST
  */
 public class ASTBinaryExpression extends ASTNode
 {
-  private String op;
-  private ASTNode left, right;
+  private final String op;
+  private final ASTNode left;
+  private final ASTNode right;
   ASTBinaryExpression(String o, ASTNode l, ASTNode r)
   {
-    op = o;
+    op = o.toUpperCase();
     left = l;
     right = r;
   }
