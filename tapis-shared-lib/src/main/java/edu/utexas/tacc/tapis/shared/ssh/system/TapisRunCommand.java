@@ -38,7 +38,7 @@ public final class TapisRunCommand
     private ByteArrayOutputStream _err; 
     
     // Final exit status of command.
-    private int _exitStatus;
+    private int _exitStatus = -1;
     
     /* **************************************************************************** */
     /*                                Constructors                                  */
@@ -67,8 +67,9 @@ public final class TapisRunCommand
     /* ---------------------------------------------------------------------------- */
     /* execute:                                                                     */
     /* ---------------------------------------------------------------------------- */
-    /** Execute the command and without closing the connection afterwards.
-     * 
+    /** Execute the command without closing the connection afterwards.
+     *
+     * @param command the command to execute on the target system
      * @return command results
      * @throws TapisException
      */
@@ -76,8 +77,8 @@ public final class TapisRunCommand
     {
         return execute(command, false);
     }
-    
-    /* ---------------------------------------------------------------------------- */
+
+  /* ---------------------------------------------------------------------------- */
     /* execute:                                                                     */
     /* ---------------------------------------------------------------------------- */
     /** Execute the command and optionally close the connection afterwards.  Each
@@ -88,7 +89,7 @@ public final class TapisRunCommand
      * @return command results
      * @throws TapisException
      */
-    public String execute(String command, boolean closeConnection) 
+    public String execute(String command, boolean closeConnection)
      throws TapisException
     {
         // We need something to run.
@@ -109,6 +110,7 @@ public final class TapisRunCommand
         // Get an exec channel and issue the command.
         String result = null;
         ChannelExec channel = null;
+        _exitStatus = -1;
         try {
             // Initialize channel without connecting it.
             try {channel = configureExecChannel(command, conn);}
@@ -119,7 +121,7 @@ public final class TapisRunCommand
                 }
         
             // Issue command and read results; the channel is connected and disconnected.
-            try {result = sendCommand(command, conn, channel);}
+            try {result = sendCommand(command, channel);}
                 catch (Exception e) {
                     String msg = MsgUtils.getMsg("SYSTEMS_CMD_EXEC_ERROR", getSystemHostMessage(),
                                                  _system.getTenant(), e.getMessage(),
@@ -128,9 +130,9 @@ public final class TapisRunCommand
                 }
         } 
         finally {
-            // Always clean up channel.
-            conn.returnChannel(channel);
-            if (closeConnection) closeConnection();
+          // Always clean up channel.
+          conn.returnChannel(channel);
+          if (closeConnection) closeConnection();
         }
         
         return result;
@@ -140,7 +142,16 @@ public final class TapisRunCommand
     /* getExitStatus:                                                               */
     /* ---------------------------------------------------------------------------- */
     public int getExitStatus() {return _exitStatus;}
-    
+
+    /* ---------------------------------------------------------------------------- */
+    /* getErrorStreamMessage:                                                       */
+    /* ---------------------------------------------------------------------------- */
+    public String getErrorStreamMessage()
+    {
+      if (_err == null || _err.size() <= 0) return "";
+      return _err.toString();
+    }
+
     /* **************************************************************************** */
     /*                               Private Methods                                */
     /* **************************************************************************** */
@@ -162,7 +173,7 @@ public final class TapisRunCommand
     /* ---------------------------------------------------------------------------- */
     /* sendCommand:                                                                 */
     /* ---------------------------------------------------------------------------- */
-    private String sendCommand(String command, SSHConnection conn, ChannelExec channel) 
+    private String sendCommand(String command, ChannelExec channel)
      throws IOException, JSchException
     {
         // Initial the result string buffer.
@@ -174,15 +185,25 @@ public final class TapisRunCommand
         
         // Read input chunks into a buffer until there's no more input.
         while (true) {
-            byte[] buf = new byte[DEFAULT_READ_BUFFER_LEN];
+          byte[] buf = new byte[DEFAULT_READ_BUFFER_LEN];
+          while (in.available() > 0) {
             int bytesRead = in.read(buf, 0, buf.length);
             if (bytesRead < 0) break;
             result.append(new String(buf, 0, bytesRead));
+          }
+          if (channel.isClosed()) {
+            if (in.available() > 0) continue;
+            _exitStatus = channel.getExitStatus();
+            break;
+          }
+          // Pause to free up some CPU
+          try {Thread.sleep(100); } catch (Exception e) {}
         }
-        
+
         // Check for an error if the channel got closed.
         _exitStatus = channel.getExitStatus();
-        if (channel.isClosed()) 
+
+        if (channel.isClosed())
             if (_exitStatus != 0) {
                 String msg = MsgUtils.getMsg("SYSTEMS_CHANNEL_EXIT_WARN", 
                                getSystemHostMessage(), _system.getTenant(), 
@@ -192,14 +213,5 @@ public final class TapisRunCommand
         
         // The cumulative result string.
         return result.toString();
-    }
-
-    /* ---------------------------------------------------------------------------- */
-    /* getErrorStreamMessage:                                                       */
-    /* ---------------------------------------------------------------------------- */
-    private String getErrorStreamMessage()
-    {
-        if (_err == null || _err.size() <= 0) return "";
-        return _err.toString();
     }
 }
