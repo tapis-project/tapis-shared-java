@@ -18,9 +18,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.Provider;
 import java.util.List;
 
-import static edu.utexas.tacc.tapis.shared.threadlocal.SearchParameters.DEFAULT_COMPUTETOTAL;
-import static edu.utexas.tacc.tapis.shared.threadlocal.SearchParameters.DEFAULT_SKIP;
-
 /*
  *  jax-rs filter to intercept various search, sort and filter query parameters and set values in the thread context.
  *  Parameters:
@@ -60,6 +57,11 @@ public class QueryParametersRequestFilter implements ContainerRequestFilter
   @Override
   public void filter(ContainerRequestContext requestContext)
   {
+    // Retrieve all query parameters. If none we are done.
+    //   and since there is a decent chance the request does not have any search/select parameters also check for that.
+    MultivaluedMap<String, String> queryParameters = requestContext.getUriInfo().getQueryParameters();
+    if (queryParameters == null || queryParameters.isEmpty() || !hasSearchParms(queryParameters)) return;
+
     // Tracing.
     if (_log.isTraceEnabled())
       _log.trace("Executing JAX-RX request filter: " + this.getClass().getSimpleName() + ".");
@@ -69,14 +71,7 @@ public class QueryParametersRequestFilter implements ContainerRequestFilter
 
     // Set default sort and paginate options
     SearchParameters searchParms = new SearchParameters();
-    searchParms.setSkip(DEFAULT_SKIP);
-    searchParms.setComputeTotal(DEFAULT_COMPUTETOTAL);
-
     threadContext.setSearchParameters(searchParms);
-
-    // Retrieve all query parameters. If none we are done.
-    MultivaluedMap<String, String> queryParameters = requestContext.getUriInfo().getQueryParameters();
-    if (queryParameters == null || queryParameters.isEmpty()) return;
 
     // Look for and extract computeTotal query parameter.
     // Common checks for query parameters
@@ -221,6 +216,25 @@ public class QueryParametersRequestFilter implements ContainerRequestFilter
 
     // Update parameter set in thread context
     threadContext.setSearchParameters(searchParms);
+  }
+
+  /* ********************************************************************** */
+  /*                            Private Methods                             */
+  /* ********************************************************************** */
+
+  /**
+   * Check for presence of search/select query parameters.
+   * @return true if present else false
+   */
+  private static boolean hasSearchParms(MultivaluedMap<String, String> queryParameters)
+  {
+    return queryParameters.containsKey(PARM_SEARCH) ||
+            queryParameters.containsKey(PARM_LIMIT) ||
+            queryParameters.containsKey(PARM_ORDERBY) ||
+            queryParameters.containsKey(PARM_SKIP) ||
+            queryParameters.containsKey(PARM_STARTAFTER) ||
+            queryParameters.containsKey(PARM_COMPUTETOTAL) ||
+            queryParameters.containsKey(PARM_SELECT);
   }
 
   /**

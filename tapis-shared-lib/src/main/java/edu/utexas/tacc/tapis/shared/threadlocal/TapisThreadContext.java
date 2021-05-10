@@ -10,7 +10,9 @@ public final class TapisThreadContext
 	/* **************************************************************************** */
     // An invalid tenant id string that indicates an uninitialized tenant id.
 	public static final String INVALID_ID = "?";
-	
+
+	public static final SearchParameters DEFAULT_SEARCHPARMS = new SearchParameters();
+
     /* **************************************************************************** */
     /*                                     Enums                                    */
     /* **************************************************************************** */
@@ -43,7 +45,7 @@ public final class TapisThreadContext
 	private TapisExecutionContext executionContext = null;
 
     // Search, sort and filter parameters
-    private SearchParameters searchParameters;
+    private SearchParameters searchParameters = DEFAULT_SEARCHPARMS;
 
   /* **************************************************************************** */
     /*                                Public Methods                                */
