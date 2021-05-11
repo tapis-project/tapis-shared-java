@@ -13,9 +13,12 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.CacheStats;
 import com.google.common.cache.LoadingCache;
+import com.google.common.cache.RemovalListener;
+import com.google.common.cache.RemovalNotification;
 
 import edu.utexas.tacc.tapis.apps.client.AppsClient;
 import edu.utexas.tacc.tapis.auth.client.AuthClient;
+import edu.utexas.tacc.tapis.client.shared.ITapisClient;
 import edu.utexas.tacc.tapis.files.client.FilesClient;
 import edu.utexas.tacc.tapis.jobs.client.JobsClient;
 import edu.utexas.tacc.tapis.meta.client.MetaClient;
@@ -81,7 +84,7 @@ public class ServiceClients
 	// combination.  Clients are site specific via their base URL setting.
 	// The key is a concatenation of user, tenant and service.  The value is
 	// the client object for a service customized for a particular user@tenant.
-	private final LoadingCache<String,Object> _clientCache = initCache();
+	private final LoadingCache<String,ITapisClient> _clientCache = initCache();
 
 	/* ********************************************************************** */
 	/*                       SingletonInitializer class                       */
@@ -156,7 +159,7 @@ public class ServiceClients
 	 * @throws TapisException
 	 * @throws ExecutionException 
 	 */
-	public Object getClient(String user, String tenant, String service) 
+	public ITapisClient getClient(String user, String tenant, String service) 
      throws RuntimeException, TapisException, ExecutionException
 	{
 	    // Guard against bogus input.
@@ -232,16 +235,17 @@ public class ServiceClients
 	 * 
 	 * @return the cache
 	 */
-	private LoadingCache<String,Object> initCache()
+	private LoadingCache<String,ITapisClient> initCache()
 	{
 	    // Create the cache of string keys to service client objects.
-	    LoadingCache<String,Object> cache = CacheBuilder.newBuilder()
+	    LoadingCache<String,ITapisClient> cache = CacheBuilder.newBuilder()
 	        .maximumSize(MAX_CLIENTS)
 	        .expireAfterAccess(MAX_MINUTES, TimeUnit.MINUTES)
+	        .removalListener(new TapisClientListener())
 	        .recordStats()
-	        .build(new CacheLoader<String, Object>() {
+	        .build(new CacheLoader<String, ITapisClient>() {
 	             @Override
-	             public Object load(String key) throws Exception {
+	             public ITapisClient load(String key) throws Exception {
 	               return loadClient(key);
 	             }
 	           });
@@ -261,7 +265,7 @@ public class ServiceClients
      * @throws RuntimeException
      * @throws TapisException
      */
-    private Object loadClient(String key) 
+    private ITapisClient loadClient(String key) 
      throws RuntimeException, TapisException
     {
         // Split the key into its 3 parts.
@@ -274,96 +278,86 @@ public class ServiceClients
         var router = ServiceContext.getInstance().getRouter(tenant, service);
         
         // Get the client.
-        Object client = null;
+        ITapisClient client = null;
         switch (service)
         {
             case TapisConstants.SERVICE_NAME_APPS: {
-                var clt = new AppsClient(router.getServiceBaseUrl(), router.getAccessJWT());
-                clt.addDefaultHeader("X-Tapis-User", user);
-                clt.addDefaultHeader("X-Tapis-Tenant", tenant);
-                clt.addDefaultHeader("Content-Type", "application/json");
-                client = clt;
+                client = new AppsClient(router.getServiceBaseUrl(), router.getAccessJWT());
+                client.addDefaultHeader("X-Tapis-User", user);
+                client.addDefaultHeader("X-Tapis-Tenant", tenant);
+                client.addDefaultHeader("Content-Type", "application/json");
                 break;
             }
                 
             case TapisConstants.SERVICE_NAME_JOBS: {
-                var clt = new JobsClient(router.getServiceBaseUrl(), router.getAccessJWT());
-                clt.addDefaultHeader("X-Tapis-User", user);
-                clt.addDefaultHeader("X-Tapis-Tenant", tenant);
-                clt.addDefaultHeader("Content-Type", "application/json");
-                client = clt;
+                client = new JobsClient(router.getServiceBaseUrl(), router.getAccessJWT());
+                client.addDefaultHeader("X-Tapis-User", user);
+                client.addDefaultHeader("X-Tapis-Tenant", tenant);
+                client.addDefaultHeader("Content-Type", "application/json");
                 break;
             }
                 
             case TapisConstants.SERVICE_NAME_SECURITY: {
-                var clt = new SKClient(router.getServiceBaseUrl(), router.getAccessJWT());
-                clt.addDefaultHeader("X-Tapis-User", user);
-                clt.addDefaultHeader("X-Tapis-Tenant", tenant);
-                clt.addDefaultHeader("Content-Type", "application/json");
-                client = clt;
+                client = new SKClient(router.getServiceBaseUrl(), router.getAccessJWT());
+                client.addDefaultHeader("X-Tapis-User", user);
+                client.addDefaultHeader("X-Tapis-Tenant", tenant);
+                client.addDefaultHeader("Content-Type", "application/json");
                 break;
             }
                 
             case TapisConstants.SERVICE_NAME_SYSTEMS: {
-                var clt = new SystemsClient(router.getServiceBaseUrl(), router.getAccessJWT());
-                clt.addDefaultHeader("X-Tapis-User", user);
-                clt.addDefaultHeader("X-Tapis-Tenant", tenant);
-                clt.addDefaultHeader("Content-Type", "application/json");
-                client = clt;
+                client = new SystemsClient(router.getServiceBaseUrl(), router.getAccessJWT());
+                client.addDefaultHeader("X-Tapis-User", user);
+                client.addDefaultHeader("X-Tapis-Tenant", tenant);
+                client.addDefaultHeader("Content-Type", "application/json");
                 break;
             }
             
             case TapisConstants.SERVICE_NAME_AUTHN: {
-                var clt = new AuthClient(router.getServiceBaseUrl());
-                clt.addDefaultHeader("X-Tapis-User", user);
-                clt.addDefaultHeader("X-Tapis-Tenant", tenant);
-                clt.addDefaultHeader("Content-Type", "application/json");
-                client = clt;
+                client = new AuthClient(router.getServiceBaseUrl());
+                client.addDefaultHeader("X-Tapis-User", user);
+                client.addDefaultHeader("X-Tapis-Tenant", tenant);
+                client.addDefaultHeader("Content-Type", "application/json");
                 break;
             }
                 
             case TapisConstants.SERVICE_NAME_TENANTS: {
-                var clt = new TenantsClient(router.getServiceBaseUrl());
-                clt.addDefaultHeader("X-Tapis-User", user);
-                clt.addDefaultHeader("X-Tapis-Tenant", tenant);
-                clt.addDefaultHeader("Content-Type", "application/json");
-                client = clt;
+                client = new TenantsClient(router.getServiceBaseUrl());
+                client.addDefaultHeader("X-Tapis-User", user);
+                client.addDefaultHeader("X-Tapis-Tenant", tenant);
+                client.addDefaultHeader("Content-Type", "application/json");
                 break;
             }
                 
             case TapisConstants.SERVICE_NAME_TOKENS: {
-                var clt = new TokensClient(router.getServiceBaseUrl());
-                clt.addDefaultHeader("X-Tapis-User", user);
-                clt.addDefaultHeader("X-Tapis-Tenant", tenant);
-                clt.addDefaultHeader("Content-Type", "application/json");
-                client = clt;
+                client = new TokensClient(router.getServiceBaseUrl());
+                client.addDefaultHeader("X-Tapis-User", user);
+                client.addDefaultHeader("X-Tapis-Tenant", tenant);
+                client.addDefaultHeader("Content-Type", "application/json");
                 break;
             }
                 
             case TapisConstants.SERVICE_NAME_META: {
-                var clt = new MetaClient(router.getServiceBaseUrl(), router.getAccessJWT());
-                clt.addDefaultHeader("X-Tapis-User", user);
-                clt.addDefaultHeader("X-Tapis-Tenant", tenant);
-                clt.addDefaultHeader("Content-Type", "application/json");
-                client = clt;
+                client = new MetaClient(router.getServiceBaseUrl(), router.getAccessJWT());
+                client.addDefaultHeader("X-Tapis-User", user);
+                client.addDefaultHeader("X-Tapis-Tenant", tenant);
+                client.addDefaultHeader("Content-Type", "application/json");
                 break;
             }   
                 
             case TapisConstants.SERVICE_NAME_FILES: {
-                var clt = new FilesClient(router.getServiceBaseUrl(), router.getAccessJWT());
-                clt.addDefaultHeader("X-Tapis-User", user);
-                clt.addDefaultHeader("X-Tapis-Tenant", tenant);
-                clt.addDefaultHeader("Content-Type", "application/json");
-                client = clt;
+                client = new FilesClient(router.getServiceBaseUrl(), router.getAccessJWT());
+                client.addDefaultHeader("X-Tapis-User", user);
+                client.addDefaultHeader("X-Tapis-Tenant", tenant);
+                client.addDefaultHeader("Content-Type", "application/json");
                 break;
             }
                 
             case TapisConstants.SERVICE_NAME_NOTIFICATIONS: {
-                var clt = new NotificationsClient(router.getServiceBaseUrl(), router.getAccessJWT());
-                clt.addDefaultHeader("X-Tapis-User", user);
-                clt.addDefaultHeader("X-Tapis-Tenant", tenant);
-                clt.addDefaultHeader("Content-Type", "application/json");
-                client = clt;
+                client = new NotificationsClient(router.getServiceBaseUrl(), router.getAccessJWT());
+                client.addDefaultHeader("X-Tapis-User", user);
+                client.addDefaultHeader("X-Tapis-Tenant", tenant);
+                client.addDefaultHeader("Content-Type", "application/json");
                 break;
             }
                 
@@ -419,5 +413,26 @@ public class ServiceClients
 	        map.put(entry.getValue(), entry.getKey());
 	    
 	    return map;
+	}
+	
+    /* ********************************************************************** */
+    /*                        TapisClientListener Class                       */
+    /* ********************************************************************** */
+	public class TapisClientListener 
+	  implements RemovalListener<String,ITapisClient>
+	{
+        @Override
+        public void onRemoval(RemovalNotification<String, ITapisClient> notification) 
+        {
+            ITapisClient clt = notification.getValue();
+            if (clt == null) return;
+            
+            // Trace this callback method.
+            if (_log.isDebugEnabled()) 
+                _log.debug(MsgUtils.getMsg("TAPIS_CLIENT_UNCACHED", clt.getClass().getSimpleName()));
+            
+            // Each client has its own close method.
+            clt.close();
+        }
 	}
 }

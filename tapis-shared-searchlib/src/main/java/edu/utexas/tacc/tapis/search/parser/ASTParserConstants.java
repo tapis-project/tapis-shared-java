@@ -40,33 +40,39 @@ public interface ASTParserConstants {
   /** RegularExpression Id. */
   int BETWEEN = 11;
   /** RegularExpression Id. */
-  int LIKE = 12;
+  int NBETWEEN = 12;
   /** RegularExpression Id. */
-  int ESCAPE = 13;
+  int LIKE = 13;
   /** RegularExpression Id. */
-  int IN = 14;
+  int NLIKE = 14;
   /** RegularExpression Id. */
-  int IS = 15;
+  int ESCAPE = 15;
   /** RegularExpression Id. */
-  int TRUE = 16;
+  int IN = 16;
   /** RegularExpression Id. */
-  int FALSE = 17;
+  int NIN = 17;
   /** RegularExpression Id. */
-  int NULL = 18;
+  int IS = 18;
   /** RegularExpression Id. */
-  int DECIMAL_LITERAL = 19;
+  int TRUE = 19;
   /** RegularExpression Id. */
-  int HEX_LITERAL = 20;
+  int FALSE = 20;
   /** RegularExpression Id. */
-  int OCTAL_LITERAL = 21;
+  int NULL = 21;
   /** RegularExpression Id. */
-  int FLOATING_POINT_LITERAL = 22;
+  int DECIMAL_LITERAL = 22;
   /** RegularExpression Id. */
-  int EXPONENT = 23;
+  int HEX_LITERAL = 23;
   /** RegularExpression Id. */
-  int STRING_LITERAL = 24;
+  int OCTAL_LITERAL = 24;
   /** RegularExpression Id. */
-  int ID = 25;
+  int FLOATING_POINT_LITERAL = 25;
+  /** RegularExpression Id. */
+  int EXPONENT = 26;
+  /** RegularExpression Id. */
+  int STRING_LITERAL = 27;
+  /** RegularExpression Id. */
+  int ID = 28;
 
   /** Lexical state. */
   int DEFAULT = 0;
@@ -85,9 +91,12 @@ public interface ASTParserConstants {
     "\"AND\"",
     "\"OR\"",
     "\"BETWEEN\"",
+    "\"NBETWEEN\"",
     "\"LIKE\"",
+    "\"NLIKE\"",
     "\"ESCAPE\"",
     "\"IN\"",
+    "\"NIN\"",
     "\"IS\"",
     "\"TRUE\"",
     "\"FALSE\"",
