@@ -159,7 +159,7 @@ public final class TapisRunCommand
     /* configureExecChannel:                                                        */
     /* ---------------------------------------------------------------------------- */
     private ChannelExec configureExecChannel(String command, SSHConnection conn) 
-     throws IOException
+     throws TapisException
     {
         // Create the channel but don't connect it yet.
         ChannelExec channel = (ChannelExec) conn.createChannel("exec");

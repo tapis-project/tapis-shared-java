@@ -1,10 +1,13 @@
 package edu.utexas.tacc.tapis.shared.ssh;
 
 import com.jcraft.jsch.*;
+import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
+import edu.utexas.tacc.tapis.shared.exceptions.recoverable.TapisRecoverableException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.UnknownHostException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -54,7 +57,7 @@ public class SSHConnection implements ISSHConnection {
      * @param privateKey The private key
      * @throws IOException Throws an exception if the session can't connect or a channel could not be opened.
      */
-    public SSHConnection(String host, String username, int port, String publicKey, String privateKey)  throws IOException {
+    public SSHConnection(String host, String username, int port, String publicKey, String privateKey)  throws TapisException, TapisRecoverableException {
         this.host = host;
         this.username = username;
         this.port = port > 0 ? port : 22;
@@ -72,7 +75,7 @@ public class SSHConnection implements ISSHConnection {
      * @param password
      * @throws IOException
      */
-    public SSHConnection(String host, int port, String username, String password) throws IOException {
+    public SSHConnection(String host, int port, String username, String password) throws TapisException, TapisRecoverableException {
         this.host = host;
         this.port = port > 0 ? port : 22;
         this.username = username;
@@ -86,7 +89,7 @@ public class SSHConnection implements ISSHConnection {
         return channels.size();
     }
 
-    private void initSession() throws IOException {
+    private void initSession() throws TapisException, TapisRecoverableException {
         final JSch jsch = new JSch();
         try {
             session = jsch.getSession(username, host, port);
@@ -96,7 +99,7 @@ public class SSHConnection implements ISSHConnection {
 
         } catch (JSchException e) {
             String msg = String.format("SSH_CONNECTION_GET_SESSION_ERROR for user %s on host %s", username, host);
-            throw new IOException(msg, e);
+            throw new TapisException(msg, e);
         }
 
         if (authMethod == AuthMethod.PUBLICKEY_AUTH) {
@@ -104,7 +107,7 @@ public class SSHConnection implements ISSHConnection {
                 jsch.addIdentity(host, privateKey.getBytes(), publicKey.getBytes(), (byte[]) null);
             } catch (JSchException e) {
                 String msg = String.format("SSH_CONNECTION_ADD_KEY_ERROR for user %s on host %s", username, host);
-                throw new IOException(msg, e);
+                throw new TapisException(msg, e);
             }
         } else {
             UserInfo ui;
@@ -116,8 +119,13 @@ public class SSHConnection implements ISSHConnection {
         try {
             session.connect();
         } catch (JSchException e) {
-            String msg = String.format("SSH_CONNECT_SESSION_ERROR for user %s on host %s", username, host);
-            throw new IOException(msg, e);
+            if (e.getMessage().contains("UnknownHostException")) {
+                String msg = String.format("SSH_CONNECT_SESSION_ERROR for user %s on host %s", username, host);
+                throw new TapisException(msg);
+            } else {
+                String msg = String.format("SSH_CONNECT_SESSION_ERROR for user %s on host %s", username, host);
+                throw new TapisException(msg, e);
+            }
         }
     }
 
@@ -141,7 +149,7 @@ public class SSHConnection implements ISSHConnection {
      * @throws IOException
      */
     @Override
-    public synchronized Channel createChannel(String channelType) throws IOException {
+    public synchronized Channel createChannel(String channelType) throws TapisException, TapisRecoverableException {
         Channel channel;
         try {
             if (!session.isConnected()) {
@@ -157,14 +165,14 @@ public class SSHConnection implements ISSHConnection {
                     channel = session.openChannel(channelType);
                     break;
                 default:
-                    throw new IOException("Invalid channel type: " + channelType);
+                    throw new TapisException("Invalid channel type: " + channelType);
             }
             channels.add(channel);
             return channel;
 
         } catch (JSchException e) {
             String msg = String.format("SSH_OPEN_CHANNEL_ERROR for user %s on host %s", username, host);
-            throw new IOException(msg, e);
+            throw new TapisException(msg, e);
         }
 
     }

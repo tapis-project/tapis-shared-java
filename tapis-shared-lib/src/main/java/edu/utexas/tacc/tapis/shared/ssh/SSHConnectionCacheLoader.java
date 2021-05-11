@@ -2,6 +2,7 @@ package edu.utexas.tacc.tapis.shared.ssh;
 
 import java.io.IOException;
 
+import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
 import edu.utexas.tacc.tapis.systems.client.gen.model.AuthnEnum;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +16,7 @@ public class SSHConnectionCacheLoader extends CacheLoader<SSHConnectionCacheKey,
     private static final Logger log = LoggerFactory.getLogger(SSHConnectionCache.class);
 
     @Override
-    public SSHConnection load(SSHConnectionCacheKey key) throws IOException, IllegalArgumentException {
+    public SSHConnection load(SSHConnectionCacheKey key) throws TapisException, IllegalArgumentException {
         TapisSystem system = key.getSystem();
         String username = key.getUsername();
         int port;
