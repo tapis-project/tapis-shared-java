@@ -108,7 +108,7 @@ public class SSHConnection implements ISSHConnection {
             try {
                 jsch.addIdentity(host, privateKey.getBytes(), publicKey.getBytes(), (byte[]) null);
             } catch (JSchException e) {
-                String msg = String.format("SSH_CONNECTION_ADD_KEY_ERROR for user %s on host %s", username, host);
+                String msg = String.format("SSH_CONNECTION_ADD_KEY_ERROR Invalid SSH key for user %s on host %s", username, host);
                 throw new TapisException(msg, e);
             }
         } else {
