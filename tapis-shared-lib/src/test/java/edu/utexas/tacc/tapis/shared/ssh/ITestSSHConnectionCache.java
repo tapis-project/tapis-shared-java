@@ -7,7 +7,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import edu.utexas.tacc.tapis.systems.client.gen.model.AuthnEnum;
-import edu.utexas.tacc.tapis.systems.client.gen.model.TransferMethodEnum;
 import org.testng.Assert;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
@@ -35,9 +34,6 @@ public class ITestSSHConnectionCache {
         testSystem.setId("testSystem");
         testSystem.setEffectiveUserId("testuser");
         testSystem.setDefaultAuthnMethod(AuthnEnum.PASSWORD);
-        List<TransferMethodEnum> transferMechs = new ArrayList<>();
-        transferMechs.add(TransferMethodEnum.SFTP);
-        testSystem.setTransferMethods(transferMechs);
     }
 
 
