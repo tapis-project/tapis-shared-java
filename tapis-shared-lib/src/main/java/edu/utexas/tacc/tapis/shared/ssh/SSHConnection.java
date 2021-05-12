@@ -2,7 +2,6 @@ package edu.utexas.tacc.tapis.shared.ssh;
 
 import com.jcraft.jsch.*;
 import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
-import edu.utexas.tacc.tapis.shared.exceptions.recoverable.TapisRecoverableException;
 import edu.utexas.tacc.tapis.shared.exceptions.recoverable.TapisSSHConnectionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -100,7 +99,7 @@ public class SSHConnection implements ISSHConnection {
 
         } catch (JSchException e) {
             // Will only catch here if things are really out of sorts above, like null values,
-            String msg = String.format("SSH_CONNECTION_GET_SESSION_ERROR for user %s on host %s", username, host);
+            String msg = String.format("SSH_CONNECTION_GET_SESSION_ERROR for user %s on host %s at port %s", username, host, port);
             throw new TapisException(msg, e);
         }
 
@@ -108,7 +107,7 @@ public class SSHConnection implements ISSHConnection {
             try {
                 jsch.addIdentity(host, privateKey.getBytes(), publicKey.getBytes(), (byte[]) null);
             } catch (JSchException e) {
-                String msg = String.format("SSH_CONNECTION_ADD_KEY_ERROR Invalid SSH key for user %s on host %s", username, host);
+                String msg = String.format("SSH_CONNECTION_ADD_KEY_ERROR Invalid SSH key for user %s on host %s at port %s", username, host, port);
                 throw new TapisException(msg, e);
             }
         } else {
@@ -123,14 +122,14 @@ public class SSHConnection implements ISSHConnection {
         } catch (JSchException e) {
             if (e.getMessage().contains("UnknownHostException")) {
                 // Could not resolve the host
-                String msg = String.format("SSH_CONNECT_SESSION_ERROR Unknown host for user %s on host %s", username, host);
+                String msg = String.format("SSH_CONNECT_SESSION_ERROR Unknown host for user %s on host %s at port %s", username, host, port);
                 throw new TapisException(msg);
             } else if (e.getMessage().contains("Too many authentication failures")) {
                 // This will get hit if the credentials are bad. Jsch can hit the host on the given port.
-                String msg = String.format("SSH_CONNECT_SESSION_ERROR Invalid credentials for user %s on host %s", username, host);
+                String msg = String.format("SSH_CONNECT_SESSION_ERROR Invalid credentials for user %s on host %s at port %s", username, host, port);
                 throw new TapisException(msg);
             } else {
-                String msg = String.format("SSH_CONNECT_SESSION_ERROR for user %s on host %s", username, host);
+                String msg = String.format("SSH_CONNECT_SESSION_ERROR for user %s on host %s at port %s", username, host, port);
                 throw new TapisException(msg, e);
             }
         }
@@ -181,7 +180,7 @@ public class SSHConnection implements ISSHConnection {
         } catch (JSchException e) {
             // The session is authenticated but a channel could not be opened. This is the case
             // when the max number of connections is reached. Should be a recoverable error condition.
-            String msg = String.format("SSH_OPEN_CHANNEL_ERROR for user %s on host %s", username, host);
+            String msg = String.format("SSH_OPEN_CHANNEL_ERROR for user %s on host %s at port %s", username, host, port);
             TreeMap<String, String> state = new TreeMap<>();
             state.put("hostname", host);
             state.put("username", username);
