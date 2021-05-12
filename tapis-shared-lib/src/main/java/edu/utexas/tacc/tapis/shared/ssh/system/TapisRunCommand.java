@@ -17,6 +17,20 @@ import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
 import edu.utexas.tacc.tapis.shared.ssh.SSHConnection;
 import edu.utexas.tacc.tapis.systems.client.gen.model.TapisSystem;
 
+/**
+ * Class that can be used to run a command on a Tapis System
+ * Captures stdout, stderr and exit code.
+ * Once an instance is created for a system using new TapisRunCommand(system)
+ *   it can be used to run one or more commands and get the results.
+ * Connection is cached but can be closed as part of the execute() method.
+ * Usage:
+ *   var runCmd = new TapisRunCommand(system);
+ *   runCmd.execute("ls /tmp"); // Run a command and leave connection open
+ *   runCmd.execute("ls /tmp", true); // Run a command and close the connection
+ *   runCmd.getExitStatus(); // Get exit code
+ *   runCmd.getStdOut(); // Get output of command
+ *   runCmd.getStdErr(); // Get error output of command
+ */
 public final class TapisRunCommand 
  extends TapisAbstractConnection
 {
@@ -30,13 +44,18 @@ public final class TapisRunCommand
     private static final int DEFAULT_RESULT_LEN = 1024;
     private static final int DEFAULT_READ_BUFFER_LEN = DEFAULT_RESULT_LEN;
     private static final int DEFAULT_ERR_BUFFER_LEN  = 2048;
+
+    // Compile time flag for detailed debug output
+    private static final boolean DEBUG = false;
     
     /* **************************************************************************** */
     /*                                    Fields                                    */
     /* **************************************************************************** */
-    // Used by subclasses for capturing error information.
-    private ByteArrayOutputStream _err; 
-    
+    // Used for capturing stderr output
+    private ByteArrayOutputStream _stdErr;
+    // Used for capturing command output
+    private String _stdOut;
+
     // Final exit status of command.
     private int _exitStatus = -1;
     
@@ -67,10 +86,13 @@ public final class TapisRunCommand
     /* ---------------------------------------------------------------------------- */
     /* execute:                                                                     */
     /* ---------------------------------------------------------------------------- */
-    /** Execute the command without closing the connection afterwards.
+    /**
+     *  Execute the command without closing the connection afterwards.
+     *  Collect stdout and stderr. Set the exit status
+     *  Each invocation of this methods creates a new channel and then destroys it.
      *
      * @param command the command to execute on the target system
-     * @return command results
+     * @return stdout output from command execution
      * @throws TapisException
      */
     public String execute(String command) throws TapisException
@@ -78,15 +100,17 @@ public final class TapisRunCommand
         return execute(command, false);
     }
 
-  /* ---------------------------------------------------------------------------- */
+    /* ---------------------------------------------------------------------------- */
     /* execute:                                                                     */
     /* ---------------------------------------------------------------------------- */
-    /** Execute the command and optionally close the connection afterwards.  Each
-     * invocation of this methods creates a new channel and then destroys it.
+    /**
+     *  Execute the command and optionally close the connection afterwards.
+     *  Collect stdout and stderr. Set the exit status
+     *  Each invocation of this methods creates a new channel and then destroys it.
      * 
      * @param command the command to execute on the target system
      * @param closeConnection true to close the connection, false to leave open
-     * @return command results
+     * @return stdout output from command execution
      * @throws TapisException
      */
     public String execute(String command, boolean closeConnection)
@@ -97,7 +121,8 @@ public final class TapisRunCommand
             String msg = MsgUtils.getMsg("TAPIS_NULL_PARAMETER", "execute", "command");
             throw new TapisRuntimeException(msg);
         }
-        
+
+        if (DEBUG) _log.debug(String.format("Running command: %s", command));
         // Connect to the system.
         SSHConnection conn = null;
         try {conn = getConnection();}
@@ -121,11 +146,11 @@ public final class TapisRunCommand
                 }
         
             // Issue command and read results; the channel is connected and disconnected.
-            try {result = sendCommand(command, channel);}
+            try {result = sendCommand(channel);}
                 catch (Exception e) {
                     String msg = MsgUtils.getMsg("SYSTEMS_CMD_EXEC_ERROR", getSystemHostMessage(),
                                                  _system.getTenant(), e.getMessage(),
-                                                 command, getErrorStreamMessage());
+                                                 command, getStdErr());
                     throw new TapisException(msg, e);
                 }
         } 
@@ -134,7 +159,8 @@ public final class TapisRunCommand
           conn.returnChannel(channel);
           if (closeConnection) closeConnection();
         }
-        
+
+        _stdOut = result;
         return result;
     }
 
@@ -144,12 +170,21 @@ public final class TapisRunCommand
     public int getExitStatus() {return _exitStatus;}
 
     /* ---------------------------------------------------------------------------- */
-    /* getErrorStreamMessage:                                                       */
+    /* getStdErr:                                                                   */
     /* ---------------------------------------------------------------------------- */
-    public String getErrorStreamMessage()
+    public String getStdErr()
     {
-      if (_err == null || _err.size() <= 0) return "";
-      return _err.toString();
+      if (_stdErr == null || _stdErr.size() <= 0) return "";
+      return _stdErr.toString();
+    }
+
+    /* ---------------------------------------------------------------------------- */
+    /* getStdOut:                                                                   */
+    /* ---------------------------------------------------------------------------- */
+    public String getStdOut()
+    {
+      if (StringUtils.isBlank(_stdOut)) return "";
+      else return _stdOut;
     }
 
     /* **************************************************************************** */
@@ -165,53 +200,79 @@ public final class TapisRunCommand
         ChannelExec channel = (ChannelExec) conn.createChannel("exec");
         channel.setCommand(command);
         channel.setInputStream(null);
-        _err = new ByteArrayOutputStream(DEFAULT_ERR_BUFFER_LEN);
-        channel.setErrStream(_err);
+        _stdErr = new ByteArrayOutputStream(DEFAULT_ERR_BUFFER_LEN);
+        channel.setErrStream(_stdErr);
         return channel;
     }
     
     /* ---------------------------------------------------------------------------- */
     /* sendCommand:                                                                 */
     /* ---------------------------------------------------------------------------- */
-    private String sendCommand(String command, ChannelExec channel)
+    /**
+     * Connect to the channel and read any stdout until the channel closes.
+     * Update the exit status.
+     * Return stdout as a string.
+     */
+    private String sendCommand(ChannelExec channel)
      throws IOException, JSchException
     {
-        // Initial the result string buffer.
-        StringBuilder result = new StringBuilder(DEFAULT_RESULT_LEN);
-        
-        // Connect the channel and read the results.
-        InputStream in = channel.getInputStream();
-        channel.connect();
-        
-        // Read input chunks into a buffer until there's no more input.
-        while (true) {
-          byte[] buf = new byte[DEFAULT_READ_BUFFER_LEN];
-          while (in.available() > 0) {
-            int bytesRead = in.read(buf, 0, buf.length);
-            if (bytesRead < 0) break;
-            result.append(new String(buf, 0, bytesRead));
-          }
-          if (channel.isClosed()) {
-            if (in.available() > 0) continue;
-            _exitStatus = channel.getExitStatus();
-            break;
-          }
-          // Pause to free up some CPU
-          try {Thread.sleep(100); } catch (Exception e) {}
+      // Initialize string buffer for capturing command output.
+      StringBuilder result = new StringBuilder(DEFAULT_RESULT_LEN);
+
+      // Create an input stream for receiving any stdout and connect the channel
+      InputStream stdOutputStream = channel.getInputStream();
+      channel.connect();
+
+      // Read stdout into a buffer until the channel closes and no more stdout
+      // Based on Jsch example: http://www.jcraft.com/jsch/examples/Exec.java.html
+      int i = 0, j = 0; // Simple counters for DEBUG
+      byte[] buf = new byte[DEFAULT_READ_BUFFER_LEN];
+      // Loop forever until the channel closes and all stdout bytes have been read
+      while (true)
+      {
+        i++;
+        if (DEBUG) _log.debug(String.format("sendCmd: Starting available() while loop. Check # %d.%d",i,j));
+        // While output available read the bytes and append them to the result
+        // NOTE: Without this while loop we sometimes get exitStatus = -1.
+        //       One factor is it seems to take about 80ms for stdout to start flowing.
+        //       NOTE: It takes same amount of time to startup if re-using a connection or creating a new one.
+        while (stdOutputStream.available() > 0)
+        {
+          j++;
+          if (DEBUG) _log.debug(String.format("sendCmd: reading bytes # %d.%d",i,j));
+          int bytesRead1 = stdOutputStream.read(buf, 0, buf.length);
+          if (DEBUG) _log.debug(String.format("sendCmd after read poll_loop # %d.%d ByteCount: %d",i,j,bytesRead1));
+          // If no bytes read then we have read in all currently available data
+          if (bytesRead1 < 0) break;
+          // We have some data, append to the result
+          result.append(new String(buf, 0, bytesRead1));
         }
-
-        // Check for an error if the channel got closed.
-        _exitStatus = channel.getExitStatus();
-
+        // If channel is closed then the command is finished, but there may still be data coming in from stdout
         if (channel.isClosed())
-            if (_exitStatus != 0) {
-                String msg = MsgUtils.getMsg("SYSTEMS_CHANNEL_EXIT_WARN", 
-                               getSystemHostMessage(), _system.getTenant(), 
-                               channel.getExitStatus(), command, getErrorStreamMessage());
-                _log.warn(msg);
-            }
-        
-        // The cumulative result string.
-        return result.toString();
+        {
+          if (DEBUG) _log.debug(String.format("sendCmd: channel is closed # %d.%d", i,j));
+          if (DEBUG) _log.debug(String.format("sendCmd: final available() check # %d.%d",i,j));
+          // While output available check for and read in any remaining stdout data
+          // NOTE: Without this final available() it seems we always get exitStatus = -1
+          if (stdOutputStream.available() > 0)
+          {
+            int bytesRead2 = stdOutputStream.read(buf, 0, buf.length);
+            if (bytesRead2 < 0) break;
+            if (DEBUG) _log.debug(String.format("sendCmd: final read # %d.%d ByteCount: %d",i,j,bytesRead2));
+            result.append(new String(buf, 0, bytesRead2));
+          }
+          _exitStatus = channel.getExitStatus();
+          if (DEBUG) _log.debug(String.format("sendCmd: Breakout at # %d.%d ExitStatus: %d", i,j,_exitStatus));
+          // Channel is closed, all stdout has been collected so we are ready to finish
+          break;
+        }
+        if (DEBUG) _log.debug(String.format("sendCmd: sleep poll_loop # %d.%d",i,j));
+        // Channel has not closed, command may continue to generate stdout. Pause briefly while command runs.
+        try {Thread.sleep(10); } catch (Exception ignored) {}
+      }
+
+      // Return the cumulative result string from stdout.
+      _stdOut = result.toString();
+      return _stdOut;
     }
 }
