@@ -9,7 +9,7 @@ extends TapisException
 {
     private static final long serialVersionUID = 8857182330433990489L;
     
-    public TreeMap<String,String> state;
+    public TreeMap<String,String> state = new TreeMap<String,String>();
     
     public TapisRecoverableException(String message, TreeMap<String,String> state) 
     {
