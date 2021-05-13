@@ -4,7 +4,7 @@ import java.util.TreeMap;
 
 import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
 
-public class TapisRecoverableException
+public abstract class TapisRecoverableException
 extends TapisException
 {
     private static final long serialVersionUID = 8857182330433990489L;
