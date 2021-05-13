@@ -2,6 +2,7 @@ package edu.utexas.tacc.tapis.shared.ssh;
 
 import com.jcraft.jsch.*;
 import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
+import edu.utexas.tacc.tapis.shared.exceptions.recoverable.TapisSSHAuthException;
 import edu.utexas.tacc.tapis.shared.exceptions.recoverable.TapisSSHConnectionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -126,8 +127,13 @@ public class SSHConnection implements ISSHConnection {
                 throw new TapisException(msg);
             } else if (e.getMessage().contains("Too many authentication failures")) {
                 // This will get hit if the credentials are bad. Jsch can hit the host on the given port.
-                String msg = String.format("SSH_CONNECT_SESSION_ERROR Invalid credentials for user %s on host %s at port %s", username, host, port);
-                throw new TapisException(msg);
+                String msg = String.format("SSH_CONNECT_SESSION_ERROR Auth failed for user %s on host %s at port %s", username, host, port);
+                TreeMap<String, String> state = new TreeMap<>();
+                state.put("hostname", host);
+                state.put("username", username);
+                state.put("port", String.valueOf(port));
+                state.put("loginProtocolType", authMethod.name());
+                throw new TapisSSHAuthException(msg, e, state);
             } else {
                 String msg = String.format("SSH_CONNECT_SESSION_ERROR for user %s on host %s at port %s", username, host, port);
                 throw new TapisException(msg, e);
