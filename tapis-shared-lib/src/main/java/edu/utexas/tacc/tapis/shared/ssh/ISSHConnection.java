@@ -2,6 +2,8 @@ package edu.utexas.tacc.tapis.shared.ssh;
 
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.Session;
+import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
+import edu.utexas.tacc.tapis.shared.exceptions.recoverable.TapisRecoverableException;
 
 import java.io.IOException;
 
@@ -10,7 +12,7 @@ public interface ISSHConnection {
 
     void returnChannel(Channel channel);
 
-    Channel createChannel(String channelType) throws IOException;
+    Channel createChannel(String channelType) throws TapisException, TapisRecoverableException;
 
     void closeSession();
 

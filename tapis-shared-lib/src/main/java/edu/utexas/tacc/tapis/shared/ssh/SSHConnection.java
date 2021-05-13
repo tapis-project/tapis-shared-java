@@ -1,12 +1,16 @@
 package edu.utexas.tacc.tapis.shared.ssh;
 
 import com.jcraft.jsch.*;
+import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
+import edu.utexas.tacc.tapis.shared.exceptions.recoverable.TapisSSHAuthException;
+import edu.utexas.tacc.tapis.shared.exceptions.recoverable.TapisSSHConnectionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.TreeMap;
 
 
 /**
@@ -54,7 +58,7 @@ public class SSHConnection implements ISSHConnection {
      * @param privateKey The private key
      * @throws IOException Throws an exception if the session can't connect or a channel could not be opened.
      */
-    public SSHConnection(String host, String username, int port, String publicKey, String privateKey)  throws IOException {
+    public SSHConnection(String host, String username, int port, String publicKey, String privateKey)  throws TapisException {
         this.host = host;
         this.username = username;
         this.port = port > 0 ? port : 22;
@@ -70,9 +74,9 @@ public class SSHConnection implements ISSHConnection {
      * @param port
      * @param username
      * @param password
-     * @throws IOException
+     * @throws TapisException
      */
-    public SSHConnection(String host, int port, String username, String password) throws IOException {
+    public SSHConnection(String host, int port, String username, String password) throws TapisException {
         this.host = host;
         this.port = port > 0 ? port : 22;
         this.username = username;
@@ -86,7 +90,7 @@ public class SSHConnection implements ISSHConnection {
         return channels.size();
     }
 
-    private void initSession() throws IOException {
+    private void initSession() throws TapisException {
         final JSch jsch = new JSch();
         try {
             session = jsch.getSession(username, host, port);
@@ -95,16 +99,17 @@ public class SSHConnection implements ISSHConnection {
             session.setTimeout(CONNECT_TIMEOUT_MILLIS);
 
         } catch (JSchException e) {
-            String msg = String.format("SSH_CONNECTION_GET_SESSION_ERROR for user %s on host %s", username, host);
-            throw new IOException(msg, e);
+            // Will only catch here if things are really out of sorts above, like null values,
+            String msg = String.format("SSH_CONNECTION_GET_SESSION_ERROR for user %s on host %s at port %s", username, host, port);
+            throw new TapisException(msg, e);
         }
 
         if (authMethod == AuthMethod.PUBLICKEY_AUTH) {
             try {
                 jsch.addIdentity(host, privateKey.getBytes(), publicKey.getBytes(), (byte[]) null);
             } catch (JSchException e) {
-                String msg = String.format("SSH_CONNECTION_ADD_KEY_ERROR for user %s on host %s", username, host);
-                throw new IOException(msg, e);
+                String msg = String.format("SSH_CONNECTION_ADD_KEY_ERROR Invalid SSH key for user %s on host %s at port %s", username, host, port);
+                throw new TapisException(msg, e);
             }
         } else {
             UserInfo ui;
@@ -116,8 +121,23 @@ public class SSHConnection implements ISSHConnection {
         try {
             session.connect();
         } catch (JSchException e) {
-            String msg = String.format("SSH_CONNECT_SESSION_ERROR for user %s on host %s", username, host);
-            throw new IOException(msg, e);
+            if (e.getMessage().contains("UnknownHostException")) {
+                // Could not resolve the host
+                String msg = String.format("SSH_CONNECT_SESSION_ERROR Unknown host for user %s on host %s at port %s", username, host, port);
+                throw new TapisException(msg);
+            } else if (e.getMessage().contains("Too many authentication failures")) {
+                // This will get hit if the credentials are bad. Jsch can hit the host on the given port.
+                String msg = String.format("SSH_CONNECT_SESSION_ERROR Auth failed for user %s on host %s at port %s", username, host, port);
+                TreeMap<String, String> state = new TreeMap<>();
+                state.put("hostname", host);
+                state.put("username", username);
+                state.put("port", String.valueOf(port));
+                state.put("loginProtocolType", authMethod.name());
+                throw new TapisSSHAuthException(msg, e, state);
+            } else {
+                String msg = String.format("SSH_CONNECT_SESSION_ERROR for user %s on host %s at port %s", username, host, port);
+                throw new TapisException(msg, e);
+            }
         }
     }
 
@@ -138,10 +158,11 @@ public class SSHConnection implements ISSHConnection {
      * that are active on the session.
      * @param channelType One of "sftp", "exec" or "shell"
      * @return Channel
-     * @throws IOException
+     * @throws TapisException Non-recoverable,
+     * @throws TapisSSHConnectionException A recoverable error occured.
      */
     @Override
-    public synchronized Channel createChannel(String channelType) throws IOException {
+    public synchronized Channel createChannel(String channelType) throws TapisSSHConnectionException, TapisException {
         Channel channel;
         try {
             if (!session.isConnected()) {
@@ -157,14 +178,21 @@ public class SSHConnection implements ISSHConnection {
                     channel = session.openChannel(channelType);
                     break;
                 default:
-                    throw new IOException("Invalid channel type: " + channelType);
+                    throw new TapisException("Invalid channel type: " + channelType);
             }
             channels.add(channel);
             return channel;
 
         } catch (JSchException e) {
-            String msg = String.format("SSH_OPEN_CHANNEL_ERROR for user %s on host %s", username, host);
-            throw new IOException(msg, e);
+            // The session is authenticated but a channel could not be opened. This is the case
+            // when the max number of connections is reached. Should be a recoverable error condition.
+            String msg = String.format("SSH_OPEN_CHANNEL_ERROR for user %s on host %s at port %s", username, host, port);
+            TreeMap<String, String> state = new TreeMap<>();
+            state.put("hostname", host);
+            state.put("username", username);
+            state.put("port", String.valueOf(port));
+            state.put("loginProtocolType", authMethod.name());
+            throw new TapisSSHConnectionException(msg, e, state);
         }
 
     }
