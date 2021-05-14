@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>edu.utexas.tacc.tapis</groupId>
   <artifactId>tapis-shared-api</artifactId>
-  <version>1.11.91</version>
+  <version>1.11.92</version>
   <name>Tapis Shared Front-End Library</name>
   <description>Shared library for front end Tapis code</description>
   <url>https://github.com/tapis-project/tapis-shared-java/tapis-shared-api</url>
@@ -210,7 +210,7 @@
     <maven-shade-plugin.version>3.2.1</maven-shade-plugin.version>
     <mockito-core.version>3.0.0</mockito-core.version>
     <javax.websocket-api.version>1.1</javax.websocket-api.version>
-    <build.timestamp>2021-05-13T21:28:28Z</build.timestamp>
+    <build.timestamp>2021-05-14T17:40:50Z</build.timestamp>
     <statefulj.version>3.0</statefulj.version>
     <java-source.version>1.15</java-source.version>
     <reactor-rabbitmq.version>1.4.4.RELEASE</reactor-rabbitmq.version>
@@ -515,13 +515,13 @@
     <dependency>
       <groupId>edu.utexas.tacc.tapis</groupId>
       <artifactId>tapis-shared-lib</artifactId>
-      <version>1.11.91</version>
+      <version>1.11.92</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>edu.utexas.tacc.tapis</groupId>
       <artifactId>tapis-shared-searchlib</artifactId>
-      <version>1.11.91</version>
+      <version>1.11.92</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
