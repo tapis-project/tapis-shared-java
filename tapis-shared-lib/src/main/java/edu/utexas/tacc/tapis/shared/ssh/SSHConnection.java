@@ -56,7 +56,7 @@ public class SSHConnection implements ISSHConnection {
      * @param port Port to connect to, defaults to 22
      * @param publicKey The public key
      * @param privateKey The private key
-     * @throws IOException Throws an exception if the session can't connect or a channel could not be opened.
+     * @throws TapisException Throws an exception if the session can't connect.
      */
     public SSHConnection(String host, String username, int port, String publicKey, String privateKey)  throws TapisException {
         this.host = host;
@@ -70,11 +70,11 @@ public class SSHConnection implements ISSHConnection {
 
     /**
      * Username/password auth
-     * @param host
-     * @param port
-     * @param username
-     * @param password
-     * @throws TapisException
+     * @param host Hostname
+     * @param port port, defaults to 22
+     * @param username username
+     * @param password password
+     * @throws TapisException Throws an exception if the session can't connect
      */
     public SSHConnection(String host, int port, String username, String password) throws TapisException {
         this.host = host;
@@ -134,6 +134,9 @@ public class SSHConnection implements ISSHConnection {
                 state.put("port", String.valueOf(port));
                 state.put("loginProtocolType", authMethod.name());
                 throw new TapisSSHAuthException(msg, e, state);
+            } else if (e.getMessage().contains("timeout:")) {
+                String msg = String.format("SSH_CONNECT_SESSION_ERROR Connection timeout for user %s on host %s at port %s", username, host, port);
+                throw new TapisException(msg, e);
             } else {
                 String msg = String.format("SSH_CONNECT_SESSION_ERROR for user %s on host %s at port %s", username, host, port);
                 throw new TapisException(msg, e);
