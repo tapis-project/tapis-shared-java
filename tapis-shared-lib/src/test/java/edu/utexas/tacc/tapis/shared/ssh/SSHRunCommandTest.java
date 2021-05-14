@@ -3,6 +3,7 @@ package edu.utexas.tacc.tapis.shared.ssh;
 import java.io.IOException;
 import java.io.InputStream;
 
+import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
@@ -43,7 +44,7 @@ public class SSHRunCommandTest
     }
     
     @Test
-    public void sshConnectionTest() throws IOException, JSchException
+    public void sshConnectionTest() throws TapisException, JSchException, IOException
     {
         var conn = new SSHConnection(host, port, userid, password);
         
