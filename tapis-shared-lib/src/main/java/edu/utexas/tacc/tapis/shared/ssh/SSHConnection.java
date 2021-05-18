@@ -1,16 +1,21 @@
 package edu.utexas.tacc.tapis.shared.ssh;
 
-import com.jcraft.jsch.*;
-import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
-import edu.utexas.tacc.tapis.shared.exceptions.recoverable.TapisSSHAuthException;
-import edu.utexas.tacc.tapis.shared.exceptions.recoverable.TapisSSHConnectionException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeMap;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.jcraft.jsch.Channel;
+import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.Session;
+import com.jcraft.jsch.UserInfo;
+
+import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
+import edu.utexas.tacc.tapis.shared.exceptions.recoverable.TapisSSHAuthException;
+import edu.utexas.tacc.tapis.shared.exceptions.recoverable.TapisSSHConnectionException;
 
 
 /**
@@ -37,7 +42,7 @@ public class SSHConnection implements ISSHConnection {
     private static final String STRICT_HOSTKEY_CHECKIN_KEY = "StrictHostKeyChecking";
     private static final String STRICT_HOSTKEY_CHECKIN_VALUE = "no";
 
-    private enum AuthMethod {PUBLICKEY_AUTH, PASSWORD_AUTH}
+    public enum AuthMethod {PUBLICKEY_AUTH, PASSWORD_AUTH}
     private static final Logger log = LoggerFactory.getLogger(SSHConnection.class);
 
     private final String host;
