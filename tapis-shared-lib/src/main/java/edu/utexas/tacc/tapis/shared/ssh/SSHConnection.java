@@ -4,6 +4,7 @@ import com.jcraft.jsch.*;
 import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
 import edu.utexas.tacc.tapis.shared.exceptions.recoverable.TapisSSHAuthException;
 import edu.utexas.tacc.tapis.shared.exceptions.recoverable.TapisSSHConnectionException;
+import edu.utexas.tacc.tapis.shared.exceptions.recoverable.TapisSSHTimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,7 +25,7 @@ import java.util.TreeMap;
  */
 public class SSHConnection implements ISSHConnection {
 
-    private static final int CONNECT_TIMEOUT_MILLIS = 15000; // 15 seconds
+    private int CONNECT_TIMEOUT_MILLIS = 15000; // 15 seconds
 
     // A  set that will be used to store the channels that are open
     // on the SSH session.
@@ -37,7 +38,7 @@ public class SSHConnection implements ISSHConnection {
     private static final String STRICT_HOSTKEY_CHECKIN_KEY = "StrictHostKeyChecking";
     private static final String STRICT_HOSTKEY_CHECKIN_VALUE = "no";
 
-    private enum AuthMethod {PUBLICKEY_AUTH, PASSWORD_AUTH}
+    public enum AuthMethod {PUBLICKEY_AUTH, PASSWORD_AUTH}
     private static final Logger log = LoggerFactory.getLogger(SSHConnection.class);
 
     private final String host;
@@ -68,6 +69,18 @@ public class SSHConnection implements ISSHConnection {
         initSession();
     }
 
+    public SSHConnection(String host, String username, int port, String publicKey, String privateKey, int timeoutMilliseconds)  throws TapisException {
+        this.CONNECT_TIMEOUT_MILLIS = timeoutMilliseconds;
+        this.host = host;
+        this.username = username;
+        this.port = port > 0 ? port : 22;
+        this.privateKey = privateKey;
+        this.publicKey = publicKey;
+        authMethod = AuthMethod.PUBLICKEY_AUTH;
+        initSession();
+    }
+
+
     /**
      * Username/password auth
      * @param host Hostname
@@ -77,6 +90,16 @@ public class SSHConnection implements ISSHConnection {
      * @throws TapisException Throws an exception if the session can't connect
      */
     public SSHConnection(String host, int port, String username, String password) throws TapisException {
+        this.host = host;
+        this.port = port > 0 ? port : 22;
+        this.username = username;
+        this.password = password;
+        authMethod = AuthMethod.PASSWORD_AUTH;
+        initSession();
+    }
+
+    public SSHConnection(String host, int port, String username, String password, int timeoutMilliseconds) throws TapisException {
+        this.CONNECT_TIMEOUT_MILLIS = timeoutMilliseconds;
         this.host = host;
         this.port = port > 0 ? port : 22;
         this.username = username;
@@ -136,7 +159,12 @@ public class SSHConnection implements ISSHConnection {
                 throw new TapisSSHAuthException(msg, e, state);
             } else if (e.getMessage().contains("timeout:")) {
                 String msg = String.format("SSH_CONNECT_SESSION_ERROR Connection timeout for user %s on host %s at port %s", username, host, port);
-                throw new TapisException(msg, e);
+                TreeMap<String, String> state = new TreeMap<>();
+                state.put("hostname", host);
+                state.put("username", username);
+                state.put("port", String.valueOf(port));
+                state.put("loginProtocolType", authMethod.name());
+                throw new TapisSSHTimeoutException(msg, e, state);
             } else {
                 String msg = String.format("SSH_CONNECT_SESSION_ERROR for user %s on host %s at port %s", username, host, port);
                 throw new TapisException(msg, e);
