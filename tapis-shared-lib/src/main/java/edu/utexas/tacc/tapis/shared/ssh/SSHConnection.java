@@ -28,7 +28,11 @@ import edu.utexas.tacc.tapis.shared.exceptions.recoverable.TapisSSHConnectionExc
  *
  */
 public class SSHConnection implements ISSHConnection {
-
+    
+    // Public enums.
+    public enum AuthMethod {PUBLICKEY_AUTH, PASSWORD_AUTH}
+    
+    // Timeouts.
     private static final int CONNECT_TIMEOUT_MILLIS = 15000; // 15 seconds
 
     // A  set that will be used to store the channels that are open
@@ -42,7 +46,6 @@ public class SSHConnection implements ISSHConnection {
     private static final String STRICT_HOSTKEY_CHECKIN_KEY = "StrictHostKeyChecking";
     private static final String STRICT_HOSTKEY_CHECKIN_VALUE = "no";
 
-    public enum AuthMethod {PUBLICKEY_AUTH, PASSWORD_AUTH}
     private static final Logger log = LoggerFactory.getLogger(SSHConnection.class);
 
     private final String host;
@@ -137,7 +140,7 @@ public class SSHConnection implements ISSHConnection {
                 state.put("hostname", host);
                 state.put("username", username);
                 state.put("port", String.valueOf(port));
-                state.put("loginProtocolType", authMethod.name());
+                state.put("authMethod", authMethod.name());
                 throw new TapisSSHAuthException(msg, e, state);
             } else if (e.getMessage().contains("timeout:")) {
                 String msg = String.format("SSH_CONNECT_SESSION_ERROR Connection timeout for user %s on host %s at port %s", username, host, port);
@@ -199,10 +202,10 @@ public class SSHConnection implements ISSHConnection {
             state.put("hostname", host);
             state.put("username", username);
             state.put("port", String.valueOf(port));
-            state.put("loginProtocolType", authMethod.name());
+            state.put("authMethod", authMethod.name());
+            state.put("channelType", channelType);
             throw new TapisSSHConnectionException(msg, e, state);
         }
-
     }
 
     @Override
