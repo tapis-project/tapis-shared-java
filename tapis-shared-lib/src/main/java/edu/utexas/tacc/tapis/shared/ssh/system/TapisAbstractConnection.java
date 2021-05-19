@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import com.jcraft.jsch.Channel;
 
 import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
+import edu.utexas.tacc.tapis.shared.exceptions.recoverable.TapisRecoverableException;
 import edu.utexas.tacc.tapis.shared.exceptions.runtime.TapisRuntimeException;
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
 import edu.utexas.tacc.tapis.shared.ssh.SSHConnection;
@@ -154,18 +155,28 @@ public abstract class TapisAbstractConnection
         }
         
         // We currently only use two types of authn for target systems.
-        SSHConnection conn = null;
-        if (system.getDefaultAuthnMethod() == AuthnEnum.PASSWORD) 
-            conn = new SSHConnection(system.getHost(), system.getPort(), 
-                                     system.getEffectiveUserId(), cred.getPassword());
-        else if (system.getDefaultAuthnMethod() == AuthnEnum.PKI_KEYS)
-            conn = new SSHConnection(system.getHost(), system.getEffectiveUserId(), 
-                                     system.getPort(), cred.getPublicKey(), cred.getPrivateKey());
-        else {
+        if (system.getDefaultAuthnMethod() != AuthnEnum.PASSWORD &&
+            system.getDefaultAuthnMethod() != AuthnEnum.PKI_KEYS) 
+        {
             String msg = MsgUtils.getMsg("SYSTEMS_CMD_UNSUPPORTED_AUTHN_METHOD", 
-                                         getSystemHostMessage(system),
-                                         system.getTenant(), system.getDefaultAuthnMethod());
+                    getSystemHostMessage(system),
+                    system.getTenant(), system.getDefaultAuthnMethod());
             throw new TapisException(msg);
+        }
+        
+        // Connect.
+        SSHConnection conn = null;
+        try {
+            if (system.getDefaultAuthnMethod() == AuthnEnum.PASSWORD) 
+                conn = new SSHConnection(system.getHost(), system.getPort(), 
+                                     system.getEffectiveUserId(), cred.getPassword());
+            else 
+                conn = new SSHConnection(system.getHost(), system.getEffectiveUserId(), 
+                                     system.getPort(), cred.getPublicKey(), cred.getPrivateKey());
+        } catch (TapisRecoverableException e) {
+            // Handle recoverable exceptions, let non-recoverable ones through.
+            // We add the systemId to all recoverable exceptions.
+            e.state.put("systemId", system.getId());
         }
         
         return conn;
