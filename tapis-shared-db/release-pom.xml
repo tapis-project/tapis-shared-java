@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>edu.utexas.tacc.tapis</groupId>
   <artifactId>tapis-shared-db</artifactId>
-  <version>1.11.93</version>
+  <version>1.11.94</version>
   <name>Tapis Shared Database Library</name>
   <description>Library for shared database code</description>
   <url>https://github.com/tapis-project/tapis-shared-java/tapis-shared-db</url>
@@ -210,7 +210,7 @@
     <maven-shade-plugin.version>3.2.1</maven-shade-plugin.version>
     <mockito-core.version>3.0.0</mockito-core.version>
     <javax.websocket-api.version>1.1</javax.websocket-api.version>
-    <build.timestamp>2021-05-19T16:35:45Z</build.timestamp>
+    <build.timestamp>2021-05-19T19:44:38Z</build.timestamp>
     <statefulj.version>3.0</statefulj.version>
     <java-source.version>1.15</java-source.version>
     <reactor-rabbitmq.version>1.4.4.RELEASE</reactor-rabbitmq.version>
@@ -473,7 +473,7 @@
     <dependency>
       <groupId>edu.utexas.tacc.tapis</groupId>
       <artifactId>tapis-shared-lib</artifactId>
-      <version>1.11.93</version>
+      <version>1.11.94</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
