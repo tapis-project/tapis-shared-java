@@ -43,6 +43,7 @@ import edu.utexas.tacc.tapis.tenants.client.gen.model.Tenant;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwt;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.SignatureException;
 
 /** This jax-rs filter is the main authentication mechanism for Tapis services 
  * written in Java.  This class depends on the Tapis Tenants service to acquire
@@ -279,7 +280,7 @@ public class JWTValidateRequestFilter
         // Do we need to verify the JWT?
         boolean skipJWTVerify = TapisEnv.getBoolean(EnvVar.TAPIS_ENVONLY_SKIP_JWT_VERIFY);
         if (!skipJWTVerify) {
-            try {verifyJwt(encodedJWT, jwtTenant);}
+            try {verifyJwt(encodedJWT, jwtTenant, true);}
             catch (Exception e) {
                 Status status = Status.UNAUTHORIZED;
                 String msg = e.getMessage();
@@ -499,13 +500,20 @@ public class JWTValidateRequestFilter
     /* ---------------------------------------------------------------------- */
     /** Verify the jwt as it was received as a header value.  Signature verification
      * occurs using the specified tenant's signing key.  An exception is thrown
-     * if decoding or signature verification fails.
+     * if decoding or signature verification fails.  
+     * 
+     * If the allowRefresh flag is set, then an attempt will be made on signature 
+     * validation errors to refresh the tenants lists.  If the tenant's public
+     * key has been updated, the refresh should acquire the new key.  The tenant
+     * manager throttles the number of refreshes it allows in a time period, so
+     * there may be a delay in getting new keys.
      * 
      * @param encodedJwt the raw jwt
      * @param tenant the tenant to verify against
+     * @param allowRefresh allow the tenants list to be refreshed
      * @throws TapisSecurityException if the jwt cannot be verified 
      */
-    private void verifyJwt(String encodedJwt, String tenant) 
+    private void verifyJwt(String encodedJwt, String tenant, boolean allowRefresh) 
      throws TapisSecurityException
     {
         // Get the public part of the signing key.
@@ -515,6 +523,18 @@ public class JWTValidateRequestFilter
         @SuppressWarnings({ "unused", "rawtypes" })
         Jwt jwt = null; 
         try {jwt = Jwts.parser().setSigningKey(publicKey).parse(encodedJwt);}
+            catch (SignatureException e) {
+                // Signature validation could have failed because we used
+                // a stale public key for this tenant.  Let's see if refreshing
+                // the tenant information is possible and helpful.
+                if (allowRefresh && refreshTenants()) 
+                    verifyJwt(encodedJwt, tenant, false); // prevent infinite recursion
+                  else {
+                      String msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_PARSE_ERROR", e.getMessage());
+                      _log.error(msg, e);
+                      throw new TapisSecurityException(msg, e);
+                  }
+            }
             catch (Exception e) {
                 String msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_PARSE_ERROR", e.getMessage());
                 _log.error(msg, e);
@@ -874,5 +894,23 @@ public class JWTValidateRequestFilter
     	if (_siteId == null || _service == null) return false;
     	
     	return true;
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* refreshTenants:                                                        */
+    /* ---------------------------------------------------------------------- */
+    /** Request the TenantManager to refresh its tenants information.
+     * 
+     * @return true if a refresh occurred, false otherwise
+     */
+    private boolean refreshTenants()
+    {
+        // Request a tenants refresh and determine if a refresh actually
+        // occurred be comparing before and after timestamps.
+        var beforeUpdateTime = _tenantManager.getLastUpdateTime();
+        _tenantManager.refreshTenants();
+        var afterUpdateTime  = _tenantManager.getLastUpdateTime();
+        if (afterUpdateTime.isAfter(beforeUpdateTime)) return true;
+          else return false;
     }
 }
