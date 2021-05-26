@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 /**
@@ -36,7 +37,7 @@ public class SSHConnection implements ISSHConnection {
 
     // A  set that will be used to store the channels that are open
     // on the SSH session.
-    private final Set<Channel> channels = new HashSet<>();
+    private final AtomicInteger channelCount = new AtomicInteger();
 
 
     // Indicates what to do if the server's host key changed or the server is
@@ -116,7 +117,7 @@ public class SSHConnection implements ISSHConnection {
 
     @Override
     public synchronized int getChannelCount() {
-        return channels.size();
+        return channelCount.get();
     }
 
     private void initSession() throws TapisException {
@@ -186,8 +187,8 @@ public class SSHConnection implements ISSHConnection {
     @Override
     public synchronized void returnChannel(Channel channel) {
         if (channel == null) return;
-        channels.remove(channel);
         channel.disconnect();
+        channelCount.decrementAndGet();
     }
 
     /**
@@ -202,6 +203,7 @@ public class SSHConnection implements ISSHConnection {
     public synchronized Channel createChannel(String channelType) throws TapisSSHConnectionException, TapisException {
         Channel channel;
         try {
+            channelCount.incrementAndGet();
             if (!session.isConnected()) {
                 initSession();
             }
@@ -217,10 +219,10 @@ public class SSHConnection implements ISSHConnection {
                 default:
                     throw new TapisException("Invalid channel type: " + channelType);
             }
-            channels.add(channel);
             return channel;
 
         } catch (JSchException e) {
+            channelCount.decrementAndGet();
             // The session is authenticated but a channel could not be opened. This is the case
             // when the max number of connections is reached. Should be a recoverable error condition.
             String msg = String.format("SSH_OPEN_CHANNEL_ERROR for user %s on host %s at port %s", username, host, port);
@@ -237,9 +239,8 @@ public class SSHConnection implements ISSHConnection {
     @Override
     public synchronized void closeSession() {
         if (session != null && session.isConnected()) {
-            for (var c : channels) c.disconnect();
             session.disconnect();
-            channels.clear();
+            channelCount.set(0);
         }
     }
 
