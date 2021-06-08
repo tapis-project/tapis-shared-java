@@ -153,11 +153,13 @@ public class SSHConnection implements ISSHConnection {
         } catch (JSchException e) {
             if (e.getMessage().contains("UnknownHostException")) {
                 // Could not resolve the host
-                String msg = String.format("SSH_CONNECT_SESSION_ERROR Unknown host for user %s on host %s at port %s", username, host, port);
+                String msg = String.format("SSH_CONNECT_SESSION_ERROR Unknown host for user %s on host %s at port %s: %s" , 
+                                           username, host, port, e.getMessage());
                 throw new TapisException(msg);
             } else if (e.getMessage().contains("Too many authentication failures")) {
                 // This will get hit if the credentials are bad. Jsch can hit the host on the given port.
-                String msg = String.format("SSH_CONNECT_SESSION_ERROR Auth failed for user %s on host %s at port %s", username, host, port);
+                String msg = String.format("SSH_CONNECT_SESSION_ERROR Auth failed for user %s on host %s at port %s: %s", 
+                                           username, host, port, e.getMessage());
                 TreeMap<String, String> state = new TreeMap<>();
                 state.put("hostname", host);
                 state.put("username", username);
@@ -165,7 +167,8 @@ public class SSHConnection implements ISSHConnection {
                 state.put("authMethod", authMethod.name());
                 throw new TapisSSHAuthException(msg, e, state);
             } else if (e.getMessage().contains("timeout:")) {
-                String msg = String.format("SSH_CONNECT_SESSION_ERROR Connection timeout for user %s on host %s at port %s", username, host, port);
+                String msg = String.format("SSH_CONNECT_SESSION_ERROR Connection timeout for user %s on host %s at port %s: %s", 
+                                           username, host, port, e.getMessage());
                 TreeMap<String, String> state = new TreeMap<>();
                 state.put("hostname", host);
                 state.put("username", username);
@@ -173,7 +176,8 @@ public class SSHConnection implements ISSHConnection {
                 state.put("authMethod", authMethod.name());
                 throw new TapisSSHTimeoutException(msg, e, state);
             } else {
-                String msg = String.format("SSH_CONNECT_SESSION_ERROR for user %s on host %s at port %s", username, host, port);
+                String msg = String.format("SSH_CONNECT_SESSION_ERROR for user %s on host %s at port %s: %s", 
+                                           username, host, port, e.getMessage());
                 throw new TapisException(msg, e);
             }
         }
