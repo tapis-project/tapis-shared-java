@@ -8,6 +8,7 @@ import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.ChannelExec;
 
 import edu.utexas.tacc.tapis.shared.ssh.SSHConnection;
+import edu.utexas.tacc.tapis.shared.ssh.SSHConnectionLogger;
 import edu.utexas.tacc.tapis.shared.utils.TapisUtils;
 
 /** This is a test program that can be manually run to check SSH access to a host
@@ -82,6 +83,8 @@ public class SSHRunCommand
     public void execute(String userid, String password, String host, int port) 
      throws Exception
     {
+        // Provide a logger when debugging.
+        SSHConnection.setJschLogger(new SSHConnectionLogger());
         var conn = new SSHConnection(host, port, userid, password);
         
         Channel channel = conn.createChannel("exec");

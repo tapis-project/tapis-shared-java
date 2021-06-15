@@ -1,21 +1,21 @@
 package edu.utexas.tacc.tapis.shared.ssh;
 
+import java.util.TreeMap;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 import com.jcraft.jsch.UserInfo;
+
 import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
 import edu.utexas.tacc.tapis.shared.exceptions.recoverable.TapisSSHAuthException;
 import edu.utexas.tacc.tapis.shared.exceptions.recoverable.TapisSSHConnectionException;
 import edu.utexas.tacc.tapis.shared.exceptions.recoverable.TapisSSHTimeoutException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.HashSet;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 
 /**
@@ -39,14 +39,15 @@ public class SSHConnection implements ISSHConnection {
     // on the SSH session.
     private final AtomicInteger channelCount = new AtomicInteger();
 
-
     // Indicates what to do if the server's host key changed or the server is
     // unknown. One of yes (refuse connection), ask (ask the user whether to add/change the
     // key) and no (always insert the new key).
     private static final String STRICT_HOSTKEY_CHECKIN_KEY = "StrictHostKeyChecking";
     private static final String STRICT_HOSTKEY_CHECKIN_VALUE = "no";
 
+    // The optional jsch logger can be set to get debug information from jsch.
     private static final Logger log = LoggerFactory.getLogger(SSHConnection.class);
+    private static com.jcraft.jsch.Logger _jschLogger; 
 
     private final String host;
     private final int port;
@@ -122,6 +123,7 @@ public class SSHConnection implements ISSHConnection {
 
     private void initSession() throws TapisException {
         final JSch jsch = new JSch();
+        if (_jschLogger != null) JSch.setLogger(_jschLogger);
         try {
             session = jsch.getSession(username, host, port);
             session.setConfig(STRICT_HOSTKEY_CHECKIN_KEY, STRICT_HOSTKEY_CHECKIN_VALUE);
@@ -253,5 +255,11 @@ public class SSHConnection implements ISSHConnection {
         return this.session;
     }
 
+    public static com.jcraft.jsch.Logger getJschLogger() {
+        return _jschLogger;
+    }
 
+    public static void setJschLogger(com.jcraft.jsch.Logger jschLogger) {
+        SSHConnection._jschLogger = jschLogger;
+    }
 }
