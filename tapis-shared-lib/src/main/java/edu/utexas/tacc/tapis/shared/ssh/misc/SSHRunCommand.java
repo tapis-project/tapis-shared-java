@@ -7,7 +7,7 @@ import org.apache.commons.lang3.StringUtils;
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.ChannelExec;
 
-import edu.utexas.tacc.tapis.shared.ssh.SSHConnection;
+import edu.utexas.tacc.tapis.shared.ssh.SSHConnectionJsch;
 import edu.utexas.tacc.tapis.shared.ssh.SSHConnectionLogger;
 import edu.utexas.tacc.tapis.shared.utils.TapisUtils;
 
@@ -84,8 +84,8 @@ public class SSHRunCommand
      throws Exception
     {
         // Provide a logger when debugging.
-        SSHConnection.setJschLogger(new SSHConnectionLogger());
-        var conn = new SSHConnection(host, port, userid, password);
+        SSHConnectionJsch.setJschLogger(new SSHConnectionLogger());
+        var conn = new SSHConnectionJsch(host, port, userid, password);
         
         Channel channel = conn.createChannel("exec");
         ((ChannelExec)channel).setCommand(command);

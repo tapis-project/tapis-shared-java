@@ -46,7 +46,7 @@ public class SSHRunCommandTest
     @Test
     public void sshConnectionTest() throws TapisException, JSchException, IOException
     {
-        var conn = new SSHConnection(host, port, userid, password);
+        var conn = new SSHConnectionJsch(host, port, userid, password);
         
         Channel channel = conn.createChannel("exec");
         ((ChannelExec)channel).setCommand(command);

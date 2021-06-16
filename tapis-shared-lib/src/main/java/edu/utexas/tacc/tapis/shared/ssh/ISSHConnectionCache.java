@@ -9,6 +9,6 @@ import java.io.IOException;
 public interface ISSHConnectionCache {
 
     CacheStats  getCacheStats();
-    LoadingCache<SSHConnectionCacheKey, SSHConnection> getCache();
-    SSHConnection getConnection(TapisSystem system, String username) throws IOException;
+    LoadingCache<SSHConnectionCacheKey, SSHConnectionJsch> getCache();
+    SSHConnectionJsch getConnection(TapisSystem system, String username) throws IOException;
 }

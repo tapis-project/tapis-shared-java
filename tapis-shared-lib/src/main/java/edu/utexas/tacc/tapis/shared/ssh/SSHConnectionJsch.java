@@ -27,7 +27,7 @@ import edu.utexas.tacc.tapis.shared.exceptions.recoverable.TapisSSHTimeoutExcept
  * The connection/session is opened upon instantiation
  *
  */
-public class SSHConnection implements ISSHConnection {
+public class SSHConnectionJsch implements ISSHConnection {
 
     private int CONNECT_TIMEOUT_MILLIS = 15000; // 15 seconds
 
@@ -46,7 +46,7 @@ public class SSHConnection implements ISSHConnection {
     private static final String STRICT_HOSTKEY_CHECKIN_VALUE = "no";
 
     // The optional jsch logger can be set to get debug information from jsch.
-    private static final Logger log = LoggerFactory.getLogger(SSHConnection.class);
+    private static final Logger log = LoggerFactory.getLogger(SSHConnectionJsch.class);
     private static com.jcraft.jsch.Logger _jschLogger; 
 
     private final String host;
@@ -67,7 +67,7 @@ public class SSHConnection implements ISSHConnection {
      * @param privateKey The private key
      * @throws TapisException Throws an exception if the session can't connect.
      */
-    public SSHConnection(String host, String username, int port, String publicKey, String privateKey)  throws TapisException {
+    public SSHConnectionJsch(String host, String username, int port, String publicKey, String privateKey)  throws TapisException {
         this.host = host;
         this.username = username;
         this.port = port > 0 ? port : 22;
@@ -77,7 +77,7 @@ public class SSHConnection implements ISSHConnection {
         initSession();
     }
 
-    public SSHConnection(String host, String username, int port, String publicKey, String privateKey, int timeoutMilliseconds)  throws TapisException {
+    public SSHConnectionJsch(String host, String username, int port, String publicKey, String privateKey, int timeoutMilliseconds)  throws TapisException {
         this.CONNECT_TIMEOUT_MILLIS = timeoutMilliseconds;
         this.host = host;
         this.username = username;
@@ -97,7 +97,7 @@ public class SSHConnection implements ISSHConnection {
      * @param password password
      * @throws TapisException Throws an exception if the session can't connect
      */
-    public SSHConnection(String host, int port, String username, String password) throws TapisException {
+    public SSHConnectionJsch(String host, int port, String username, String password) throws TapisException {
         this.host = host;
         this.port = port > 0 ? port : 22;
         this.username = username;
@@ -106,7 +106,7 @@ public class SSHConnection implements ISSHConnection {
         initSession();
     }
 
-    public SSHConnection(String host, int port, String username, String password, int timeoutMilliseconds) throws TapisException {
+    public SSHConnectionJsch(String host, int port, String username, String password, int timeoutMilliseconds) throws TapisException {
         this.CONNECT_TIMEOUT_MILLIS = timeoutMilliseconds;
         this.host = host;
         this.port = port > 0 ? port : 22;
@@ -260,6 +260,6 @@ public class SSHConnection implements ISSHConnection {
     }
 
     public static void setJschLogger(com.jcraft.jsch.Logger jschLogger) {
-        SSHConnection._jschLogger = jschLogger;
+        SSHConnectionJsch._jschLogger = jschLogger;
     }
 }

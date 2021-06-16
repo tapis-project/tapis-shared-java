@@ -14,7 +14,7 @@ import java.io.InputStream;
 public class TapisJSCHInputStream extends FilterInputStream {
 
 
-    private SSHConnection connection;
+    private SSHConnectionJsch connection;
     private Channel channel;
 
     protected TapisJSCHInputStream(InputStream in) {
@@ -26,7 +26,7 @@ public class TapisJSCHInputStream extends FilterInputStream {
         return super.read();
     }
 
-    public TapisJSCHInputStream(InputStream in, SSHConnection connection, Channel channel) {
+    public TapisJSCHInputStream(InputStream in, SSHConnectionJsch connection, Channel channel) {
         super(in);
         this.connection = connection;
         this.channel = channel;
