@@ -1,14 +1,11 @@
 package edu.utexas.tacc.tapis.shared.ssh;
 
 import java.io.IOException;
-import java.security.GeneralSecurityException;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
-import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
-import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
@@ -228,6 +225,7 @@ public class SSHConnection
     private KeyPair getKeyPair()
       throws TapisSecurityException
     {
+        // Get each key using their own specialized code.
         var prvKey = getPrivateKey();
         var pubKey = getPublicKey();
         
@@ -417,27 +415,5 @@ public class SSHConnection
         }
         
         return (RSAPublicKey) obj;
-    }
-    
-    /* ---------------------------------------------------------------------- */
-    /* makeRsaPrivateKey:                                                     */
-    /* ---------------------------------------------------------------------- */
-    private RSAPrivateKey makeRsaPrivateKey(byte[] bytes)
-     throws TapisSecurityException
-    {
-        Object obj = null;
-        try {
-            PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(bytes);
-            KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-            obj = keyFactory.generatePrivate(keySpec);
-        }
-        catch (Exception e) {
-            String msg = MsgUtils.getMsg("TAPIS_SECURITY_SSH_KEY_CREATE", 
-                                         _username, _host, "private",
-                                         e.getMessage());
-            throw new TapisSecurityException(msg, e);
-        }
-        
-        return (RSAPrivateKey) obj;
     }
 }
