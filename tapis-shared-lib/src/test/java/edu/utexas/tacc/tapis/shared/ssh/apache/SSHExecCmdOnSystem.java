@@ -5,6 +5,17 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
+/** This test program is used to read public and private key out of 
+ * files and use them to issue a simple command on a host.  The
+ * command format is:
+ * 
+ *  SSHExecCmdOnSystem <private key file> <public key file> <host> <user>
+ *  
+ * All 4 arguments are required.  The keys are used to login to user@host.
+ * The command exit code and response are printed to standard out.
+ * 
+ * @author rcardone
+ */
 public class SSHExecCmdOnSystem 
 {
     private static final String CMD = "echo $USER";
@@ -23,7 +34,6 @@ public class SSHExecCmdOnSystem
         
         var execCmd = new SSHExecCmdOnSystem();
         execCmd.execute(prvKeyFilePath, pubKeyFilePath, hostAddr, user);
-
     }
     
     private void execute(String prvKeyFilePath, String pubKeyFilePath,

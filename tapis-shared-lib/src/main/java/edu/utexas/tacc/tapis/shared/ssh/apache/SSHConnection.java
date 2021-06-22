@@ -1,19 +1,7 @@
 package edu.utexas.tacc.tapis.shared.ssh.apache;
 
 import java.io.IOException;
-import java.security.KeyFactory;
 import java.security.KeyPair;
-import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.security.interfaces.RSAPrivateCrtKey;
-import java.security.interfaces.RSAPublicKey;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.PKCS8EncodedKeySpec;
-import java.security.spec.RSAPublicKeySpec;
-import java.security.spec.X509EncodedKeySpec;
-import java.util.Base64;
-import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sshd.client.SshClient;
@@ -22,7 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
-import edu.utexas.tacc.tapis.shared.exceptions.TapisSecurityException;
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
 
 /** This class abstracts the idea of an authenticated SSH connection to a host.
@@ -53,8 +40,15 @@ public class SSHConnection
     private static final String SSH_HEADER        = "-----BEGIN OPENSSH PRIVATE KEY-----";
     private static final String SSH_FOOTER        = "-----END OPENSSH PRIVATE KEY-----";
     
-    // Split strings on space characters.
-    private static final Pattern _spaceSpitter = Pattern.compile(" ");
+    /* ********************************************************************** */
+    /*                            Initializers                                */
+    /* ********************************************************************** */
+    static {
+        // Turn off apache ssh logging by interfacing directly with logback.
+        var sshLogger = 
+           (ch.qos.logback.classic.Logger) org.slf4j.LoggerFactory.getLogger("org.apache.sshd");
+        if (sshLogger != null) sshLogger.setLevel(ch.qos.logback.classic.Level.ERROR);
+    }
     
     /* ********************************************************************** */
     /*                                 Enums                                  */
@@ -125,8 +119,12 @@ public class SSHConnection
         
         // Establish a connected and authenticated session.
         try {initSession();}
-            catch (TapisException e) {throw e;}
+            catch (TapisException e) {
+                stop();
+                throw e;
+            }
             catch (Exception e) {
+                stop();
                 String msg = MsgUtils.getMsg("TAPIS_SSH_CONNECT_ERROR", host, port,
                                              username, _authMethod, e.getMessage());
                 throw new TapisException(msg, e);
@@ -259,7 +257,8 @@ public class SSHConnection
         if (_authMethod == AuthMethod.PASSWORD_AUTH) 
             _session.addPasswordIdentity(_password);
           else {
-              KeyPair keyPair = getKeyPair();
+              var keyLoader = new SSHKeyLoader(_publicKey, _privateKey, _username, _host);
+              KeyPair keyPair = keyLoader.getKeyPair();
               _session.addPublicKeyIdentity(keyPair);
           }
             
@@ -267,229 +266,6 @@ public class SSHConnection
         _session.auth().verify(_timeouts.getAuthenticateMillis());
     }
 
-    /* ---------------------------------------------------------------------- */
-    /* getKeyPair:                                                            */
-    /* ---------------------------------------------------------------------- */
-    private KeyPair getKeyPair()
-      throws TapisSecurityException
-    {
-        // Get each key using their own specialized code.
-        var prvKey = getPrivateKey();
-        var pubKey = getPublicKey(prvKey);
-        
-        // Assign key pair.
-        KeyPair keyPair = new KeyPair(pubKey, prvKey);
-        return keyPair;
-    }
-    
-    /* ---------------------------------------------------------------------- */
-    /* getPrivateKey:                                                         */
-    /* ---------------------------------------------------------------------- */
-    private PrivateKey getPrivateKey() throws TapisSecurityException
-    {
-        // PKCS#1 format.
-        String keyDataString = _privateKey;
-        if (keyDataString.startsWith(PKCS_1_PEM_HEADER)) {
-            // OpenSSL / PKCS#1 Base64 PEM encoded file
-            keyDataString = keyDataString.replace(PKCS_1_PEM_HEADER, "");
-            keyDataString = keyDataString.replace(PKCS_1_PEM_FOOTER, "");
-            keyDataString = keyDataString.replaceAll("\n", "").trim();
-            return readPkcs1PrivateKey(base64Decode(keyDataString, "private"));
-        }
-
-        // PKCS#8 format.
-        if (keyDataString.startsWith(PKCS_8_PEM_HEADER)) {
-            // PKCS#8 Base64 PEM encoded file
-            keyDataString = keyDataString.replace(PKCS_8_PEM_HEADER, "");
-            keyDataString = keyDataString.replace(PKCS_8_PEM_FOOTER, "");
-            keyDataString = keyDataString.replaceAll("\n", "").trim();
-            return readPkcs8PrivateKey(base64Decode(keyDataString, "private"));
-        }
-
-        // Openssh format not supported.
-        if (keyDataString.startsWith(SSH_HEADER)) {
-            throw new IllegalArgumentException("ERROR: Keys generated using ssh-keygen that start with \""
-                                               + SSH_HEADER + "\" are not supported.");
-        }
-
-        // We assume it's a PKCS#8 DER encoded binary file
-        return readPkcs8PrivateKey(base64Decode(keyDataString, "private"));
-    }
-    
-    /* ---------------------------------------------------------------------- */
-    /* getPublicKey:                                                          */
-    /* ---------------------------------------------------------------------- */
-    private PublicKey getPublicKey(PrivateKey privateKey) throws TapisSecurityException
-    {
-        PublicKey derivedKey = null;
-        try {derivedKey = derivePublicKey(privateKey);}
-            catch (Exception e) {
-                throw new TapisSecurityException(e.getMessage(), e);
-            }
-        if (derivedKey != null) return derivedKey;
-        
-        // Remove an non-key material from the key strings.
-        String trimmedPublic = trimKeyMaterial(_publicKey);
-        
-        // Decode the key material into binary.
-        byte[] publicBytes = base64Decode(trimmedPublic,  "public");
-        
-        // Make into keys.
-        return makeRsaPublicKey(publicBytes);
-    }
-    
-    /* ---------------------------------------------------------------------- */
-    /* derivePublicKey:                                                       */
-    /* ---------------------------------------------------------------------- */
-    private PublicKey derivePublicKey(PrivateKey privateKey) 
-     throws NoSuchAlgorithmException, InvalidKeySpecException
-    {
-        if (!_publicKey.startsWith("ssh-rsa ")) return null;
-        
-        RSAPrivateCrtKey privk = (RSAPrivateCrtKey) privateKey;
-
-        RSAPublicKeySpec publicKeySpec = new java.security.spec.RSAPublicKeySpec(privk.getModulus(), privk.getPublicExponent());
-
-        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-        PublicKey publicKey = keyFactory.generatePublic(publicKeySpec);
-        return publicKey;
-    }
-    
-    /* ---------------------------------------------------------------------- */
-    /* readPkcs1PrivateKey:                                                   */
-    /* ---------------------------------------------------------------------- */
-    private PrivateKey readPkcs1PrivateKey(byte[] pkcs1Bytes) 
-     throws TapisSecurityException
-    {
-        // We can't use Java internal APIs to parse ASN.1 structures, 
-        // so we build a PKCS#8 key Java can understand.
-        int pkcs1Length = pkcs1Bytes.length;
-        int totalLength = pkcs1Length + 22;
-        byte[] pkcs8Header = new byte[] {
-            0x30, (byte) 0x82, (byte) ((totalLength >> 8) & 0xff), (byte) (totalLength & 0xff), // Sequence + total length
-            0x2, 0x1, 0x0, // Integer (0)
-            0x30, 0xD, 0x6, 0x9, 0x2A, (byte) 0x86, 0x48, (byte) 0x86, (byte) 0xF7, 0xD, 0x1, 0x1, 0x1, 0x5, 0x0, // Sequence: 1.2.840.113549.1.1.1, NULL
-            0x4, (byte) 0x82, (byte) ((pkcs1Length >> 8) & 0xff), (byte) (pkcs1Length & 0xff) // Octet string + length
-        };
-        byte[] pkcs8bytes = join(pkcs8Header, pkcs1Bytes);
-        return readPkcs8PrivateKey(pkcs8bytes);
-    }
-
-    /* ---------------------------------------------------------------------- */
-    /* readPkcs8PrivateKey:                                                   */
-    /* ---------------------------------------------------------------------- */
-    private PrivateKey readPkcs8PrivateKey(byte[] pkcs8Bytes) 
-     throws TapisSecurityException
-    {
-        try {
-            KeyFactory keyFactory = KeyFactory.getInstance("RSA", "SunRsaSign");
-            PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(pkcs8Bytes);
-            return keyFactory.generatePrivate(keySpec);
-        }
-        catch (Exception e) {throw new TapisSecurityException(e.getMessage(), e);}
-    }
-
-    /* ---------------------------------------------------------------------- */
-    /* join:                                                                  */
-    /* ---------------------------------------------------------------------- */
-    private byte[] join(byte[] byteArray1, byte[] byteArray2)
-    {
-        byte[] bytes = new byte[byteArray1.length + byteArray2.length];
-        System.arraycopy(byteArray1, 0, bytes, 0, byteArray1.length);
-        System.arraycopy(byteArray2, 0, bytes, byteArray1.length, byteArray2.length);
-        return bytes;
-    }
-    
-    /* ---------------------------------------------------------------------- */
-    /* trimKeyMaterial:                                                       */
-    /* ---------------------------------------------------------------------- */
-    /** Extract the key material from the encoded format and remove all newline
-     * characters.
-     * 
-     * @param encodedKey the key in PEM or other encodings.
-     * @param nonPEMCheck attempt to parse non-PEM encodings
-     * @return
-     */
-    private String trimKeyMaterial(String encodedKey)
-    {
-        
-        // First check for non-PEM formatting as found in authorized_key files.
-//        if (nonPEMCheck && encodedKey.startsWith("ssh-rsa ")) {
-//            // Split the key on space characters and return the next
-//            // non-empty part after the first one.
-//            var parts = _spaceSpitter.split(encodedKey);
-//            if (parts.length > 1) {
-//                for (int i = 1; i < parts.length; i++)
-//                    if (!parts[i].isEmpty()) {
-//                        encodedKey = parts[i];
-//                        break;
-//                    }
-//            }
-//            
-//            // We always return from here even if 
-//            // the key is unchanged.
-//            return encodedKey.replaceAll("\n", "").trim();
-//        }
-        
-        // Remove prologue and epilogue if they exist.  For example, public
-        // keys stored in PEM format have a prologue and epilogue (see
-        // https://tools.ietf.org/html/rfc1421 for the specification):
-        //
-        //      "-----BEGIN PUBLIC KEY-----\n"
-        //      "\n-----END PUBLIC KEY-----"
-        //
-        // In general, different messages can appear after the BEGIN and END text,
-        // so stripping out the prologue and epilogue requires some care.  The  
-        // approach below handles only unix-style line endings.  
-        // 
-        // Check for unix style prologue.
-        int index = encodedKey.indexOf("-\n");
-        if (index > 0) encodedKey = encodedKey.substring(index + 2);
-        
-        // Check for unix style epilogue.
-        index = encodedKey.lastIndexOf("\n-");
-        if (index > 0) encodedKey = encodedKey.substring(0, index);
-        
-        return encodedKey.replaceAll("\n", "").trim();
-    }
-
-    /* ---------------------------------------------------------------------- */
-    /* base64Decode:                                                          */
-    /* ---------------------------------------------------------------------- */
-    private byte[] base64Decode(String base64, String keyDesc) 
-     throws TapisSecurityException
-    {
-        // Try to decode the key.
-        try {return Base64.getDecoder().decode(base64);}
-        catch (Exception e) {
-            String msg = MsgUtils.getMsg("TAPIS_SECURITY_SSH_KEY_DECODE",
-                                         _username, _host, keyDesc);
-            throw new TapisSecurityException(msg, e);
-        }
-    }
-    
-    /* ---------------------------------------------------------------------- */
-    /* makeRsaPublicKey:                                                      */
-    /* ---------------------------------------------------------------------- */
-    private RSAPublicKey makeRsaPublicKey(byte[] bytes)
-     throws TapisSecurityException
-    {
-        Object obj = null;
-        try {
-            X509EncodedKeySpec keySpec = new X509EncodedKeySpec(bytes);
-            KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-            obj = keyFactory.generatePublic(keySpec);
-        }
-        catch (Exception e) {
-            String msg = MsgUtils.getMsg("TAPIS_SECURITY_SSH_KEY_CREATE", 
-                                         _username, _host, "public",
-                                         e.getMessage());
-            throw new TapisSecurityException(msg, e);
-        }
-        
-        return (RSAPublicKey) obj;
-    }
-    
     /* ---------------------------------------------------------------------- */
     /* closeSession:                                                          */
     /* ---------------------------------------------------------------------- */

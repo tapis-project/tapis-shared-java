@@ -18,7 +18,7 @@ import java.util.Base64;
  * @author rcardone
  *
  */
-public class PemLoadKeyTest 
+public class KeyLoadingTest2 
 {
     private static final String PKCS_1_PEM_HEADER = "-----BEGIN RSA PRIVATE KEY-----";
     private static final String PKCS_1_PEM_FOOTER = "-----END RSA PRIVATE KEY-----";

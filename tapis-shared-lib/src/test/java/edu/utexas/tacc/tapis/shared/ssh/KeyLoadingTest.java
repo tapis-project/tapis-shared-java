@@ -19,6 +19,17 @@ import org.apache.commons.io.FileUtils;
 import edu.utexas.tacc.tapis.shared.exceptions.TapisSecurityException;
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
 
+/** This program provides a way to test different approaches to loading 
+ * key file content into PublicKey and PrivateKey objects.  Key's that 
+ * work include key pairs created by openssl, though only pkcs8 private
+ * keys are currently handled.  Here's one way to create such keys:
+ * 
+ *  openssl genrsa -out keypair.pem 4096
+ *  openssl rsa -in keypair.pem -pubout -out publickey.crt
+ *  openssl pkcs8 -topk8 -inform PEM -outform PEM -nocrypt -in keypair.pem -out pkcs8.key
+ * 
+ * @author rcardone
+ */
 public class KeyLoadingTest 
 {
     // Split strings on space characters.
@@ -30,8 +41,6 @@ public class KeyLoadingTest
     private final String      _username = "fakeUser";
     private String            _privateKey;
     private String            _publicKey;
-    
-    
 
     public static void main(String[] args) 
      throws Exception
@@ -49,7 +58,7 @@ public class KeyLoadingTest
      throws Exception
     {
         
-//        _privateKey = readFile(privateFile);
+        _privateKey = readFile(privateFile);
         _publicKey  = readFile(publicFile);
         KeyPair keyPair = getKeyPair();
     }
@@ -75,7 +84,6 @@ public class KeyLoadingTest
         byte[] publicBytes  = base64Decode(trimmedPublic,  "public");
         
         // Make into keys.
-//        PrivateKey prvKey = null;
         PrivateKey prvKey = makeRsaPrivateKey(privateBytes);
         PublicKey  pubKey = makeRsaPublicKey(publicBytes);
         

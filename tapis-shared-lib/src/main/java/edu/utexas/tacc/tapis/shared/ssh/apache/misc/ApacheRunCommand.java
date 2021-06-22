@@ -3,29 +3,52 @@ package edu.utexas.tacc.tapis.shared.ssh.apache.misc;
 import java.io.ByteArrayOutputStream;
 
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.LoggerFactory;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
 import edu.utexas.tacc.tapis.shared.ssh.apache.SSHConnection;
 import edu.utexas.tacc.tapis.shared.utils.TapisUtils;
 
+/** This test program is bundled with the non-test code for ease of use with
+ * the standard shaded jar file.  It's main utility is to test that simple
+ * password access to a host is possible using SSH and, in particular, that
+ * MFA exemption is in effect.  The command format is:
+ * 
+ *      ApacheRunCommand host userid [password] [port]
+ *   
+ * If you specify only the host and userid, you will be prompted for the
+ * password without displaying your keystrokes.  The port defaults to 22
+ * if it's not provided.  
+ * 
+ * This program runs a simple, hardcoded command and writes the exitcode 
+ * and response to standard out.
+ * 
+ * Installation and Execution
+ * --------------------------
+ * To run this program on a host1 to test SSH access to host2, perform the following:
+ * 
+ *  1. Build the shaded jar using shaded-pom.xml
+ *      - cd tapis-shared-java
+ *      - mvn install -f tapis-shared-lib/shaded-pom.xml
+ *  2. Copy the shaded jar to host1.
+ *      - cd tapis-shared-java/tapis-shared-lib/target
+ *      - scp shaded-sharedlib.jar 'user@host:/home/user'
+ *  3. Copy the current JDK on host1.
+ *      - scp openjdk-15.0.1_linux-x64_bin.tar.gz 'user@host:/home/user'
+ *  4. Login to host1.
+ *  5  Unpack the JDK and put the its bin directory on the PATH
+ *  6. Issue the SSH call to host2.
+ *      - java -cp shaded-sharedlib.jar eedu.utexas.tacc.tapis.shared.ssh.apache.misc.ApacheRunCommand host2 user2
+ *      - Input user2@host2's password when prompted.
+ *      
+ * @author rcardone
+ */
 public class ApacheRunCommand 
 {
-
     // Some simple command to run on target host.
     private static final String command = "echo $USER";
     
     // Collect argument and run command.
     public static void main(String[] args) throws Exception 
     {
-        // Turn off apache ssh logging.
-        Logger minaLogger = (Logger) LoggerFactory.getLogger("org.apache.sshd");
-        if(minaLogger!=null)
-        {
-            minaLogger.setLevel(Level.ERROR);
-        }
-        
         // Make sure we got the required arguments.
         // Format:  SSHRunCommand userid password host [port]
         if (args.length < 2) {
@@ -85,7 +108,7 @@ public class ApacheRunCommand
     private static String getHelpMessage()
     {
         String msg = "ERROR: Missing arguments.\n";
-        msg += "Enter:  SSHRunCommand host userid [password] [port]\n\n";
+        msg += "Enter:  ApacheRunCommand host userid [password] [port]\n\n";
         msg += "If password isn't provided, you will be prompted.\n";
         msg += "The default port is 22 if not provided.\n";
         return msg;
