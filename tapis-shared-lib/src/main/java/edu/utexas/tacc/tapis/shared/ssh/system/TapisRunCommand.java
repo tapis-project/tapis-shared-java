@@ -14,7 +14,7 @@ import com.jcraft.jsch.JSchException;
 import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
 import edu.utexas.tacc.tapis.shared.exceptions.runtime.TapisRuntimeException;
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
-import edu.utexas.tacc.tapis.shared.ssh.SSHConnectionJsch;
+import edu.utexas.tacc.tapis.shared.ssh.SSHConnection;
 import edu.utexas.tacc.tapis.systems.client.gen.model.TapisSystem;
 
 /**
@@ -74,7 +74,7 @@ public final class TapisRunCommand
     /* ---------------------------------------------------------------------------- */
     /* constructor:                                                                 */
     /* ---------------------------------------------------------------------------- */
-    public TapisRunCommand(TapisSystem system, SSHConnectionJsch conn)
+    public TapisRunCommand(TapisSystem system, SSHConnection conn)
     {
         // Save system and connection in superclass.
         super(system, conn);
@@ -124,7 +124,7 @@ public final class TapisRunCommand
 
         if (DEBUG) _log.debug(String.format("Running command: %s", command));
         // Connect to the system.
-        SSHConnectionJsch conn = null;
+        SSHConnection conn = null;
         try {conn = getConnection();}
             catch (Exception e) {
                 String msg = MsgUtils.getMsg("SYSTEMS_CONNECTION_FAILED", getSystemHostMessage(),
@@ -193,7 +193,7 @@ public final class TapisRunCommand
     /* ---------------------------------------------------------------------------- */
     /* configureExecChannel:                                                        */
     /* ---------------------------------------------------------------------------- */
-    private ChannelExec configureExecChannel(String command, SSHConnectionJsch conn) 
+    private ChannelExec configureExecChannel(String command, SSHConnection conn) 
      throws TapisException
     {
         // Create the channel but don't connect it yet.

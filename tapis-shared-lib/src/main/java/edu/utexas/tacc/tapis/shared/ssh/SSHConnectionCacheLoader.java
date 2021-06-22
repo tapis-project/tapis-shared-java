@@ -11,16 +11,16 @@ import com.google.common.cache.CacheLoader;
 
 import edu.utexas.tacc.tapis.systems.client.gen.model.TapisSystem;
 
-public class SSHConnectionCacheLoader extends CacheLoader<SSHConnectionCacheKey, SSHConnectionJsch> {
+public class SSHConnectionCacheLoader extends CacheLoader<SSHConnectionCacheKey, SSHConnection> {
 
     private static final Logger log = LoggerFactory.getLogger(SSHConnectionCache.class);
 
     @Override
-    public SSHConnectionJsch load(SSHConnectionCacheKey key) throws TapisException, IllegalArgumentException {
+    public SSHConnection load(SSHConnectionCacheKey key) throws TapisException, IllegalArgumentException {
         TapisSystem system = key.getSystem();
         String username = key.getUsername();
         int port;
-        SSHConnectionJsch sshConnection;
+        SSHConnection sshConnection;
         AuthnEnum accessMethodEnum = system.getDefaultAuthnMethod();
         // This should not be null, but if it is, we default to password.
         accessMethodEnum = accessMethodEnum == null ? AuthnEnum.PASSWORD : accessMethodEnum;
@@ -29,7 +29,7 @@ public class SSHConnectionCacheLoader extends CacheLoader<SSHConnectionCacheKey,
                 String password = system.getAuthnCredential().getPassword();
                 port = system.getPort();
                 if (port <= 0) port = 22;
-                sshConnection = new SSHConnectionJsch(
+                sshConnection = new SSHConnection(
                         system.getHost(),
                         port,
                         username,
@@ -40,7 +40,7 @@ public class SSHConnectionCacheLoader extends CacheLoader<SSHConnectionCacheKey,
                 String privateKey = system.getAuthnCredential().getPrivateKey();
                 port = system.getPort();
                 if (port <= 0) port = 22;
-                sshConnection = new SSHConnectionJsch(system.getHost(), username, port, pubKey, privateKey);
+                sshConnection = new SSHConnection(system.getHost(), username, port, pubKey, privateKey);
                 return sshConnection;
             default:
                 String msg = String.format("Access method of %s is not valid.", accessMethodEnum.getValue());

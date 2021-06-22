@@ -11,7 +11,7 @@ import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.SftpException;
 
 import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
-import edu.utexas.tacc.tapis.shared.ssh.SSHConnectionJsch;
+import edu.utexas.tacc.tapis.shared.ssh.SSHConnection;
 import edu.utexas.tacc.tapis.systems.client.gen.model.TapisSystem;
 
 public final class TapisSftp 
@@ -52,7 +52,7 @@ public final class TapisSftp
     /* ---------------------------------------------------------------------------- */
     /* constructor:                                                                 */
     /* ---------------------------------------------------------------------------- */
-    public TapisSftp(TapisSystem system, SSHConnectionJsch conn)
+    public TapisSftp(TapisSystem system, SSHConnection conn)
     {
         // Save system and connection in superclass.
         super(system, conn);

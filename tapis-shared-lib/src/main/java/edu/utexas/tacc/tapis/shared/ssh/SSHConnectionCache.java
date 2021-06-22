@@ -26,7 +26,7 @@ import java.util.concurrent.*;
 public class SSHConnectionCache implements ISSHConnectionCache {
 
     private static final Logger log = LoggerFactory.getLogger(SSHConnectionCache.class);
-    private static LoadingCache<SSHConnectionCacheKey, SSHConnectionJsch> sessionCache;
+    private static LoadingCache<SSHConnectionCacheKey, SSHConnection> sessionCache;
     private  final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
     private final TimeUnit timeUnit;
     private final long timeout;
@@ -42,7 +42,7 @@ public class SSHConnectionCache implements ISSHConnectionCache {
                 .recordStats()
                 .build(new SSHConnectionCacheLoader());
         executorService.scheduleAtFixedRate( ()-> {
-            sessionCache.asMap().forEach( (SSHConnectionCacheKey key, SSHConnectionJsch connection) -> {
+            sessionCache.asMap().forEach( (SSHConnectionCacheKey key, SSHConnection connection) -> {
                 if (connection.getChannelCount() == 0) {
                     connection.closeSession();
                     sessionCache.invalidate(key);
@@ -64,7 +64,7 @@ public class SSHConnectionCache implements ISSHConnectionCache {
      *
      * @return
      */
-    public LoadingCache<SSHConnectionCacheKey, SSHConnectionJsch> getCache() {
+    public LoadingCache<SSHConnectionCacheKey, SSHConnection> getCache() {
         return sessionCache;
     }
 
@@ -77,7 +77,7 @@ public class SSHConnectionCache implements ISSHConnectionCache {
      * create one and return it from the cache.
      * @throws IOException
      */
-    public SSHConnectionJsch getConnection(TapisSystem system, String username) throws IOException {
+    public SSHConnection getConnection(TapisSystem system, String username) throws IOException {
         SSHConnectionCacheKey key = new SSHConnectionCacheKey(system, username);
         try {
             return sessionCache.get(key);

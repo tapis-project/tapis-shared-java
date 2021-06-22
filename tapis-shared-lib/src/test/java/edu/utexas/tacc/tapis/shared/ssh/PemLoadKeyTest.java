@@ -11,6 +11,13 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Base64;
 
+/** This class can be use for offline testing of different PEM file loading implementations.
+ * The code here is essentially a copy of the code in SSHConnection that converts a string
+ * into a PrivateKey object.
+ *  
+ * @author rcardone
+ *
+ */
 public class PemLoadKeyTest 
 {
     private static final String PKCS_1_PEM_HEADER = "-----BEGIN RSA PRIVATE KEY-----";

@@ -11,7 +11,7 @@ import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
 import edu.utexas.tacc.tapis.shared.exceptions.recoverable.TapisRecoverableException;
 import edu.utexas.tacc.tapis.shared.exceptions.runtime.TapisRuntimeException;
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
-import edu.utexas.tacc.tapis.shared.ssh.SSHConnectionJsch;
+import edu.utexas.tacc.tapis.shared.ssh.SSHConnection;
 import edu.utexas.tacc.tapis.systems.client.gen.model.AuthnEnum;
 import edu.utexas.tacc.tapis.systems.client.gen.model.TapisSystem;
 
@@ -30,7 +30,7 @@ public abstract class TapisAbstractConnection
     protected final TapisSystem     _system;
     
     // Cached connection.
-    private SSHConnectionJsch           _conn;
+    private SSHConnection           _conn;
     
     /* **************************************************************************** */
     /*                                Constructors                                  */
@@ -65,7 +65,7 @@ public abstract class TapisAbstractConnection
      * @param system the target system
      * @param conn an existing connection to the target system 
      */
-    protected TapisAbstractConnection(TapisSystem system, SSHConnectionJsch conn)
+    protected TapisAbstractConnection(TapisSystem system, SSHConnection conn)
     {
         this(system);
         _conn = conn;
@@ -84,7 +84,7 @@ public abstract class TapisAbstractConnection
      * @throws IOException when unable to get a connection
      * @throws TapisException invalid or missing credentials
      */
-    public SSHConnectionJsch getConnection() throws IOException, TapisException
+    public SSHConnection getConnection() throws IOException, TapisException
     {
         // Do we already have a connection?
         if (_conn != null) return _conn;
@@ -136,7 +136,7 @@ public abstract class TapisAbstractConnection
      * @throws IOException when unable to get a connection
      * @throws TapisException invalid or missing credentials
      */
-    public static SSHConnectionJsch createNewConnection(TapisSystem system)
+    public static SSHConnection createNewConnection(TapisSystem system)
      throws IOException, TapisException
     {
         // Check input.
@@ -165,13 +165,13 @@ public abstract class TapisAbstractConnection
         }
         
         // Connect.
-        SSHConnectionJsch conn = null;
+        SSHConnection conn = null;
         try {
             if (system.getDefaultAuthnMethod() == AuthnEnum.PASSWORD) 
-                conn = new SSHConnectionJsch(system.getHost(), system.getPort(), 
+                conn = new SSHConnection(system.getHost(), system.getPort(), 
                                      system.getEffectiveUserId(), cred.getPassword());
             else 
-                conn = new SSHConnectionJsch(system.getHost(), system.getEffectiveUserId(), 
+                conn = new SSHConnection(system.getHost(), system.getEffectiveUserId(), 
                                      system.getPort(), cred.getPublicKey(), cred.getPrivateKey());
         } catch (TapisRecoverableException e) {
             // Handle recoverable exceptions, let non-recoverable ones through.
@@ -192,7 +192,7 @@ public abstract class TapisAbstractConnection
      * 
      * @return null or the existing connection
      */
-    protected SSHConnectionJsch getExistingConnection() {return _conn;}
+    protected SSHConnection getExistingConnection() {return _conn;}
     
     /* ---------------------------------------------------------------------------- */
     /* closeChannel:                                                                */
