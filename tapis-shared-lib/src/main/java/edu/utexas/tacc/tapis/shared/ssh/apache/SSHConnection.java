@@ -189,11 +189,11 @@ public class SSHConnection
     }
     
     /* ---------------------------------------------------------------------- */
-    /* getSftpChannel:                                                        */
+    /* getSftpClient:                                                         */
     /* ---------------------------------------------------------------------- */
-    public void getSftpChannel()
+    public SSHSftpClient getSftpClient() throws IOException
     {
-        
+        return new SSHSftpClient(this);
     }
     
     /* ---------------------------------------------------------------------- */
