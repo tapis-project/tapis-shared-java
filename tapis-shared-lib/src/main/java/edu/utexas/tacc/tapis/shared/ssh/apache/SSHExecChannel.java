@@ -8,6 +8,8 @@ import java.util.EnumSet;
 import org.apache.sshd.client.channel.ChannelExec;
 import org.apache.sshd.client.channel.ClientChannelEvent;
 
+import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
+import edu.utexas.tacc.tapis.shared.exceptions.runtime.TapisRuntimeException;
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
 
 public class SSHExecChannel 
@@ -15,7 +17,7 @@ public class SSHExecChannel
     /* ********************************************************************** */
     /*                               Constants                                */
     /* ********************************************************************** */
-    private static final int DEFAULT_OUTPUT_LEN = 1024;
+    public  static final int DEFAULT_OUTPUT_LEN = 1024;
     private static final EnumSet<ClientChannelEvent> _closedSet = EnumSet.of(ClientChannelEvent.CLOSED);
     
     /* ********************************************************************** */
@@ -30,7 +32,15 @@ public class SSHExecChannel
     /* ---------------------------------------------------------------------- */
     /* constructor:                                                           */
     /* ---------------------------------------------------------------------- */
-    SSHExecChannel(SSHConnection sshConnection){_sshConnection = sshConnection;}
+    SSHExecChannel(SSHConnection sshConnection)
+    {
+        // Check input.
+        if (sshConnection == null) {
+            String msg = MsgUtils.getMsg("TAPIS_NULL_PARAMETER", "SSHExecChannel", "sshConnection");
+            throw new TapisRuntimeException(msg);
+        }
+        _sshConnection = sshConnection;
+    }
     
     /* ********************************************************************** */
     /*                            Public Methods                              */
@@ -38,7 +48,7 @@ public class SSHExecChannel
     /* ---------------------------------------------------------------------- */
     /* execute:                                                               */
     /* ---------------------------------------------------------------------- */
-    public int execute(String cmd) throws IOException
+    public int execute(String cmd) throws IOException, TapisException
     {
         return execute(cmd, new ByteArrayOutputStream(DEFAULT_OUTPUT_LEN));
     }
@@ -46,7 +56,8 @@ public class SSHExecChannel
     /* ---------------------------------------------------------------------- */
     /* execute:                                                               */
     /* ---------------------------------------------------------------------- */
-    public int execute(String cmd, ByteArrayOutputStream outErrStream) throws IOException
+    public int execute(String cmd, ByteArrayOutputStream outErrStream) 
+      throws IOException, TapisException
     {
         return execute(cmd, outErrStream, outErrStream);
     }
@@ -56,7 +67,7 @@ public class SSHExecChannel
     /* ---------------------------------------------------------------------- */
     public int execute(String cmd, ByteArrayOutputStream outStream,
                        ByteArrayOutputStream errStream) 
-     throws IOException
+     throws IOException, TapisException
     {
         // Check call-specific input.
         if (outStream == null) {
@@ -68,12 +79,15 @@ public class SSHExecChannel
             throw new IOException(msg);
         }
         
+        // See if we still have a connection and session, if not restart one.
+        if (_sshConnection.isClosed()) _sshConnection.restart();
+        
         // Create and configure the execution channel.
         int exitCode = -1;  // default value when no remote code returned 
         var session  = _sshConnection.getSession();
         if (session == null) {
             String msg =  MsgUtils.getMsg("TAPIS_SSH_NO_SESSION");
-            throw new IOException(msg);
+            throw new TapisException(msg);
         }
         
         // Create the channel.

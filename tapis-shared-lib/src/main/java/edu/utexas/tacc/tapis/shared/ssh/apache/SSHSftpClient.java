@@ -17,8 +17,13 @@ import org.apache.sshd.client.session.ClientSession;
 import org.apache.sshd.common.channel.Channel;
 import org.apache.sshd.common.session.SessionContext;
 import org.apache.sshd.common.util.buffer.Buffer;
-import org.apache.sshd.sftp.client.FullAccessSftpClient;
 import org.apache.sshd.sftp.client.SftpClient;
+import org.apache.sshd.sftp.client.SftpClient.Attributes;
+import org.apache.sshd.sftp.client.SftpClient.CloseableHandle;
+import org.apache.sshd.sftp.client.SftpClient.CopyMode;
+import org.apache.sshd.sftp.client.SftpClient.DirEntry;
+import org.apache.sshd.sftp.client.SftpClient.Handle;
+import org.apache.sshd.sftp.client.SftpClient.OpenMode;
 import org.apache.sshd.sftp.client.SftpVersionSelector;
 import org.apache.sshd.sftp.client.extensions.SftpClientExtension;
 import org.apache.sshd.sftp.client.extensions.SftpClientExtensionFactory;
@@ -26,7 +31,6 @@ import org.apache.sshd.sftp.client.impl.DefaultSftpClient;
 import org.apache.sshd.sftp.client.impl.DefaultSftpClientFactory;
 
 public class SSHSftpClient
-  implements FullAccessSftpClient
 {
     // Fields.
     private final SSHConnection     _sshConnection;
