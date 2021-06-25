@@ -119,4 +119,21 @@ public class SSHExecChannel
     /* getSSHConnection:                                                      */
     /* ---------------------------------------------------------------------- */
     public SSHConnection getSSHConnection() {return _sshConnection;}
+
+    /* ---------------------------------------------------------------------- */
+    /* pwd:                                                                   */
+    /* ---------------------------------------------------------------------- */
+    /** Convenience method to discover current directory. */
+    public String pwd() throws IOException, TapisException
+    {
+        final int capacity = 256;
+        var output = new ByteArrayOutputStream(capacity);
+        var rc = execute("pwd", output);
+        if (rc != 0) {
+            String msg = MsgUtils.getMsg("TAPIS_SSH_EXEC_CMD_ERROR", "pwd", 
+                _sshConnection.getHost(), _sshConnection.getUsername(), rc);
+            throw new TapisException(msg);
+        }
+        return new String(output.toByteArray());
+    }
 }

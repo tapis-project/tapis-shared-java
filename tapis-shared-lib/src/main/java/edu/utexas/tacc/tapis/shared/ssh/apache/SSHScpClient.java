@@ -224,9 +224,10 @@ public class SSHScpClient
     {
         if (preserveAttributes)
             _scpClient.upload(localDir, remoteDir, Option.PreserveAttributes, 
-                              Option.TargetIsDirectory);
+                              Option.TargetIsDirectory, Option.Recursive);
         else 
-            _scpClient.upload(localDir, remoteDir, Option.TargetIsDirectory);
+            _scpClient.upload(localDir, remoteDir, Option.TargetIsDirectory,
+                              Option.Recursive);
     }
     
     /* ---------------------------------------------------------------------- */
