@@ -4,20 +4,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.channels.FileChannel;
-import java.nio.charset.Charset;
 import java.nio.file.OpenOption;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.List;
-import java.util.NavigableMap;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.apache.sshd.client.channel.ClientChannel;
-import org.apache.sshd.client.session.ClientSession;
-import org.apache.sshd.common.channel.Channel;
-import org.apache.sshd.common.session.SessionContext;
 import org.apache.sshd.common.util.buffer.Buffer;
-import org.apache.sshd.sftp.client.SftpClient;
 import org.apache.sshd.sftp.client.SftpClient.Attributes;
 import org.apache.sshd.sftp.client.SftpClient.CloseableHandle;
 import org.apache.sshd.sftp.client.SftpClient.CopyMode;
@@ -25,85 +18,42 @@ import org.apache.sshd.sftp.client.SftpClient.DirEntry;
 import org.apache.sshd.sftp.client.SftpClient.Handle;
 import org.apache.sshd.sftp.client.SftpClient.OpenMode;
 import org.apache.sshd.sftp.client.SftpVersionSelector;
-import org.apache.sshd.sftp.client.extensions.SftpClientExtension;
-import org.apache.sshd.sftp.client.extensions.SftpClientExtensionFactory;
 import org.apache.sshd.sftp.client.impl.DefaultSftpClient;
 import org.apache.sshd.sftp.client.impl.DefaultSftpClientFactory;
 
+import edu.utexas.tacc.tapis.shared.exceptions.runtime.TapisRuntimeException;
+import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
+
+/** This class delegates all real work to the default apache SftpClient class.
+ * Apache sftp does not support the familiar get and put sftp commands.  Use
+ * SSHScpClient to copy files and directories between hosts.
+ * 
+ * Some apache data types are exposed on this interface.
+ * 
+ * @author rcardone
+ */
 public class SSHSftpClient
+ implements AutoCloseable
 {
     // Fields.
     private final SSHConnection     _sshConnection;
     private final DefaultSftpClient _sftpClient;
     
     // Constructor.
-    SSHSftpClient(SSHConnection conn) throws IOException
+    SSHSftpClient(SSHConnection sshConnection) throws IOException
     {
-        _sshConnection = conn;
+        // Check input.
+        if (sshConnection == null) {
+            String msg = MsgUtils.getMsg("TAPIS_NULL_PARAMETER", "SSHSftpClient", "sshConnection");
+            throw new TapisRuntimeException(msg);
+        }
+       
+        _sshConnection = sshConnection;
         _sftpClient = (DefaultSftpClient) 
             DefaultSftpClientFactory.INSTANCE.createSftpClient(_sshConnection.getSession());
     }
-
-    // Delegated methods.
-    public SessionContext getSessionContext() {
-        return _sftpClient.getSessionContext();
-    }
-
-    public String toString() {
-        return _sftpClient.toString();
-    }
-
-    public ClientSession getSession() {
-        return _sftpClient.getSession();
-    }
-
-    public String getName() {
-        return _sftpClient.getName();
-    }
-
-    public int hashCode() {
-        return _sftpClient.hashCode();
-    }
-
-    public Channel getChannel() {
-        return _sftpClient.getChannel();
-    }
-
-    public <E extends SftpClientExtension> E getExtension(Class<? extends E> extensionType) {
-        return _sftpClient.getExtension(extensionType);
-    }
-
-    public SftpClientExtension getExtension(SftpClientExtensionFactory factory) {
-        return _sftpClient.getExtension(factory);
-    }
-
-    public boolean equals(Object obj) {
-        return _sftpClient.equals(obj);
-    }
-
-    public int getVersion() {
-        return _sftpClient.getVersion();
-    }
-
-    public ClientSession getClientSession() {
-        return _sftpClient.getClientSession();
-    }
-
-    public ClientChannel getClientChannel() {
-        return _sftpClient.getClientChannel();
-    }
-
-    public NavigableMap<String, byte[]> getServerExtensions() {
-        return _sftpClient.getServerExtensions();
-    }
-
-    public Charset getNameDecodingCharset() {
-        return _sftpClient.getNameDecodingCharset();
-    }
-
-    public void setNameDecodingCharset(Charset nameDecodingCharset) {
-        _sftpClient.setNameDecodingCharset(nameDecodingCharset);
-    }
+    
+    public SSHConnection getConnection() {return _sshConnection;}
 
     public boolean isClosing() {
         return _sftpClient.isClosing();
@@ -115,6 +65,10 @@ public class SSHSftpClient
 
     public void close() throws IOException {
         _sftpClient.close();
+    }
+    
+    public String getName() {
+        return _sftpClient.getName();
     }
 
     public int send(int cmd, Buffer buffer) throws IOException {
@@ -245,14 +199,6 @@ public class SSHSftpClient
     public int read(Handle handle, long fileOffset, byte[] dst, int dstOffset, int len,
             AtomicReference<Boolean> eofSignalled) throws IOException {
         return _sftpClient.read(handle, fileOffset, dst, dstOffset, len, eofSignalled);
-    }
-
-    public SftpClientExtension getExtension(String extensionName) {
-        return _sftpClient.getExtension(extensionName);
-    }
-
-    public SftpClient singleSessionInstance() {
-        return _sftpClient.singleSessionInstance();
     }
 
     public void write(Handle handle, long fileOffset, byte[] src, int srcOffset, int len) throws IOException {

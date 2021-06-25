@@ -35,7 +35,7 @@ public class SSHConnection
     /*                            Initializers                                */
     /* ********************************************************************** */
     static {
-        // Turn off apache ssh logging by interfacing directly with logback.
+        // Configure apache ssh logging by interfacing directly with logback.
         var sshLogger = 
            (ch.qos.logback.classic.Logger) org.slf4j.LoggerFactory.getLogger("org.apache.sshd");
         if (sshLogger != null) sshLogger.setLevel(ch.qos.logback.classic.Level.ERROR);
@@ -185,6 +185,14 @@ public class SSHConnection
     public SSHSftpClient getSftpClient() throws IOException
     {
         return new SSHSftpClient(this);
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* getScpClient:                                                          */
+    /* ---------------------------------------------------------------------- */
+    public SSHScpClient getScpClient() throws IOException
+    {
+        return new SSHScpClient(this);
     }
     
     /* ---------------------------------------------------------------------- */
