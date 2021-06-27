@@ -13,8 +13,17 @@ import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
 
 /** This class abstracts the idea of an authenticated SSH connection to a host.
+ * Currently, this class supports exactly one session per instance.  This is
+ * another way of saying that in Tapis, there's a 1-to-1 correspondence between
+ * between connections and sessions.  Apache SSH allows multiple sessions per
+ * connection, where each session is authenticated with its own credentials.
  * 
- * Some of the code in this class concerning PEM file parsing is based on code
+ * Future enhancements might allow for a single, long-lived connection to be
+ * established to commonly used hosts in which the connection would manage many
+ * sessions.  This type of multiplexed connection would act like a tunnel to
+ * the remote host and avoid incurring frequent connection setup overhead.  
+ * 
+ * Some of the code used by this class concerning PEM file parsing is based on code
  * from a public MasterCard repository with MIT license.
  * 
  * Source: https://github.com/Mastercard/client-encryption-java/blob/master/src/main/java/com/mastercard/developer/utils/EncryptionUtils.java

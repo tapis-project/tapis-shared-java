@@ -13,6 +13,21 @@ import edu.utexas.tacc.tapis.shared.ssh.apache.SSHConnection;
 import edu.utexas.tacc.tapis.shared.ssh.apache.SSHExecChannel;
 import edu.utexas.tacc.tapis.systems.client.gen.model.TapisSystem;
 
+/** This class creates a new channel for each remote command that it issues.  Instances
+ * can be constructed directly by users or indirectly via a TapisSSH instance.  The 
+ * preferred method is to use TapisSSH since that class provide easy access to the SCP
+ * and SFTP APIs.
+ * 
+ * The execute() methods of this class return the exit code of the last remote command
+ * run.  A value of -1 is returned if no exit code was retrieved from the last command.   
+ * 
+ * Output from remote commands are captured in one or two byte streams depending
+ * on whether the caller chooses to combine or separate standard out and error.  The last
+ * command, its exit code, and its output streams are available until the next command 
+ * (if any) is run.   
+ * 
+ * @author rcardone
+ */
 public class TapisRunCommand
  extends TapisAbstractConnection
 {

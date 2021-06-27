@@ -13,7 +13,11 @@ import edu.utexas.tacc.tapis.shared.ssh.apache.SSHConnection;
 import edu.utexas.tacc.tapis.systems.client.gen.model.AuthnEnum;
 import edu.utexas.tacc.tapis.systems.client.gen.model.TapisSystem;
 
-public abstract class TapisAbstractConnection 
+/** This class establishes and manages a connection and session to a TapisSystem.  
+ * 
+ * @author rcardone
+ */
+abstract class TapisAbstractConnection 
 {
     /* **************************************************************************** */
     /*                                   Constants                                  */
@@ -96,6 +100,30 @@ public abstract class TapisAbstractConnection
     }
 
     /* ---------------------------------------------------------------------------- */
+    /* closeConnection:                                                             */
+    /* ---------------------------------------------------------------------------- */
+    /** Close the connection if it exists and reset the connection field to null.
+     * This brings the object back to its origin state after construction, which
+     * allows a new connection to the system to be established on demand.  This
+     * method is idempotent.
+     */
+    public void closeConnection()
+    {
+        if (_conn != null) {
+            _conn.close();
+            _conn = null;
+        }
+    }
+    
+    /* ---------------------------------------------------------------------------- */
+    /* getSystem:                                                                   */
+    /* ---------------------------------------------------------------------------- */
+    public TapisSystem getSystem() {return _system;}
+
+    /* **************************************************************************** */
+    /*                             Protected Methods                                */
+    /* **************************************************************************** */
+    /* ---------------------------------------------------------------------------- */
     /* createNewConnection:                                                         */
     /* ---------------------------------------------------------------------------- */
     /** Get a new ssh connection to the system using one of the supported authn 
@@ -113,7 +141,7 @@ public abstract class TapisAbstractConnection
      * @throws IOException when unable to get a connection
      * @throws TapisException invalid or missing credentials
      */
-    public static SSHConnection createNewConnection(TapisSystem system)
+    protected static SSHConnection createNewConnection(TapisSystem system)
      throws TapisException
     {
         // Check input.
@@ -162,30 +190,6 @@ public abstract class TapisAbstractConnection
         return conn;
     }
     
-    /* ---------------------------------------------------------------------------- */
-    /* closeConnection:                                                             */
-    /* ---------------------------------------------------------------------------- */
-    /** Close the connection if it exists and reset the connection field to null.
-     * This brings the object back to its origin state after construction, which
-     * allows a new connection to the system to be established on demand.  This
-     * method is idempotent.
-     */
-    public void closeConnection()
-    {
-        if (_conn != null) {
-            _conn.close();
-            _conn = null;
-        }
-    }
-    
-    /* ---------------------------------------------------------------------------- */
-    /* getSystem:                                                                   */
-    /* ---------------------------------------------------------------------------- */
-    public TapisSystem getSystem() {return _system;}
-
-    /* **************************************************************************** */
-    /*                             Protected Methods                                */
-    /* **************************************************************************** */
     /* ---------------------------------------------------------------------------- */
     /* getSystemHostMessage:                                                        */
     /* ---------------------------------------------------------------------------- */

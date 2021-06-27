@@ -14,6 +14,17 @@ import java.util.Base64;
 import edu.utexas.tacc.tapis.shared.exceptions.TapisSecurityException;
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
 
+/** The purpose of this class is to taken raw key data from file or memory and
+ * convert it to key objects used by the SSH subsystem.
+ * 
+ * Some of the code used by this class concerning PEM file parsing is based on code
+ * from a public MasterCard repository with MIT license.
+ * 
+ * Source: https://github.com/Mastercard/client-encryption-java/blob/master/src/main/java/com/mastercard/developer/utils/EncryptionUtils.java
+ *         https://stackoverflow.com/questions/7216969/getting-rsa-private-key-from-pem-base64-encoded-private-key-file/55339208#55339208
+ * 
+ * @author rcardone
+ */
 public class SSHKeyLoader 
 {
     /* ********************************************************************** */
@@ -269,5 +280,4 @@ public class SSHKeyLoader
         
         return (RSAPublicKey) obj;
     }
-    
 }
