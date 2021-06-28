@@ -65,13 +65,14 @@ public class SSHMedleyOnSystem
         // Get the current directory.
         String pwd = conn.getExecChannel().pwd();
         System.out.println("--> pwd: " + pwd);
+        if (pwd != null) pwd = pwd.trim();
         
         // Specify the remote directory that will get created.
         final String remoteDirName = "DeleteMe";
         
         // Get an sftp client.
         SSHSftpClient sftpClient = conn.getSftpClient();
-        String testDir = remoteDirName;
+        String testDir = pwd + "/" + remoteDirName;
         sftpClient.mkdir(testDir);
         
         // Get the current directory.
