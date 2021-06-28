@@ -200,6 +200,26 @@ public class TapisRunCommand
         return new String(_err.toByteArray());
     }
     
+    /* ---------------------------------------------------------------------------- */
+    /* logNonZeroExitCode:                                                          */
+    /* ---------------------------------------------------------------------------- */
+    public void logNonZeroExitCode()
+    {
+        // Don't log when last command succeeded, doesn't exist
+        // or we're not logging warnings.
+        if (_exitCode == 0) return;
+        if (_command == null) return;
+        if (!_log.isWarnEnabled()) return;
+        
+        // Best effort logging.
+        try {
+            _log.warn(MsgUtils.getMsg("TAPIS_SSH_CMD_ERROR", _command, 
+                      getConnection().getHost(), 
+                      getConnection().getUsername(), 
+                      _exitCode));
+        } catch (Exception e) {}
+    }
+    
     /* **************************************************************************** */
     /*                                  Accessors                                   */
     /* **************************************************************************** */

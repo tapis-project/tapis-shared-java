@@ -46,7 +46,7 @@ public class TapisSSH
     /* ---------------------------------------------------------------------------- */
     /* getRunCommand:                                                               */
     /* ---------------------------------------------------------------------------- */
-    public TapisRunCommand getRunCommand() throws IOException, TapisException 
+    public TapisRunCommand getRunCommand() throws TapisException 
     {
         // Create the run command instance on first use.
         if (_tapisRunCommand == null) 

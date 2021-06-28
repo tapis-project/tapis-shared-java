@@ -34,8 +34,10 @@ public class SSHScpClient
     /* ********************************************************************** */
     /*                               Constants                                */
     /* ********************************************************************** */
-    // Default minimal permissions for upload.
-    private static final List<PosixFilePermission> _defaultPerms = initDefaultPerms();
+    // Define commonly used permissions for upload.
+    public static final List<PosixFilePermission> DEFAULT_PERMS = initDefaultPerms();
+    public static final List<PosixFilePermission> RWRW_PERMS    = initRWRWPerms();
+    public static final List<PosixFilePermission> RWXRWX_PERMS  = initRWXRWXPerms();
     
     /* ********************************************************************** */
     /*                                Fields                                  */
@@ -253,7 +255,7 @@ public class SSHScpClient
      throws IOException
     {
         // Assign default permission if none given.
-        if (perms == null) perms = _defaultPerms;
+        if (perms == null) perms = DEFAULT_PERMS;
         
         // Assign the times if none given.
         if (times == null) times = new FileTimes();
@@ -288,7 +290,7 @@ public class SSHScpClient
      throws IOException
     {
         // Assign default permission if none given.
-        if (perms == null) perms = _defaultPerms;
+        if (perms == null) perms = DEFAULT_PERMS;
         
         // Assign the times if none given.
         if (times == null) times = new FileTimes();
@@ -316,6 +318,36 @@ public class SSHScpClient
         var list = new ArrayList<PosixFilePermission>(capacity);
         list.add(PosixFilePermission.OWNER_READ);
         list.add(PosixFilePermission.OWNER_WRITE);
+        return Collections.unmodifiableList(list);
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* initRWRWPerms:                                                         */
+    /* ---------------------------------------------------------------------- */
+    private static List<PosixFilePermission> initRWRWPerms()
+    {
+        final int capacity = 4;
+        var list = new ArrayList<PosixFilePermission>(capacity);
+        list.add(PosixFilePermission.OWNER_READ);
+        list.add(PosixFilePermission.OWNER_WRITE);
+        list.add(PosixFilePermission.GROUP_READ);
+        list.add(PosixFilePermission.GROUP_WRITE);
+        return Collections.unmodifiableList(list);
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* initRWXRWXPerms:                                                       */
+    /* ---------------------------------------------------------------------- */
+    private static List<PosixFilePermission> initRWXRWXPerms()
+    {
+        final int capacity = 6;
+        var list = new ArrayList<PosixFilePermission>(capacity);
+        list.add(PosixFilePermission.OWNER_READ);
+        list.add(PosixFilePermission.OWNER_WRITE);
+        list.add(PosixFilePermission.OWNER_EXECUTE);
+        list.add(PosixFilePermission.GROUP_READ);
+        list.add(PosixFilePermission.GROUP_WRITE);
+        list.add(PosixFilePermission.GROUP_EXECUTE);
         return Collections.unmodifiableList(list);
     }
     
