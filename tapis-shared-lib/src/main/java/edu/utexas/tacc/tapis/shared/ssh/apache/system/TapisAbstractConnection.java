@@ -92,9 +92,9 @@ abstract class TapisAbstractConnection
         if (_conn != null) return _conn;
         
         // Create a new connection using the system's credentials.
-        if (_log.isTraceEnabled())
-            _log.trace(String.format("Creating new connection for System: %s User: %s",
-                       _system.getId(), _system.getEffectiveUserId()));
+        if (_log.isDebugEnabled())
+            _log.debug(String.format("Creating new connection for System: %s, User: %s",
+                                     _system.getId(), _system.getEffectiveUserId()));
         _conn = createNewConnection(_system);
         return _conn;
     }
