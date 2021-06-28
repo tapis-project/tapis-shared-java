@@ -118,18 +118,7 @@ public class SSHMedleyOnSystem
             }
         }
         if (!foundTestDir) System.out.println(testDir + " deleted.");
-          else System.out.println("ERROR: " + testDir + " NOT deleted!");
-        
-//        System.out.println("--> name = " + sftpClient.getName());
-//        var attribs = sftpClient.stat(".");
-//        System.out.println("--> stat(.) = " + attribs.toString());
-//        
-//        var it = sftpClient.readDir(".");
-//        System.out.println("--> readDir(.):");
-//        for (var elem : it) {
-//            System.out.println("  --> " + elem.toString());
-//        }
-
+          else System.out.println("ERROR: " + testDir + " NOT deleted!");        
     }
 
     private static String getHelpMessage()
