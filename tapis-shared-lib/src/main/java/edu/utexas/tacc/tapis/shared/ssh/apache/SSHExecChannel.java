@@ -12,6 +12,15 @@ import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
 import edu.utexas.tacc.tapis.shared.exceptions.runtime.TapisRuntimeException;
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
 
+/** The execute methods in this class acquire a new channel each time they are
+ * invoked.  The exit code of the remote command is returned.  If an output or
+ * error stream is provided, the remote command's output will be available in
+ * those streams.  
+ * 
+ * No Apache data types are exposed on this interface.
+ * 
+ * @author rcardone
+ */
 public class SSHExecChannel 
 {
     /* ********************************************************************** */
@@ -48,6 +57,13 @@ public class SSHExecChannel
     /* ---------------------------------------------------------------------- */
     /* execute:                                                               */
     /* ---------------------------------------------------------------------- */
+    /** Execute a remote command in which the output is not required.
+     * 
+     * @param cmd the command to execute on the remote host
+     * @return the remote command's exit code
+     * @throws IOException 
+     * @throws TapisException
+     */
     public int execute(String cmd) throws IOException, TapisException
     {
         return execute(cmd, new ByteArrayOutputStream(DEFAULT_OUTPUT_LEN));
@@ -56,6 +72,16 @@ public class SSHExecChannel
     /* ---------------------------------------------------------------------- */
     /* execute:                                                               */
     /* ---------------------------------------------------------------------- */
+    /** Execute a remote command and return its standard out and standard err 
+     * content in the stream.
+     * 
+     * @param cmd the command to execute on the remote host
+     * @param outErrStream the stream containing standard out and standard error
+     *                     of the remote command
+     * @return the remote command's exit code
+     * @throws IOException 
+     * @throws TapisException
+     */
     public int execute(String cmd, ByteArrayOutputStream outErrStream) 
       throws IOException, TapisException
     {
@@ -65,6 +91,16 @@ public class SSHExecChannel
     /* ---------------------------------------------------------------------- */
     /* execute:                                                               */
     /* ---------------------------------------------------------------------- */
+    /** Execute a remote command and return its standard out and standard err 
+     * content in their respective streams.
+     * 
+     * @param cmd the command to execute on the remote host
+     * @param outStream the stream containing standard out of the remote command
+     * @param errStream the stream containing standard err of the remote command
+     * @return the remote command's exit code
+     * @throws IOException 
+     * @throws TapisException
+     */
     public int execute(String cmd, ByteArrayOutputStream outStream,
                        ByteArrayOutputStream errStream) 
      throws IOException, TapisException

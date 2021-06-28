@@ -15,7 +15,7 @@ import edu.utexas.tacc.tapis.systems.client.gen.model.TapisSystem;
 
 /** This class creates a new channel for each remote command that it issues.  Instances
  * can be constructed directly by users or indirectly via a TapisSSH instance.  The 
- * preferred method is to use TapisSSH since that class provide easy access to the SCP
+ * preferred method is to use TapisSSH since that class provides easy access to the SCP
  * and SFTP APIs.
  * 
  * The execute() methods of this class return the exit code of the last remote command

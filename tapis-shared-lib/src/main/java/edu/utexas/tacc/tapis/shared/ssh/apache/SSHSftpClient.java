@@ -24,11 +24,16 @@ import org.apache.sshd.sftp.client.impl.DefaultSftpClientFactory;
 import edu.utexas.tacc.tapis.shared.exceptions.runtime.TapisRuntimeException;
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
 
-/** This class delegates all real work to the default apache SftpClient class.
+/** This class delegates all real work to the default Apache SftpClient class.
  * Apache sftp does not support the familiar get and put sftp commands.  Use
- * SSHScpClient to copy files and directories between hosts.
+ * SSHScpClient to copy files and directories between hosts; use this class to
+ * do more complicated i/o and run other command like mkdir and stat.
  * 
- * Some apache data types are exposed on this interface.
+ * Some Apache data types are exposed on this interface.  See these links for
+ * further information:
+ * 
+ *  https://javadoc.io/doc/org.apache.sshd/sshd-sftp/latest/index.html
+ *  https://github.com/apache/mina-sshd
  * 
  * @author rcardone
  */

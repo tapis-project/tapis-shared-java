@@ -13,7 +13,7 @@ import edu.utexas.tacc.tapis.shared.ssh.apache.SSHConnection;
 import edu.utexas.tacc.tapis.systems.client.gen.model.AuthnEnum;
 import edu.utexas.tacc.tapis.systems.client.gen.model.TapisSystem;
 
-/** This class establishes and manages a connection and session to a TapisSystem.  
+/** This class establishes and manages a connection and its single session to a TapisSystem.  
  * 
  * @author rcardone
  */

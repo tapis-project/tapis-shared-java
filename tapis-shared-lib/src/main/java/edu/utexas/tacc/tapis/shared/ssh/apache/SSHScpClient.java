@@ -20,12 +20,12 @@ import org.apache.sshd.scp.common.helpers.ScpTimestampCommandDetails;
 import edu.utexas.tacc.tapis.shared.exceptions.runtime.TapisRuntimeException;
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
 
-/** This class uses the apache scp facility to move files and directory between
+/** This class uses the Apache scp facility to move files and directory between
  * hosts.  When a source directories is specified, its contents are always 
  * recursively copied.  To avoid recursive copy, using methods that take an
- * array of source files. 
+ * array of source files and include only the files you want to copy. 
  * 
- * No apache data types are exposed on this interface.
+ * No Apache data types are exposed on this interface.
  * 
  * @author rcardone
  */

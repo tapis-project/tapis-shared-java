@@ -10,10 +10,10 @@ import edu.utexas.tacc.tapis.systems.client.gen.model.TapisSystem;
 
 /** Top-level class for SSH access to Tapis systems.  This class's superclass understands
  * how to access the credentials in a TapisSystem object.  A TapisRunCommand instance
- * can be created by this class as well as SCP and SFTP clients, which together provide
+ * and SCP and SFTP clients can be created by this class.  Together, these objects provide
  * access to all Tapis SSH support.  
  * 
- * For custom control of SSH sessions and channels, see the classes in the 
+ * For lower-level, customized control of SSH sessions and channels, see the classes in the 
  * edu.utexas.tacc.tapis.shared.ssh.apache package.
  * 
  * @author rcardone
