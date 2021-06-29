@@ -82,7 +82,7 @@ public class SSHExecChannel
      * @throws IOException 
      * @throws TapisException
      */
-    public int execute(String cmd, ByteArrayOutputStream outErrStream) 
+    public int execute(String cmd, OutputStream outErrStream) 
       throws IOException, TapisException
     {
         return execute(cmd, outErrStream, outErrStream);
@@ -101,8 +101,7 @@ public class SSHExecChannel
      * @throws IOException 
      * @throws TapisException
      */
-    public int execute(String cmd, ByteArrayOutputStream outStream,
-                       ByteArrayOutputStream errStream) 
+    public int execute(String cmd, OutputStream outStream, OutputStream errStream) 
      throws IOException, TapisException
     {
         // Check call-specific input.
