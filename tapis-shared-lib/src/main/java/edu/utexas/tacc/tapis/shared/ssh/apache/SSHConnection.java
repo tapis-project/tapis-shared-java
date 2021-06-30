@@ -6,10 +6,16 @@ import java.security.KeyPair;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sshd.client.SshClient;
 import org.apache.sshd.client.session.ClientSession;
+import org.apache.sshd.common.SshConstants;
+import org.apache.sshd.common.SshException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
+import edu.utexas.tacc.tapis.shared.exceptions.recoverable.TapisRecoverableException;
+import edu.utexas.tacc.tapis.shared.exceptions.recoverable.TapisSSHAuthException;
+import edu.utexas.tacc.tapis.shared.exceptions.recoverable.TapisSSHConnectionException;
+import edu.utexas.tacc.tapis.shared.exceptions.recoverable.TapisSSHTimeoutException;
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
 
 /** This class abstracts the idea of an authenticated SSH connection to a host.
@@ -55,6 +61,9 @@ public class SSHConnection
     /* ********************************************************************** */
     // Public enums.
     public enum AuthMethod {PUBLICKEY_AUTH, PASSWORD_AUTH}
+    
+    // Private enums.
+    private enum ExceptionSource {CONNECT, AUTH}
     
     /* ********************************************************************** */
     /*                                Fields                                  */
@@ -287,9 +296,19 @@ public class SSHConnection
         _client.start();
         
         // Connect the session.
-        _session = _client.connect(_username, _host, _port)
-                   .verify(_timeouts.getConnectMillis())
-                   .getSession();
+        try {
+            _session = _client.connect(_username, _host, _port)
+                       .verify(_timeouts.getConnectMillis())
+                       .getSession();
+        } catch (Exception e) {
+            TapisRecoverableException rex = getRecoverable(e, ExceptionSource.CONNECT);
+            if (rex == null) throw e;
+            rex.state.put("hostname", _host);
+            rex.state.put("username", _username);
+            rex.state.put("port", String.valueOf(_port));
+            rex.state.put("authMethod", _authMethod.name());
+            throw rex;
+        }
         
         // Authenticate the user.
         if (_authMethod == AuthMethod.PASSWORD_AUTH) 
@@ -301,7 +320,16 @@ public class SSHConnection
           }
             
         // Authenticate the user.
-        _session.auth().verify(_timeouts.getAuthenticateMillis());
+        try {_session.auth().verify(_timeouts.getAuthenticateMillis());}
+            catch (Exception e) {
+                TapisRecoverableException rex = getRecoverable(e, ExceptionSource.AUTH);
+                if (rex == null) throw e;
+                rex.state.put("hostname", _host);
+                rex.state.put("username", _username);
+                rex.state.put("port", String.valueOf(_port));
+                rex.state.put("authMethod", _authMethod.name());
+                throw rex;
+            }
     }
 
     /* ---------------------------------------------------------------------- */
@@ -316,4 +344,46 @@ public class SSHConnection
             _session = null;
         }
     }
+
+    /* ---------------------------------------------------------------------- */
+    /* getRecoverable:                                                        */
+    /* ---------------------------------------------------------------------- */
+    /** Return a TapisRecoverableException if a recoverable condition is detected.
+     * The actual exception class returned depends on the call site from where the
+     * exception occurred and the error condition.
+     * 
+     * @param e the exception
+     * @param source the call site where the exception occurred
+     * @return a subclass of TapisRecoverableException or null for unrecoverable exceptions
+     */
+    private TapisRecoverableException getRecoverable(Exception e, ExceptionSource source)
+    {
+        // Let's see what ssh is trying to tell us.
+        if (e instanceof SshException)
+        {
+            // Certain connection and authentication errors are possibly recoverable.
+            int disconnectCode = ((SshException)e).getDisconnectCode();
+            switch (disconnectCode) {
+                // This is the list of recoverable connection and authentication errors.
+                case SshConstants.SSH2_DISCONNECT_CONNECTION_LOST:
+                case SshConstants.SSH2_DISCONNECT_NO_MORE_AUTH_METHODS_AVAILABLE:
+                case SshConstants.SSH2_DISCONNECT_TOO_MANY_CONNECTIONS:
+                case SshConstants.SSH2_DISCONNECT_SERVICE_NOT_AVAILABLE:
+                    if (source == ExceptionSource.CONNECT) 
+                        return new TapisSSHConnectionException(e.getMessage(), e, null);
+                      else 
+                        return new TapisSSHAuthException(e.getMessage(), e, null);
+            }
+        }
+        
+        // We try to detect other recoverable conditions by examining the error message.
+        var msg = e.getMessage();
+        if (msg != null) {
+            if (msg.contains("timeout")) return new TapisSSHTimeoutException(e.getMessage(), e, null);
+        }
+        
+        // Didn't identify any recoverable condition.
+        return null;
+    }
 }
+
