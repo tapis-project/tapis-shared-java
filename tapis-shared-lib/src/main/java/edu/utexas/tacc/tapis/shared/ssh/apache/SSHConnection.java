@@ -46,6 +46,10 @@ public class SSHConnection
     // Tracing.
     private static final Logger _log = LoggerFactory.getLogger(SSHConnection.class);
     
+    // For logging purposes, allow the calling program to initialize the host 
+    // that we are running on.  If not set, no extra logging occurs.
+    private static String LOCAL_NODE_NAME; 
+    
     /* ********************************************************************** */
     /*                            Initializers                                */
     /* ********************************************************************** */
@@ -244,6 +248,11 @@ public class SSHConnection
     @Override
     public void close() {stop();}
     
+    /* ---------------------------------------------------------------------- */
+    /* setLocalNodeName:                                                      */
+    /* ---------------------------------------------------------------------- */
+    public static void setLocalNodeName(String nodeName) {LOCAL_NODE_NAME = nodeName;}
+    
     /* ********************************************************************** */
     /*                               Accessors                                */
     /* ********************************************************************** */
@@ -309,6 +318,7 @@ public class SSHConnection
             rex.state.put("authMethod", _authMethod.name());
             throw rex;
         }
+        if (LOCAL_NODE_NAME != null) logConnect();
         
         // Authenticate the user.
         if (_authMethod == AuthMethod.PASSWORD_AUTH) 
@@ -330,6 +340,7 @@ public class SSHConnection
                 rex.state.put("authMethod", _authMethod.name());
                 throw rex;
             }
+        if (LOCAL_NODE_NAME != null) logAuth();
     }
 
     /* ---------------------------------------------------------------------- */
@@ -339,7 +350,8 @@ public class SSHConnection
     {
         // Close the session.
         if (_session != null) { 
-            // close abruptly or gracefully.
+            if (LOCAL_NODE_NAME != null) logDisconnect();
+            // Close abruptly or gracefully.
             _session.close(immediate);
             _session = null;
         }
@@ -384,6 +396,42 @@ public class SSHConnection
         
         // Didn't identify any recoverable condition.
         return null;
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* logConnect:                                                            */
+    /* ---------------------------------------------------------------------- */
+    private void logConnect()
+    {
+        if (!_log.isDebugEnabled()) return;
+        byte[] bytes = _session == null ? null : _session.getSessionId();
+        String id = (bytes != null) ? null : new String(bytes);
+        _log.debug(MsgUtils.getMsg("TAPIS_SSH_CONNECT", LOCAL_NODE_NAME, 
+                                   _username, _host, _port, id));
+    }
+
+    /* ---------------------------------------------------------------------- */
+    /* logDisconnect:                                                         */
+    /* ---------------------------------------------------------------------- */
+    private void logDisconnect()
+    {
+        if (!_log.isDebugEnabled()) return;
+        byte[] bytes = _session == null ? null : _session.getSessionId();
+        String id = (bytes != null) ? null : new String(bytes);
+        _log.debug(MsgUtils.getMsg("TAPIS_SSH_DISCONNECT", LOCAL_NODE_NAME,
+                                   _username, _host, _port, id));
+    }
+
+    /* ---------------------------------------------------------------------- */
+    /* logAuth:                                                               */
+    /* ---------------------------------------------------------------------- */
+    private void logAuth()
+    {
+        if (!_log.isDebugEnabled()) return;
+        byte[] bytes = _session == null ? null : _session.getSessionId();
+        String id = (bytes != null) ? null : new String(bytes);
+        _log.debug(MsgUtils.getMsg("TAPIS_SSH_AUTH", LOCAL_NODE_NAME, _username, 
+                                   _host, _port, id, _authMethod.name()));
     }
 }
 

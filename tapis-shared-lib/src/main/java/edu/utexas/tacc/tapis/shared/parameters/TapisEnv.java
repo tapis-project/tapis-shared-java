@@ -102,6 +102,10 @@ public class TapisEnv
 	  // See the various logback.xml configuration files for usage details.
 	  TAPIS_LOG_FILE("tapis.log.file"),
 	  
+	  // The node on which we are running, which may be the name assigned
+	  // by an orchestrator like Kubernetes.
+	  TAPIS_LOCAL_NODE_NAME("tapis.local.node.name"),
+	  
 	  // ------------------- SQL Database Parameters -------------------
 	  // MySQL parameters.
 	  TAPIS_DB_CONNECTION_POOL_SIZE("tapis.db.connection.pool.size"),
