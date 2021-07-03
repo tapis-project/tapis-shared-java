@@ -405,7 +405,7 @@ public class SSHConnection
     {
         if (!_log.isDebugEnabled()) return;
         byte[] bytes = _session == null ? null : _session.getSessionId();
-        String id = (bytes != null) ? null : new String(bytes);
+        String id = (bytes == null) ? null : new String(bytes);
         _log.debug(MsgUtils.getMsg("TAPIS_SSH_CONNECT", LOCAL_NODE_NAME, 
                                    _username, _host, _port, id));
     }
@@ -417,7 +417,7 @@ public class SSHConnection
     {
         if (!_log.isDebugEnabled()) return;
         byte[] bytes = _session == null ? null : _session.getSessionId();
-        String id = (bytes != null) ? null : new String(bytes);
+        String id = (bytes == null) ? null : new String(bytes);
         _log.debug(MsgUtils.getMsg("TAPIS_SSH_DISCONNECT", LOCAL_NODE_NAME,
                                    _username, _host, _port, id));
     }
@@ -429,7 +429,7 @@ public class SSHConnection
     {
         if (!_log.isDebugEnabled()) return;
         byte[] bytes = _session == null ? null : _session.getSessionId();
-        String id = (bytes != null) ? null : new String(bytes);
+        String id = (bytes == null) ? null : new String(bytes);
         _log.debug(MsgUtils.getMsg("TAPIS_SSH_AUTH", LOCAL_NODE_NAME, _username, 
                                    _host, _port, id, _authMethod.name()));
     }
