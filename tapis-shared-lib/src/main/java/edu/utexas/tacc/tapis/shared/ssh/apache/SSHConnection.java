@@ -405,10 +405,8 @@ public class SSHConnection
     private void logConnect()
     {
         if (!_log.isDebugEnabled()) return;
-        byte[] bytes = _session == null ? null : _session.getSessionId();
-        String id = (bytes == null) ? "no-id" : new String(bytes);
         _log.debug(MsgUtils.getMsg("TAPIS_SSH_CONNECT", LOCAL_NODE_NAME, 
-                                   _username, _host, _port, id));
+                                   _username, _host, _port));
     }
 
     /* ---------------------------------------------------------------------- */
