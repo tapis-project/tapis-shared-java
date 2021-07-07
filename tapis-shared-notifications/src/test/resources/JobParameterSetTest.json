@@ -1,0 +1,58 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://tapis.tacc.utexas.edu/JobParameterSetTest",
+    "description": "Top-level schema for job parameter set testing",
+    "additionalProperties": false,
+    "type": "object",
+        "properties": {
+          "parameterSet": {
+            "$comment": "Runtime parameters organized by category",
+            "type": "object",
+            "$ref": "#/$defs/Parameters"
+          }
+        },
+    "required": [
+        "parameterSet"
+    ],
+    "$defs": {
+        "Parameters": {
+            "type": "object",
+                "properties": {
+                    "appArgs": {
+                        "$comment": "Command line arguments passed to the user application",
+                        "type": "array",
+                        "items": {"$ref": "resource:///edu/utexas/tacc/tapis/shared/jsonschema/defs/TapisDefinitions.json#/$defs/ArgSpec"},
+                        "uniqueItems": true
+                    },
+                    "containerArgs": {
+                        "$comment": "Command line arguments passed to the container runtime when running a container",
+                        "type": "array",
+                        "items": {"$ref": "resource:///edu/utexas/tacc/tapis/shared/jsonschema/defs/TapisDefinitions.json#/$defs/ArgSpec"},
+                        "uniqueItems": true
+                    },
+                    "schedulerOptions": {
+                        "$comment": "Arguments passed to the HPC batch scheduler",
+                        "type": "array",
+                        "items": {"$ref": "resource:///edu/utexas/tacc/tapis/shared/jsonschema/defs/TapisDefinitions.json#/$defs/ArgSpec"},
+                        "uniqueItems": true
+                    },
+                    "envVariables": {
+                        "$comment": "Environment variables passed into the application container on start up",
+                        "type": "array",
+                        "items": {"$ref": "resource:///edu/utexas/tacc/tapis/shared/jsonschema/defs/TapisDefinitions.json#/$defs/KeyValuePair"},
+                        "uniqueItems": true
+                    },
+                    "archiveFilter": {
+                        "$comment": "Output files to include and exclude from archiving, wildcard and regex support, default=all files in execSystemOutputDir",
+                        "type": "object",
+                        "properties": {
+                            "includes": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+                            "excludes": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+                        },
+                        "additionalProperties": false
+                    }
+                },
+                "additionalProperties": false
+        }
+    }
+}

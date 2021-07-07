@@ -1,0 +1,91 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "JSON schema for definitions referenced by top-level shema objects",
+  "type": "object",
+  "additionalProperties" : false,
+  "$defs": {
+        "InputSpec": {
+            "$comment": "Used to specify file inputs on Jobs submission requests",
+            "type": "object",
+                "properties": {
+                    "sourceUrl":  {"type": "string", "minLength": 1, "format": "uri"},
+                    "targetPath": {"type": "string", "minLength": 0},
+                    "inPlace":    {"type": "boolean"},
+                    "meta":       {"type": "object", "$ref": "#/$defs/ArgMetaSpec"}             
+             },
+             "required": ["sourceUrl"],
+             "additionalProperties": false
+        },
+        "ArgSpec": {
+            "$comment": "Used to specify parameters on Jobs submission requests",
+            "type": "object",
+                "properties": {
+                    "arg":  {"type": "string", "minLength": 1},
+                    "meta": {"type": "object", "$ref": "#/$defs/ArgMetaSpec"}
+             },
+             "required": ["arg"],
+             "additionalProperties": false
+        },
+        "ArgMetaSpec": {
+            "$comment": "An open-ended way to name and annotate arguments",
+            "type": "object",
+                "properties": {
+                    "description": {"type": "string", "minLength": 1, "maxLength": 8096},
+                    "name":        {"type": "string", "minLength": 1},
+                    "required":    {"type": "boolean"},
+                    "kv":          {"type": "array",
+                                    "items": {"$ref": "#/$defs/KeyValuePair"},
+                                    "uniqueItems": true}
+             },
+             "required": ["name", "required"],
+             "additionalProperties": false
+        },
+        "KeyValuePair": {
+            "$comment": "A simple key/value pair",
+            "type": "object",
+                "properties": {
+                    "key":   {"type": "string", "minLength": 1},
+                    "value": {"type": "string", "minLength": 0}
+             },
+             "required": ["key", "value"],
+             "additionalProperties": false
+        },
+        "Constraint": {
+            "$comment": "Specify a constraint expression to be applied against system capabilities as the concatenation of the array items",
+            "type": "array",
+            "items": {"type": "string"}
+        },
+        "RuntimeOptionEnum": {
+            "$comment": "Runtime options or directives used during job execution",
+            "type": "string", 
+            "enum": ["SINGULARITY_START", "SINGULARITY_RUN"]
+        },
+        "NotificationSubscription": {
+            "$comment": "Define a notification service subscription",
+            "type" : "object",
+                "properties" : {
+                    "filter" : {"type" : "string", "minLength": 1},
+                    "notificationMechanisms" : {
+                        "type" : "array",
+                        "items" : {"$ref" : "#/$defs/NotificationMechanism"},
+                        "uniqueItems": true}
+                },
+            "required" : [ "notificationMechanisms" ],
+            "additionalProperties": false
+        },
+        "NotificationMechanism" : {
+            "$comment": "The delivery modes for notifications",
+            "type" : "object",
+            "properties" : {
+                "mechanism" : {
+                    "type" : "string",
+                    "enum" : [ "WEBHOOK", "EMAIL", "QUEUE", "ACTOR" ]
+                },
+                "webhookURL" :   {"type" : "string"},
+                "emailAddress" : {"type" : "string"}
+            },
+            "required" : [ "mechanism" ],
+            "additionalProperties": false
+      }
+  }
+}
