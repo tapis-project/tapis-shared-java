@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>edu.utexas.tacc.tapis</groupId>
   <artifactId>tapis-shared-java</artifactId>
-  <version>1.11.107</version>
+  <version>1.11.108</version>
   <packaging>pom</packaging>
   <name>Tapis shared</name>
   <description>TAPIS shared Java code</description>
@@ -213,7 +213,6 @@
     <skip.signing>true</skip.signing>
     <httpmime.version>4.5.8</httpmime.version>
     <okhttp.version>2.7.5</okhttp.version>
-    <jcraft.version>0.1.55</jcraft.version>
     <hk2.version>2.6.1</hk2.version>
     <commons-codec.version>1.15</commons-codec.version>
     <tapis-client-java.version>[1.11.92,2.0)</tapis-client-java.version>
@@ -222,7 +221,7 @@
     <apache-sshd.version>2.7.0</apache-sshd.version>
     <mockito-core.version>3.0.0</mockito-core.version>
     <javax.websocket-api.version>1.1</javax.websocket-api.version>
-    <build.timestamp>2021-07-07T13:15:22Z</build.timestamp>
+    <build.timestamp>2021-07-07T17:07:56Z</build.timestamp>
     <statefulj.version>3.0</statefulj.version>
     <java-source.version>1.15</java-source.version>
     <reactor-rabbitmq.version>1.5.2</reactor-rabbitmq.version>
@@ -371,7 +370,7 @@
       </testResource>
     </testResources>
     <directory>target</directory>
-    <finalName>tapis-shared-java-1.11.107</finalName>
+    <finalName>tapis-shared-java-1.11.108</finalName>
   </build>
   <reporting>
     <outputDirectory>target/site</outputDirectory>
