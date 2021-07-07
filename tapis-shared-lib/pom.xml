@@ -125,12 +125,6 @@
             <artifactId>eddsa</artifactId>
         </dependency> 
         
-        <!-- DELETE after switching to Apache SSH -->   
-        <dependency>
-            <groupId>com.jcraft</groupId>
-            <artifactId>jsch</artifactId>
-        </dependency>
-        
         <!-- To be relocated to another pom -->
         <dependency>
             <groupId>com.zaxxer</groupId>
