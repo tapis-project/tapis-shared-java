@@ -131,7 +131,7 @@ public class SSHExecChannel
         channel.setErr(errStream);
         try {    
             // Open the channel.
-            channel.open().verify(_sshConnection.getTimeouts().getConnectMillis());
+            channel.open().verify(_sshConnection.getTimeouts().getOpenChannelMillis());
             
             // Send the command and close its stream.
             try (OutputStream pipedIn = channel.getInvertedIn()) {
