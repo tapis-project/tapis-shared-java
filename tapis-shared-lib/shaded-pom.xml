@@ -124,11 +124,6 @@
             <groupId>net.i2p.crypto</groupId>
             <artifactId>eddsa</artifactId>
         </dependency> 
-        <!-- DELETE after switching to Apache SSH -->   
-        <dependency>
-            <groupId>com.jcraft</groupId>
-            <artifactId>jsch</artifactId>
-        </dependency>
         
         <!-- To be relocated to another pom -->
         <dependency>
