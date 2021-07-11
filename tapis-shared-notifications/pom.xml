@@ -48,5 +48,17 @@
         </dependency>
 
     </dependencies>
+    <build>
+        <sourceDirectory>src/main/java</sourceDirectory>
 
+        <plugins>
+            <!-- Capture the git commit hash and branch identifiers. -->
+            <!-- See parent pom for configuration details. -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>buildnumber-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+        <finalName>tapis-sharednotifications</finalName>
+    </build>
 </project>
