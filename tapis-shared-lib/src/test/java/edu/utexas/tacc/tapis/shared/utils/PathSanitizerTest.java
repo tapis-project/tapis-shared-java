@@ -34,9 +34,6 @@ public class PathSanitizerTest {
 		dirPath = "/home/bud/../mydir/myfile.txt";
 		isParent = PathSanitizer.detectParentDir(dirPath);
         Assert.assertEquals(isParent, falseHolder);
-        
-        String test = "\56\u002e";
-        System.out.println(test);
 	}
 	
 	/* ---------------------------------------------------------------------------- */
@@ -101,11 +98,35 @@ public class PathSanitizerTest {
         expectedOut = true;
         Assert.assertEquals(out, expectedOut);      
         
-        dirPath = "/home../..bud/my..dir/myfile/../\u002e\u002e";
-        System.out.println(dirPath);
+        dirPath = "/home../..bud/my..dir/myfile/\u002e\u002e";
+        out = PathSanitizer.splitAndCheckForParent(dirPath);
+        expectedOut = true;
+        Assert.assertEquals(out,expectedOut);
         
-        dirPath = "/home../..bud/my..dir/myfile/../%2e%2e";
-        System.out.println(dirPath);
+        dirPath = "/home../..bud/my..dir/myfile/.\u002e";
+        out = PathSanitizer.splitAndCheckForParent(dirPath);
+        expectedOut = true;
+        Assert.assertEquals(out,expectedOut);
+        
+        dirPath = "/home../..bud/my..dir/myfile/\u002e.";
+        out = PathSanitizer.splitAndCheckForParent(dirPath);
+        expectedOut = true;
+        Assert.assertEquals(out,expectedOut);
+        
+        dirPath = "/home../..bud/my..dir/myfile/\56\56";
+        out = PathSanitizer.splitAndCheckForParent(dirPath);
+        expectedOut = true;
+        Assert.assertEquals(out,expectedOut);
+        
+        dirPath = "/home../..bud/my..dir/myfile/.\56";
+        out = PathSanitizer.splitAndCheckForParent(dirPath);
+        expectedOut = true;
+        Assert.assertEquals(out,expectedOut);
+        
+        dirPath = "/home../..bud/my..dir/myfile/\56.";
+        out = PathSanitizer.splitAndCheckForParent(dirPath);
+        expectedOut = true;
+        Assert.assertEquals(out,expectedOut);
 	}
 	
 }
