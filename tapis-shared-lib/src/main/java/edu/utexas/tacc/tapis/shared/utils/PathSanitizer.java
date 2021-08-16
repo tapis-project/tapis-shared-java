@@ -3,12 +3,27 @@ package edu.utexas.tacc.tapis.shared.utils;
 import java.io.IOException;
 import java.net.URI;
 import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
 import org.apache.commons.io.FilenameUtils;
 
-
 public class PathSanitizer{
-	   
+	//STATIC VARIABLES
+	final static String dotPattern = "..";
+	final static Pattern dotPatt = Pattern.compile(dotPattern);
+	final static String slashPattern = "/";
+	final static Pattern slashPatt = Pattern.compile(slashPattern);
+	//Regex pattern that returns true if the string being checked DOES NOT
+    //contain any of the chars: $, &, >, |, ;, `
+	final static String regPattern = "[^$&>|;`]+";
+	final static Pattern regPatt = Pattern.compile(regPattern);
+	final static String[] dangPatterns = {"..","&&","||","\n",};
+	
+	public static String[] usingSplit(String path) {
+		return slashPatt.split(path);
+	}
+	
+	
 	//Not very useful for path sanitizing
 	//Checks for ".." and "." and recognizes them, but it then returns
 	//the path with ".." and "." executed meaning /home/bud/../mydir/myfile
@@ -36,8 +51,7 @@ public class PathSanitizer{
 	//When this function returns true it is signaling that the path being checked DOES NOT
 	//contain "..". This function can be extended to include a list of unwanted pattern to check for.
 	public static boolean detectParentDir(String in) {
-	    final String pattern = "..";
-	    if(in.indexOf(pattern) != -1) return false;  
+	    if(in.indexOf(dotPattern) != -1) return false;  
 	    else return true;
 	}
 	
@@ -47,16 +61,29 @@ public class PathSanitizer{
 	//escapes to any string that makes its way to the command line. Checks for presence of 
 	//patterns: "..", "&&", "||", "\n" and additionally the presence of chars: $, &, >, |, ;, ` 
 	//This method returns true if there are NO dangerous characters or patterns.
-	public static boolean strictDangerousCharCheck(String in) {
-        String[] patterns = {"..","&&","||","\n",};
-        for(int i=0; i<patterns.length; i++) {
-        	if(in.indexOf(patterns[i]) != -1) {
+	public static boolean strictDangerousCharCheck(String pathIn) {
+        for(int i=0; i<dangPatterns.length; i++) {
+        	if(pathIn.indexOf(dangPatterns[i]) != -1) {
         		return false;
         	}
         }
+        Matcher m = regPatt.matcher(pathIn);
         //Regex pattern that returns true if the string being checked DOES NOT
         //contain any of the chars: $, &, >, |, ;, `
-		boolean exitFlag = Pattern.matches("[^$&>|;`]+", in);
+		boolean exitFlag = m.matches();
         return exitFlag;
 	}  
+	
+	//returns true if special case is detected and string should be rejected
+	//TODO: ADD FUNCTION TO PROCESS UNICODE BLOCKS EX: \u002e
+	public static boolean splitAndCheckForParent(String pathIn) {
+		String[] contents = PathSanitizer.usingSplit(pathIn);
+	    boolean containsChar = false;
+		for(int i=0; i<contents.length; i++) {
+			if(contents[i].matches(dotPattern)) {
+			    containsChar = true;
+			}
+		}
+		return containsChar;
+	}
 }
