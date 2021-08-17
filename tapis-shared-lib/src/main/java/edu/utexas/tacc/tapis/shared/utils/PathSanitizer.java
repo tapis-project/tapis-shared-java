@@ -15,7 +15,7 @@ public class PathSanitizer{
 	final static Pattern slashPatt = Pattern.compile(slashPattern);
 	//Regex pattern that returns true if the string being checked DOES NOT
     //contain any of the chars: $, &, >, |, ;, `
-	final static String regPattern = "[^$&>|;`]+";
+	final static String regPattern = "[^&><|;`]+";
 	final static Pattern regPatt = Pattern.compile(regPattern);
 	final static String[] dangPatterns = {"..","&&","||","\n",};
 	
@@ -45,21 +45,11 @@ public class PathSanitizer{
 	    System.out.println("Normalized Path: " + FilenameUtils.normalize(filename));
 	}
 	
-	//Method to check user supplied strings for presence of ".." path traversal pattern.
-	//This function is intended to be used to cleanse any string that makes its 
-	//way to the command line directly and should not allow for unwanted path traversal. 
-	//When this function returns true it is signaling that the path being checked DOES NOT
-	//contain "..". This function can be extended to include a list of unwanted pattern to check for.
-	public static boolean detectParentDir(String in) {
-	    if(in.indexOf(dotPattern) != -1) return false;  
-	    else return true;
-	}
-	
 	
 	//Regex function to check user supplied strings for dangerous characters. This
 	//function is intended to be used to prevent users from inserting commands and 
 	//escapes to any string that makes its way to the command line. Checks for presence of 
-	//patterns: "..", "&&", "||", "\n" and additionally the presence of chars: $, &, >, |, ;, ` 
+	//patterns: "..", "&&", "||", "\n" and additionally the presence of chars: &, >, <, |, ;, ` 
 	//This method returns true if there are NO dangerous characters or patterns.
 	public static boolean strictDangerousCharCheck(String pathIn) {
         for(int i=0; i<dangPatterns.length; i++) {
@@ -69,13 +59,16 @@ public class PathSanitizer{
         }
         Matcher m = regPatt.matcher(pathIn);
         //Regex pattern that returns true if the string being checked DOES NOT
-        //contain any of the chars: $, &, >, |, ;, `
+        //contain any of the chars: &, >, <, |, ;, `
 		boolean exitFlag = m.matches();
         return exitFlag;
 	}  
 	
+	
+	//Method to check user supplied strings for presence of ".." path traversal pattern.
+	//This function is intended to be used to cleanse any string that makes its 
+	//way to the command line directly and should not allow for unwanted path traversal.
 	//returns true if special case is detected and string should be rejected
-	//TODO: ADD FUNCTION TO PROCESS UNICODE BLOCKS EX: \u002e
 	public static boolean splitAndCheckForParent(String pathIn) {
 		String[] contents = PathSanitizer.usingSplit(pathIn);
 	    boolean containsChar = false;

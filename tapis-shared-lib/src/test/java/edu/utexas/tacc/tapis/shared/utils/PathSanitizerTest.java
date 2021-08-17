@@ -1,9 +1,5 @@
 package edu.utexas.tacc.tapis.shared.utils;
 
-import java.nio.charset.Charset;
-
-import org.apache.commons.lang3.CharSet;
-import org.apache.commons.lang3.StringEscapeUtils;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -14,28 +10,7 @@ import edu.utexas.tacc.tapis.shared.utils.PathSanitizer;
 public class PathSanitizerTest {
 	/* **************************************************************************** */
     /*                                    Tests                                     */
-    /* **************************************************************************** */
-    /* ---------------------------------------------------------------------------- */
-    /* detectParentDirTest                                                          */
-    /* ---------------------------------------------------------------------------- */
-	@Test(enabled=true)
-	public void detectParentDirTest()
-	{
-		String dirPath = "/home/bud/mydir/myfile";
-		Boolean isParent = PathSanitizer.detectParentDir(dirPath);
-	    Boolean falseHolder = false;
-	    Boolean trueHolder = true;
-		Assert.assertEquals(isParent, trueHolder);
-		
-		dirPath = "/home/bud/mydir/myfile.txt";
-		isParent = PathSanitizer.detectParentDir(dirPath);
-		Assert.assertEquals(isParent, trueHolder);
-		
-		dirPath = "/home/bud/../mydir/myfile.txt";
-		isParent = PathSanitizer.detectParentDir(dirPath);
-        Assert.assertEquals(isParent, falseHolder);
-	}
-	
+    /* **************************************************************************** */	
 	/* ---------------------------------------------------------------------------- */
     /* strictDangerousCharCheckTest                                                 */
     /* ---------------------------------------------------------------------------- */
