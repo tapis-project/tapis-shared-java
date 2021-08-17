@@ -3,8 +3,6 @@ package edu.utexas.tacc.tapis.shared.utils;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import edu.utexas.tacc.tapis.shared.utils.PathSanitizer;
-
 
 @Test(groups= {"unit"})
 public class PathSanitizerTest {
@@ -18,21 +16,21 @@ public class PathSanitizerTest {
 	public void strictDangerousCharCheckTest()
 	{
         String dirPath = "/home/bud/mydir/myfile";
-        Boolean testResult = PathSanitizer.strictDangerousCharCheck(dirPath);
+        Boolean testResult = PathSanitizer.hasDangerousChars(dirPath);
         Boolean falseHolder = false;
         Boolean trueHolder = true;
         Assert.assertEquals(testResult, trueHolder);
        
         dirPath = "home/bud/mydir/myfile1.txt";
-        testResult = PathSanitizer.strictDangerousCharCheck(dirPath);
+        testResult = PathSanitizer.hasDangerousChars(dirPath);
         Assert.assertEquals(testResult, trueHolder);
        
         dirPath = "home/bud/../mydir/myfile1.txt";
-        testResult = PathSanitizer.strictDangerousCharCheck(dirPath);
+        testResult = PathSanitizer.hasDangerousChars(dirPath);
         Assert.assertEquals(testResult, falseHolder);
        
         dirPath = "home/bud/mydir/myfile1.txt; ls -al";
-        testResult = PathSanitizer.strictDangerousCharCheck(dirPath);
+        testResult = PathSanitizer.hasDangerousChars(dirPath);
         Assert.assertEquals(testResult, falseHolder);
 	}
 	
@@ -59,47 +57,47 @@ public class PathSanitizerTest {
 	@Test(enabled = true)
 	public void splitAndCheckForParentTest() {
         String dirPath = "/home/bud/mydir/myfile";
-        boolean out = PathSanitizer.splitAndCheckForParent(dirPath);
+        boolean out = PathSanitizer.hasParentTraversal(dirPath);
         boolean expectedOut = false;
         Assert.assertEquals(out, expectedOut);
         
         dirPath = "/home../..bud/my..dir/myfile";
-        out = PathSanitizer.splitAndCheckForParent(dirPath);
+        out = PathSanitizer.hasParentTraversal(dirPath);
         expectedOut = false;
         Assert.assertEquals(out, expectedOut);
         
         dirPath = "/home../..bud/my..dir/myfile/..";
-        out = PathSanitizer.splitAndCheckForParent(dirPath);
+        out = PathSanitizer.hasParentTraversal(dirPath);
         expectedOut = true;
         Assert.assertEquals(out, expectedOut);      
         
         dirPath = "/home../..bud/my..dir/myfile/\u002e\u002e";
-        out = PathSanitizer.splitAndCheckForParent(dirPath);
+        out = PathSanitizer.hasParentTraversal(dirPath);
         expectedOut = true;
         Assert.assertEquals(out,expectedOut);
         
         dirPath = "/home../..bud/my..dir/myfile/.\u002e";
-        out = PathSanitizer.splitAndCheckForParent(dirPath);
+        out = PathSanitizer.hasParentTraversal(dirPath);
         expectedOut = true;
         Assert.assertEquals(out,expectedOut);
         
         dirPath = "/home../..bud/my..dir/myfile/\u002e.";
-        out = PathSanitizer.splitAndCheckForParent(dirPath);
+        out = PathSanitizer.hasParentTraversal(dirPath);
         expectedOut = true;
         Assert.assertEquals(out,expectedOut);
         
         dirPath = "/home../..bud/my..dir/myfile/\56\56";
-        out = PathSanitizer.splitAndCheckForParent(dirPath);
+        out = PathSanitizer.hasParentTraversal(dirPath);
         expectedOut = true;
         Assert.assertEquals(out,expectedOut);
         
         dirPath = "/home../..bud/my..dir/myfile/.\56";
-        out = PathSanitizer.splitAndCheckForParent(dirPath);
+        out = PathSanitizer.hasParentTraversal(dirPath);
         expectedOut = true;
         Assert.assertEquals(out,expectedOut);
         
         dirPath = "/home../..bud/my..dir/myfile/\56.";
-        out = PathSanitizer.splitAndCheckForParent(dirPath);
+        out = PathSanitizer.hasParentTraversal(dirPath);
         expectedOut = true;
         Assert.assertEquals(out,expectedOut);
 	}
