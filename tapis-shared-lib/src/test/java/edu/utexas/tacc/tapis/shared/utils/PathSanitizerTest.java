@@ -13,25 +13,37 @@ public class PathSanitizerTest {
     /* strictDangerousCharCheckTest                                                 */
     /* ---------------------------------------------------------------------------- */
 	@Test(enabled = true)
-	public void strictDangerousCharCheckTest()
+	public void hasDangerousCharsTest()
 	{
         String dirPath = "/home/bud/mydir/myfile";
         Boolean testResult = PathSanitizer.hasDangerousChars(dirPath);
         Boolean falseHolder = false;
         Boolean trueHolder = true;
-        Assert.assertEquals(testResult, trueHolder);
+        Assert.assertEquals(testResult, falseHolder);
        
         dirPath = "home/bud/mydir/myfile1.txt";
         testResult = PathSanitizer.hasDangerousChars(dirPath);
-        Assert.assertEquals(testResult, trueHolder);
+        Assert.assertEquals(testResult, falseHolder);
        
         dirPath = "home/bud/../mydir/myfile1.txt";
         testResult = PathSanitizer.hasDangerousChars(dirPath);
         Assert.assertEquals(testResult, falseHolder);
-       
-        dirPath = "home/bud/mydir/myfile1.txt; ls -al";
+        
+        dirPath = "home/bud/mydir/myfile1.txt;";
         testResult = PathSanitizer.hasDangerousChars(dirPath);
-        Assert.assertEquals(testResult, falseHolder);
+        Assert.assertEquals(testResult, trueHolder);
+        
+        dirPath = "home/bud/mydir/myfile1.txt; ls -al & ls -al";
+        testResult = PathSanitizer.hasDangerousChars(dirPath);
+        Assert.assertEquals(testResult, trueHolder);
+        
+        dirPath = "home/bud/mydir/myfile1.txt; \n \t";
+        testResult = PathSanitizer.hasDangerousChars(dirPath);
+        Assert.assertEquals(testResult, trueHolder);
+        
+        dirPath = "&><|;`";
+        testResult = PathSanitizer.hasDangerousChars(dirPath);
+        Assert.assertEquals(testResult, trueHolder);
 	}
 	
 	/* ---------------------------------------------------------------------------- */
@@ -55,7 +67,7 @@ public class PathSanitizerTest {
     /* splitAndCheckForParentTest                                                   */
     /* ---------------------------------------------------------------------------- */
 	@Test(enabled = true)
-	public void splitAndCheckForParentTest() {
+	public void hasParentTraversalTest() {
         String dirPath = "/home/bud/mydir/myfile";
         boolean out = PathSanitizer.hasParentTraversal(dirPath);
         boolean expectedOut = false;
