@@ -16,34 +16,32 @@ public class PathSanitizerTest {
 	public void hasDangerousCharsTest()
 	{
         String dirPath = "/home/bud/mydir/myfile";
-        Boolean testResult = PathSanitizer.hasDangerousChars(dirPath);
-        Boolean falseHolder = false;
-        Boolean trueHolder = true;
-        Assert.assertEquals(testResult, falseHolder);
+        boolean out = PathSanitizer.hasDangerousChars(dirPath);
+        Assert.assertEquals(out, false);
        
         dirPath = "home/bud/mydir/myfile1.txt";
-        testResult = PathSanitizer.hasDangerousChars(dirPath);
-        Assert.assertEquals(testResult, falseHolder);
+        out = PathSanitizer.hasDangerousChars(dirPath);
+        Assert.assertEquals(out, false);
        
         dirPath = "home/bud/../mydir/myfile1.txt";
-        testResult = PathSanitizer.hasDangerousChars(dirPath);
-        Assert.assertEquals(testResult, falseHolder);
+        out = PathSanitizer.hasDangerousChars(dirPath);
+        Assert.assertEquals(out, false);
         
         dirPath = "home/bud/mydir/myfile1.txt;";
-        testResult = PathSanitizer.hasDangerousChars(dirPath);
-        Assert.assertEquals(testResult, trueHolder);
+        out = PathSanitizer.hasDangerousChars(dirPath);
+        Assert.assertEquals(out, true);
         
         dirPath = "home/bud/mydir/myfile1.txt; ls -al & ls -al";
-        testResult = PathSanitizer.hasDangerousChars(dirPath);
-        Assert.assertEquals(testResult, trueHolder);
+        out = PathSanitizer.hasDangerousChars(dirPath);
+        Assert.assertEquals(out, true);
         
         dirPath = "home/bud/mydir/myfile1.txt; \n \t";
-        testResult = PathSanitizer.hasDangerousChars(dirPath);
-        Assert.assertEquals(testResult, trueHolder);
+        out = PathSanitizer.hasDangerousChars(dirPath);
+        Assert.assertEquals(out, true);
         
         dirPath = "&><|;`";
-        testResult = PathSanitizer.hasDangerousChars(dirPath);
-        Assert.assertEquals(testResult, trueHolder);
+        out = PathSanitizer.hasDangerousChars(dirPath);
+        Assert.assertEquals(out, true);
 	}
 	
 	/* ---------------------------------------------------------------------------- */
@@ -70,48 +68,39 @@ public class PathSanitizerTest {
 	public void hasParentTraversalTest() {
         String dirPath = "/home/bud/mydir/myfile";
         boolean out = PathSanitizer.hasParentTraversal(dirPath);
-        boolean expectedOut = false;
-        Assert.assertEquals(out, expectedOut);
+        Assert.assertEquals(out, false);
         
         dirPath = "/home../..bud/my..dir/myfile";
         out = PathSanitizer.hasParentTraversal(dirPath);
-        expectedOut = false;
-        Assert.assertEquals(out, expectedOut);
+        Assert.assertEquals(out, false);
         
         dirPath = "/home../..bud/my..dir/myfile/..";
         out = PathSanitizer.hasParentTraversal(dirPath);
-        expectedOut = true;
-        Assert.assertEquals(out, expectedOut);      
+        Assert.assertEquals(out, true);      
         
         dirPath = "/home../..bud/my..dir/myfile/\u002e\u002e";
         out = PathSanitizer.hasParentTraversal(dirPath);
-        expectedOut = true;
-        Assert.assertEquals(out,expectedOut);
+        Assert.assertEquals(out,true);
         
         dirPath = "/home../..bud/my..dir/myfile/.\u002e";
         out = PathSanitizer.hasParentTraversal(dirPath);
-        expectedOut = true;
-        Assert.assertEquals(out,expectedOut);
+        Assert.assertEquals(out,true);
         
         dirPath = "/home../..bud/my..dir/myfile/\u002e.";
         out = PathSanitizer.hasParentTraversal(dirPath);
-        expectedOut = true;
-        Assert.assertEquals(out,expectedOut);
+        Assert.assertEquals(out,true);
         
         dirPath = "/home../..bud/my..dir/myfile/\56\56";
         out = PathSanitizer.hasParentTraversal(dirPath);
-        expectedOut = true;
-        Assert.assertEquals(out,expectedOut);
+        Assert.assertEquals(out,true);
         
         dirPath = "/home../..bud/my..dir/myfile/.\56";
         out = PathSanitizer.hasParentTraversal(dirPath);
-        expectedOut = true;
-        Assert.assertEquals(out,expectedOut);
+        Assert.assertEquals(out,true);
         
         dirPath = "/home../..bud/my..dir/myfile/\56.";
         out = PathSanitizer.hasParentTraversal(dirPath);
-        expectedOut = true;
-        Assert.assertEquals(out,expectedOut);
+        Assert.assertEquals(out,true);
 	}
 	
 }
