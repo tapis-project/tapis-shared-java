@@ -790,8 +790,9 @@ public class JWTValidateRequestFilter
     	// somewhat redundant but requires no maintenance on site update.
 		var localSiteServices = getLocalSite().getServices();
 		if (!localSiteServices.contains(_service)) {
+		    String slist = StringUtils.join(localSiteServices, ", ");
             String msg = MsgUtils.getMsg("TAPIS_SECURITY_NO_LOCAL_SERVICE", 
-                                         jwtUser, jwtTenant, _siteId, _service);
+                                         jwtUser, jwtTenant, _service, _siteId, slist);
             _log.error(msg);
             requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
             return false;
