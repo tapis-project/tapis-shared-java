@@ -4,42 +4,6 @@
   "type": "object",
   "additionalProperties" : false,
   "$defs": {
-        "InputSpec": {
-            "$comment": "Used to specify file inputs on Jobs submission requests",
-            "type": "object",
-                "properties": {
-                    "sourceUrl":  {"type": "string", "minLength": 1, "format": "uri"},
-                    "targetPath": {"type": "string", "minLength": 0},
-                    "inPlace":    {"type": "boolean"},
-                    "meta":       {"type": "object", "$ref": "#/$defs/ArgMetaSpec"}             
-             },
-             "required": ["sourceUrl"],
-             "additionalProperties": false
-        },
-        "ArgSpec": {
-            "$comment": "Used to specify parameters on Jobs submission requests",
-            "type": "object",
-                "properties": {
-                    "arg":  {"type": "string", "minLength": 1},
-                    "meta": {"type": "object", "$ref": "#/$defs/ArgMetaSpec"}
-             },
-             "required": ["arg"],
-             "additionalProperties": false
-        },
-        "ArgMetaSpec": {
-            "$comment": "An open-ended way to name and annotate arguments",
-            "type": "object",
-                "properties": {
-                    "description": {"type": "string", "minLength": 1, "maxLength": 8096},
-                    "name":        {"type": "string", "minLength": 1},
-                    "required":    {"type": "boolean"},
-                    "kv":          {"type": "array",
-                                    "items": {"$ref": "#/$defs/KeyValuePair"},
-                                    "uniqueItems": true}
-             },
-             "required": ["name", "required"],
-             "additionalProperties": false
-        },
         "KeyValuePair": {
             "$comment": "A simple key/value pair",
             "type": "object",
