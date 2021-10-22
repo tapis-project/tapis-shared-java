@@ -37,7 +37,7 @@ public class JobParameterSetTest
     /* ********************************************************************** */
     /*                                 Tests                                  */
     /* ********************************************************************** */
-    @Test
+    @Test(enabled=false)
     public void parseTest1() throws TapisException
     {
         // Test minimal input.
@@ -48,7 +48,7 @@ public class JobParameterSetTest
         Assert.assertEquals(parmSet.getAppArgs().size(), 2);
     }
     
-    @Test
+    @Test(enabled=false)
     public void parseTest2() throws TapisException
     {
         // Test minimal input.
@@ -60,7 +60,7 @@ public class JobParameterSetTest
         Assert.assertNotNull(parmSet.getContainerArgs());
     }
     
-    @Test
+    @Test(enabled=false)
     public void parseTest3() throws TapisException
     {
         // Test minimal input.
@@ -80,7 +80,7 @@ public class JobParameterSetTest
         Assert.assertEquals(parmSet.getArchiveFilter().getIncludes().get(1), "tapis*.log");
     }
     
-    @Test
+    @Test(enabled=false)
     public void parseTest4() throws TapisException
     {
         // Test minimal input.
@@ -107,7 +107,7 @@ public class JobParameterSetTest
         Assert.assertEquals(parmSet2.getArchiveFilter().getIncludes().get(1), "tapis*.log");
     }
     
-    @Test
+    @Test(enabled=false)
     public void parseTest5() throws TapisException
     {
         // Test notification subscriptions.
