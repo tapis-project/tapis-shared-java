@@ -5,15 +5,18 @@ import org.apache.commons.lang3.StringUtils;
 import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
 
-public final class TapisUrl
+public final class TapisLocalUrl
  extends AbstractTapisUrl
 {
     /* **************************************************************************** */
     /*                                   Constants                                  */
     /* **************************************************************************** */
     // The tapis protocol name.
-    public static final String TAPIS_PROTOCOL = "tapis";
-    public static final String TAPIS_PROTOCOL_PREFIX = TAPIS_PROTOCOL + "://";
+    public static final String TAPISLOCAL_PROTOCOL = "tapislocal";
+    public static final String TAPISLOCAL_PROTOCOL_PREFIX = TAPISLOCAL_PROTOCOL + "://";
+    
+    // Placeholder name for execution system.
+    public static final String TAPISLOCAL_EXEC_SYSTEM = "exec.tapis";
     
     /* **************************************************************************** */
     /*                                Constructors                                  */
@@ -31,10 +34,10 @@ public final class TapisUrl
      * @return the constructed tapis url
      * @throws TapisException 
      */
-    public TapisUrl(String systemId, String path) 
+    public TapisLocalUrl(String path) 
      throws TapisException
     {
-        super(systemId, path);
+        super(TAPISLOCAL_EXEC_SYSTEM, path);
     }
     
     /* **************************************************************************** */
@@ -44,15 +47,15 @@ public final class TapisUrl
     /* getProtocolPrefix:                                                           */
     /* ---------------------------------------------------------------------------- */
     @Override
-    protected String getProtocolPrefix() {return TAPIS_PROTOCOL_PREFIX;}
+    protected String getProtocolPrefix() {return TAPISLOCAL_PROTOCOL_PREFIX;}
 
     /* **************************************************************************** */
     /*                                Public Methods                                */
     /* **************************************************************************** */
     /* ---------------------------------------------------------------------------- */
-    /* makeTapisUrl:                                                                */
+    /* makeTapisLocalUrl:                                                           */
     /* ---------------------------------------------------------------------------- */
-    public static TapisUrl makeTapisUrl(String url) 
+    public static TapisLocalUrl makeTapisLocalUrl(String url) 
      throws TapisException
     {
         // Make sure we have a tapis url.
@@ -60,17 +63,18 @@ public final class TapisUrl
             String msg = MsgUtils.getMsg("TAPIS_NULL_PARAMETER", "makeTapisUrl", "url");
             throw new TapisException(msg);
         }
-        if (!url.startsWith(TAPIS_PROTOCOL_PREFIX)) {
-            String msg = MsgUtils.getMsg("TAPIS_NONCONFORMING_URL", "tapis://systemId/path");
+        if (!url.startsWith(TAPISLOCAL_PROTOCOL_PREFIX)) {
+            String msg = MsgUtils.getMsg("TAPIS_NONCONFORMING_URL", 
+                                         "tapislocal://" + TAPISLOCAL_EXEC_SYSTEM + "/path");
             throw new TapisException(msg);
         }
         
-        // Split the string on slashes.
+        // Split the string on slashes.  We ignore whatever systemId
+        // the caller provided and use the placeholder constant.
         String[] parts = _pattern.split(url, 4);
-        String systemId = parts.length < 3 ? null : parts[2];
         String path = parts.length < 4 ? null : parts[3];
         
         // Slash automatically prepended to path in constructor. 
-        return new TapisUrl(systemId, path);
+        return new TapisLocalUrl(path);
     }
 }

@@ -10,7 +10,8 @@ import edu.utexas.tacc.tapis.shared.exceptions.TapisJDBCException;
 import edu.utexas.tacc.tapis.shared.exceptions.TapisJSONException;
 import edu.utexas.tacc.tapis.shared.exceptions.recoverable.TapisDBConnectionException;
 import edu.utexas.tacc.tapis.shared.exceptions.runtime.TapisRuntimeException;
-import edu.utexas.tacc.tapis.shared.utils.TapisUtils;
+import edu.utexas.tacc.tapis.shared.uri.TapisLocalUrl;
+import edu.utexas.tacc.tapis.shared.uri.TapisUrl;
 
 @Test(groups={"unit"})
 public class TapisUtilsTest 
@@ -138,55 +139,88 @@ public class TapisUtilsTest
    /* extractFilenameTest:                                                         */
    /* ---------------------------------------------------------------------------- */
    @Test(enabled=true)
-   public void extractFilenameTest()
+   public void extractFilenameTest() throws TapisException
    {
        // tapis urls.
-       String url = "tapis://myhost.com/mysystem/a/b/c.txt";
+       String url = "tapis://mysystem/a/b/c.txt";
        String fileName = TapisUtils.extractFilename(url);
        Assert.assertEquals(fileName, "c.txt");
+
+       url = "tapis://mysystem/a/b/c.txt";
+       fileName = TapisUtils.extractFilename(TapisUrl.makeTapisUrl(url).toString());
+       Assert.assertEquals(fileName, "c.txt");
       
-       url = "tapis://myhost.com/mysystem/a.txt";
+       url = "tapis://mysystem/a.txt";
        fileName = TapisUtils.extractFilename(url);
        Assert.assertEquals(fileName, "a.txt");
       
-       url = "tapis://myhost.com/mysystem/";
+       url = "tapis://mysystem/a.txt";
+       fileName = TapisUtils.extractFilename(TapisUrl.makeTapisUrl(url).toString());
+       Assert.assertEquals(fileName, "a.txt");
+      
+       url = "tapis://mysystem/";
        fileName = TapisUtils.extractFilename(url);
        Assert.assertEquals(fileName, "");
       
-       url = "tapis://myhost.com/mysystem";
+       url = "tapis://mysystem/";
+       fileName = TapisUtils.extractFilename(TapisUrl.makeTapisUrl(url).toString());
+       Assert.assertEquals(fileName, "");
+      
+       url = "tapis://mysystem";
        fileName = TapisUtils.extractFilename(url);
        Assert.assertEquals(fileName, "");
 
-       url = "tapis://myhost.com";
+       url = "tapis://mysystem";
+       fileName = TapisUtils.extractFilename(TapisUrl.makeTapisUrl(url).toString());
+       Assert.assertEquals(fileName, "");
+   
+       url = "tapis://mysystem////";
        fileName = TapisUtils.extractFilename(url);
        Assert.assertEquals(fileName, "");
    
-       url = "tapis://myhost.com////";
-       fileName = TapisUtils.extractFilename(url);
+       url = "tapis://mysystem////";
+       fileName = TapisUtils.extractFilename(TapisUrl.makeTapisUrl(url).toString());
        Assert.assertEquals(fileName, "");
    
-       // Non-tapis urls.
-       url = "http://myhost.com/mysystem/a/b/c.txt";
+       // tapislocal urls.
+       url = "tapislocal://exec.tapis/a/b/c.txt";
+       fileName = TapisUtils.extractFilename(url);
+       Assert.assertEquals(fileName, "c.txt");
+
+       url = "tapislocal://mysystem/a/b/c.txt";
+       fileName = TapisUtils.extractFilename(TapisLocalUrl.makeTapisLocalUrl(url).toString());
+       Assert.assertEquals(fileName, "c.txt");
+      
+       url = "tapislocal://exec.tapis/a.txt";
+       fileName = TapisUtils.extractFilename(url);
+       Assert.assertEquals(fileName, "a.txt");
+      
+       url = "tapislocal://mysystem/a.txt";
+       fileName = TapisUtils.extractFilename(TapisLocalUrl.makeTapisLocalUrl(url).toString());
+       Assert.assertEquals(fileName, "a.txt");
+      
+       // ----------- Non-tapis urls
+       url = "http://mysystem/a/b/c.txt";
        fileName = TapisUtils.extractFilename(url);
        Assert.assertEquals(fileName, "c.txt");
       
-       url = "https://myhost.com/mysystem/a.txt";
+       url = "https://mysystem/a.txt";
        fileName = TapisUtils.extractFilename(url);
        Assert.assertEquals(fileName, "a.txt");
       
-       url = "ftp://myhost.com/mysystem/";
+       url = "ftp://mysystem/";
        fileName = TapisUtils.extractFilename(url);
        Assert.assertEquals(fileName, "");
       
-       url = "sftp://myhost.com/mysystem";
+       url = "sftp://mysystem";
        fileName = TapisUtils.extractFilename(url);
-       Assert.assertEquals(fileName, "mysystem");
+       Assert.assertEquals(fileName, "");
 
-       url = "https://myhost.com";
+       url = "https://mysystem";
        fileName = TapisUtils.extractFilename(url);
        Assert.assertEquals(fileName, "");
    
-       url = "xxx://myhost.com////";
+       url = "xxx://mysystem////";
        fileName = TapisUtils.extractFilename(url);
        Assert.assertEquals(fileName, "");
    }

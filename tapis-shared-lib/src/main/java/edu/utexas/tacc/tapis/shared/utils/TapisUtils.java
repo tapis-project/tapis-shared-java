@@ -928,11 +928,8 @@ public class TapisUtils
       if (url == null || url.isEmpty()) return "";
       if (url.endsWith("/")) return "";
       
-      // The path segment starts at the 4th slash in tapis urls and at the 
-      // 3rd slash for all other urls.
-      int pathStartIndex;
-      if (url.startsWith(TapisUrl.TAPIS_PROTOCOL_PREFIX)) pathStartIndex = 4;
-        else pathStartIndex = 3;
+      // The path segment starts at the 3rd slash for all urls.
+      final int pathStartIndex = 3;
       
       // Walk the url looking for the path start index.
       String path = null;
