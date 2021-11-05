@@ -55,6 +55,7 @@ public class PathSanitizer{
 		for(int i=0; i<contents.length; i++) {
 			if(contents[i].equals(dots)) {
 			    containsChar = true;
+			    break;
 			}
 		}
 		return containsChar;
