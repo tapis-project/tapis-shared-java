@@ -65,10 +65,12 @@ public final class TapisUrl
             throw new TapisException(msg);
         }
         
-        // Split the string on slashes.
+        // Split the string on slashes. Remove multiple 
+        // slash sequences from the path.
         String[] parts = _pattern.split(url, 4);
         String systemId = parts.length < 3 ? null : parts[2];
         String path = parts.length < 4 ? null : parts[3];
+        path = path.replaceAll("//+", "/");
         
         // Slash automatically prepended to path in constructor. 
         return new TapisUrl(systemId, path);

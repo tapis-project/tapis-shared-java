@@ -17,6 +17,8 @@ public final class TapisLocalUrl
     
     // Placeholder name for execution system.
     public static final String TAPISLOCAL_EXEC_SYSTEM = "exec.tapis";
+    public static final String TAPISLOCAL_FULL_PREFIX =
+        TAPISLOCAL_PROTOCOL_PREFIX + TAPISLOCAL_EXEC_SYSTEM + "/";
     
     /* **************************************************************************** */
     /*                                Constructors                                  */
@@ -70,9 +72,11 @@ public final class TapisLocalUrl
         }
         
         // Split the string on slashes.  We ignore whatever systemId
-        // the caller provided and use the placeholder constant.
+        // the caller provided and use the placeholder constant. 
+        // Remove multiple slash sequences from the path.
         String[] parts = _pattern.split(url, 4);
         String path = parts.length < 4 ? null : parts[3];
+        path = path.replaceAll("//+", "/");
         
         // Slash automatically prepended to path in constructor. 
         return new TapisLocalUrl(path);
