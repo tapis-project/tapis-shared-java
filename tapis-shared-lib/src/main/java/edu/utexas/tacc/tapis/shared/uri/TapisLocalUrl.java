@@ -76,7 +76,7 @@ public final class TapisLocalUrl
         // Remove multiple slash sequences from the path.
         String[] parts = _pattern.split(url, 4);
         String path = parts.length < 4 ? null : parts[3];
-        path = path.replaceAll("//+", "/");
+        if (path != null) path = path.replaceAll("//+", "/");
         
         // Slash automatically prepended to path in constructor. 
         return new TapisLocalUrl(path);

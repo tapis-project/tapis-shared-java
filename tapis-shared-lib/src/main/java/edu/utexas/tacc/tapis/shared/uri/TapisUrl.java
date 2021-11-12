@@ -70,7 +70,7 @@ public final class TapisUrl
         String[] parts = _pattern.split(url, 4);
         String systemId = parts.length < 3 ? null : parts[2];
         String path = parts.length < 4 ? null : parts[3];
-        path = path.replaceAll("//+", "/");
+        if (path != null) path = path.replaceAll("//+", "/");
         
         // Slash automatically prepended to path in constructor. 
         return new TapisUrl(systemId, path);
