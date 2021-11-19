@@ -90,7 +90,7 @@ public class TapisJDBCMigrateParms
   public boolean isDropOnly;
 
   @Option(name = "-BASELINE", required = false,  
-	      usage = "Baeline an existing database and then exit",
+	      usage = "Baseline an existing database and then exit",
 	      forbids = {"-D", "-DONLY", "-C", "-CONLY"})
   public boolean doBaseline = false;
 
