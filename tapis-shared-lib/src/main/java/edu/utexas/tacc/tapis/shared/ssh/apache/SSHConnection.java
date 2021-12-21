@@ -20,10 +20,10 @@ import edu.utexas.tacc.tapis.shared.exceptions.recoverable.TapisSSHTimeoutExcept
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
 
 /** This class abstracts the idea of an authenticated SSH connection to a host.
- * Currently, this class supports exactly one session per instance.  This is
+ * Currently, this class supports exactly one session per client instance.  This is
  * another way of saying that in Tapis, there's a 1-to-1 correspondence between
- * between connections and sessions.  Apache SSH allows multiple sessions per
- * connection, where each session is authenticated with its own credentials.
+ * connections and sessions.  Apache SSH allows multiple sessions per connection,
+ * where each session is authenticated with its own credentials.
  * 
  * Future enhancements might allow for a single, long-lived connection to be
  * established to commonly used hosts in which the connection would manage many
@@ -104,7 +104,8 @@ public class SSHConnection
     /* ---------------------------------------------------------------------- */
     /* constructor:                                                           */
     /* ---------------------------------------------------------------------- */
-    /** Establish an authenticated 
+    /**
+     *  Establish a password authenticated client+session
      * 
      * @param host
      * @param port
@@ -132,6 +133,7 @@ public class SSHConnection
         _authMethod = AuthMethod.PASSWORD_AUTH;
         
         // Establish a connected and authenticated session.
+        // Initialize and start a client. Use client.connect() to start a session.
         try {initSession();}
             catch (TapisException e) {
                 stop();
@@ -148,7 +150,17 @@ public class SSHConnection
     /* ---------------------------------------------------------------------- */
     /* constructor:                                                           */
     /* ---------------------------------------------------------------------- */
-    public SSHConnection(String host, int port, String username, 
+    /**
+     *  Establish a PKI authenticated client+session with default timeouts
+     *
+     * @param host
+     * @param port
+     * @param username
+     * @param publicKey
+     * @param privateKey
+     * @throws TapisException
+     */
+    public SSHConnection(String host, int port, String username,
                          String publicKey, String privateKey) 
      throws TapisException 
     {
@@ -158,6 +170,17 @@ public class SSHConnection
     /* ---------------------------------------------------------------------- */
     /* constructor:                                                           */
     /* ---------------------------------------------------------------------- */
+    /**
+     *  Establish a PKI authenticated client+session with given timeouts
+     *
+     * @param host
+     * @param port
+     * @param username
+     * @param publicKey
+     * @param privateKey
+     * @param timeouts
+     * @throws TapisException
+     */
     public SSHConnection(String host, int port, String username, String publicKey, 
                          String privateKey, SSHTimeouts timeouts) 
      throws TapisException 
