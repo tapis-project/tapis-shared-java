@@ -27,6 +27,7 @@ public class TapisConstants
 	public static final String SERVICE_NAME_META     = "meta";
 	public static final String SERVICE_NAME_PGREST   = "pgrest";
 	public static final String SERVICE_NAME_NOTIFICATIONS = "notifications";
+    public static final String SERVICE_NAME_GLOBUSPROXY = "globusproxy";
 
 	// Thread local logging identifier.
 	public static final String MDC_ID_KEY = "UNIQUE_ID";

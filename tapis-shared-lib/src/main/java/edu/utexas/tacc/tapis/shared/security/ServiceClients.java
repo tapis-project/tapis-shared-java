@@ -20,6 +20,7 @@ import edu.utexas.tacc.tapis.apps.client.AppsClient;
 import edu.utexas.tacc.tapis.auth.client.AuthClient;
 import edu.utexas.tacc.tapis.client.shared.ITapisClient;
 import edu.utexas.tacc.tapis.files.client.FilesClient;
+import edu.utexas.tacc.tapis.globusproxy.client.GlobusProxyClient;
 import edu.utexas.tacc.tapis.jobs.client.JobsClient;
 import edu.utexas.tacc.tapis.meta.client.MetaClient;
 import edu.utexas.tacc.tapis.notifications.client.NotificationsClient;
@@ -360,8 +361,16 @@ public class ServiceClients
                 client.addDefaultHeader("Content-Type", "application/json");
                 break;
             }
-                
-            default:    
+
+            case TapisConstants.SERVICE_NAME_GLOBUSPROXY: {
+              client = new GlobusProxyClient(router.getServiceBaseUrl(), router.getAccessJWT());
+              client.addDefaultHeader("X-Tapis-User", user);
+              client.addDefaultHeader("X-Tapis-Tenant", tenant);
+              client.addDefaultHeader("Content-Type", "application/json");
+              break;
+            }
+
+          default:
         }
         
         // Make sure we found the client.
