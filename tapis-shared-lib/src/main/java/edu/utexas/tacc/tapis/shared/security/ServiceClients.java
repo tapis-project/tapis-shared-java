@@ -403,7 +403,8 @@ public class ServiceClients
 		map.put(FilesClient.class, TapisConstants.SERVICE_NAME_FILES);
 		map.put(JobsClient.class, TapisConstants.SERVICE_NAME_JOBS);
 		map.put(NotificationsClient.class, TapisConstants.SERVICE_NAME_NOTIFICATIONS);
-		
+        map.put(GlobusProxyClient.class, TapisConstants.SERVICE_NAME_GLOBUSPROXY);
+
 		return map;
 	}
 	
