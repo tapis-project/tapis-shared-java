@@ -1,5 +1,7 @@
 package edu.utexas.tacc.tapis.sharedapi.utils;
 
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
 import org.apache.commons.lang3.StringUtils;
 
 import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
@@ -10,7 +12,7 @@ import edu.utexas.tacc.tapis.shared.utils.TapisUtils;
 import edu.utexas.tacc.tapis.sharedapi.responses.RespAbstract;
 import edu.utexas.tacc.tapis.sharedapi.responses.RespBasic;
 
-import javax.ws.rs.core.Response.Status;
+
 import java.util.HashMap;
 
 /**
@@ -33,7 +35,7 @@ public class TapisRestUtils
   // Mapping of exception class names to HTTP status response codes.  The names are
   // those returned from getClass().getName(). See the initialization method for a
   // note concerning maintenance.
-  private static final HashMap<String,Status> _exceptionStatuses = initExceptionStatuses();
+  private static final HashMap<String, Response.Status> _exceptionStatuses = initExceptionStatuses();
 
   /* **************************************************************************** */
     /*                                Public Methods                                */
@@ -175,7 +177,7 @@ public class TapisRestUtils
    * @param t the exception caused during the processing of an HTTP request
    * @return the status associated with the exception type or INTERNAL_SERVER_ERROR
    */
-  public static Status getStatus(Throwable t)
+  public static Response.Status getStatus(Throwable t)
   {
     return getStatus(t, Status.INTERNAL_SERVER_ERROR);
   }

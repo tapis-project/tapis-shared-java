@@ -1,12 +1,12 @@
 package edu.utexas.tacc.tapis.sharedapi.providers;
 
 import javax.validation.ValidationException;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
-import javax.ws.rs.ext.Provider;
 
 import edu.utexas.tacc.tapis.sharedapi.responses.TapisResponse;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.ext.ExceptionMapper;
+import jakarta.ws.rs.ext.Provider;
 
 
 /**
@@ -17,7 +17,8 @@ import edu.utexas.tacc.tapis.sharedapi.responses.TapisResponse;
  *
  */
 @Provider
-public class ValidationExceptionMapper implements ExceptionMapper<ValidationException> {
+public class ValidationExceptionMapper implements ExceptionMapper<ValidationException>
+{
 
     @Override
     public Response toResponse(ValidationException exception){

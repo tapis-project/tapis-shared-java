@@ -1,12 +1,11 @@
 package edu.utexas.tacc.tapis.search;
 
-import edu.utexas.tacc.tapis.shared.threadlocal.OrderBy;
+import jakarta.ws.rs.core.MultivaluedHashMap;
 import org.testng.Assert;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
-import javax.ws.rs.core.MultivaluedHashMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -15,6 +14,8 @@ import java.util.Map;
 import java.util.StringJoiner;
 
 import static org.testng.Assert.*;
+
+import edu.utexas.tacc.tapis.shared.threadlocal.OrderBy;
 
 /**
  * Tests for methods in the SearchUtils class.

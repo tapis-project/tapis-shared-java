@@ -2,15 +2,13 @@ package edu.utexas.tacc.tapis.sharedapi.jaxrs.filters;
 
 import java.util.List;
 import java.util.Map.Entry;
-
 import javax.annotation.Priority;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.container.ContainerRequestFilter;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
-import javax.ws.rs.ext.Provider;
 
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.container.ContainerRequestFilter;
+import jakarta.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.ext.Provider;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,7 +57,7 @@ public class TestParameterRequestFilter
     /* filter:                                                                */
     /* ---------------------------------------------------------------------- */
     @Override
-    public void filter(ContainerRequestContext requestContext) 
+    public void filter(ContainerRequestContext requestContext)
     {
         // Determine if we are ignoring or respecting test parameters.
         if (!TapisEnv.getBoolean(EnvVar.TAPIS_ENVONLY_ALLOW_TEST_HEADER_PARMS)) return;
@@ -99,7 +97,7 @@ public class TestParameterRequestFilter
                         String msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_INVALID_CLAIM", TEST_ACCOUNT_TYPE,
                                                      values.get(0));
                         _log.error(msg, e);
-                        requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
+                        requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED).entity(msg).build());
                         return;
                     }
                 }

@@ -1,14 +1,13 @@
 package edu.utexas.tacc.tapis.sharedapi.providers;
 
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.NotAuthorizedException;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
-import javax.ws.rs.ext.Provider;
-
 import edu.utexas.tacc.tapis.sharedapi.responses.TapisResponse;
+import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.NotAuthorizedException;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.ext.ExceptionMapper;
+import jakarta.ws.rs.ext.Provider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,7 +18,8 @@ import org.slf4j.LoggerFactory;
  *
  */
 @Provider
-public class TapisExceptionMapper implements ExceptionMapper<Exception> {
+public class TapisExceptionMapper implements ExceptionMapper<Exception>
+{
 
     private static final Logger log = LoggerFactory.getLogger(TapisExceptionMapper.class);
 
@@ -33,7 +33,7 @@ public class TapisExceptionMapper implements ExceptionMapper<Exception> {
             return Response.status(Response.Status.NOT_FOUND)
                     .type(MediaType.APPLICATION_JSON)
                     .entity(resp).build();
-        } else if (exception instanceof NotAuthorizedException ) {
+        } else if (exception instanceof NotAuthorizedException) {
             return Response.status(Response.Status.FORBIDDEN)
                     .type(MediaType.APPLICATION_JSON)
                     .entity(resp).build();

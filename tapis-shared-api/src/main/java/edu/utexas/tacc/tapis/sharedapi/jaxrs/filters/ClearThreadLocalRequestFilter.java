@@ -1,10 +1,10 @@
 package edu.utexas.tacc.tapis.sharedapi.jaxrs.filters;
 
 import javax.annotation.Priority;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.container.ContainerRequestFilter;
-import javax.ws.rs.ext.Provider;
 
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.container.ContainerRequestFilter;
+import jakarta.ws.rs.ext.Provider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,7 +37,7 @@ public class ClearThreadLocalRequestFilter
     /* filter:                                                                */
     /* ---------------------------------------------------------------------- */
     @Override
-    public void filter(ContainerRequestContext requestContext) 
+    public void filter(ContainerRequestContext requestContext)
     {
         // To avoid polluting logs with repetitive information, just log the first
     	// time this filter gets executed (harmless race condition notwithstanding).

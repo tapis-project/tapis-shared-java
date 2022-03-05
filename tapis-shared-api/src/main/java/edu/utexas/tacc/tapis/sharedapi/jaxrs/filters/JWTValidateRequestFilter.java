@@ -10,17 +10,16 @@ import java.util.HashMap;
 import javax.annotation.Priority;
 import javax.annotation.security.PermitAll;
 import javax.validation.constraints.NotNull;
-import javax.ws.rs.HttpMethod;
-import javax.ws.rs.Priorities;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.container.ContainerRequestFilter;
-import javax.ws.rs.container.ResourceInfo;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
-import javax.ws.rs.ext.Provider;
 
+import jakarta.ws.rs.HttpMethod;
+import jakarta.ws.rs.Priorities;
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.container.ContainerRequestFilter;
+import jakarta.ws.rs.container.ResourceInfo;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.ext.Provider;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -171,7 +170,7 @@ public class JWTValidateRequestFilter
     /* filter:                                                                */
     /* ---------------------------------------------------------------------- */
     @Override
-    public void filter(ContainerRequestContext requestContext) 
+    public void filter(ContainerRequestContext requestContext)
     {
         // Tracing.
         if (_log.isTraceEnabled())
@@ -184,7 +183,7 @@ public class JWTValidateRequestFilter
             String msg = MsgUtils.getMsg("TAPIS_SECURITY_UNINITIALIZED_FILTER", 
             		                     requestContext.getMethod(), "siteId, service");
             _log.error(msg);
-            requestContext.abortWith(Response.status(Status.INTERNAL_SERVER_ERROR).entity(msg).build());
+            requestContext.abortWith(Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(msg).build());
             return;
         }
 
@@ -210,7 +209,7 @@ public class JWTValidateRequestFilter
             String msg = MsgUtils.getMsg("TAPIS_SECURITY_UNINITIALIZED_FILTER", 
             		                     requestContext.getMethod(), "localSite");
             _log.error(msg);
-            requestContext.abortWith(Response.status(Status.INTERNAL_SERVER_ERROR).entity(msg).build());
+            requestContext.abortWith(Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(msg).build());
             return;
         }
         
@@ -232,7 +231,7 @@ public class JWTValidateRequestFilter
             // We abort the request because we're missing required security information.
             String msg = MsgUtils.getMsg("TAPIS_SECURITY_MISSING_JWT_INFO", requestContext.getMethod());
             _log.error(msg);
-            requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
+            requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED).entity(msg).build());
             return;
         }
         
@@ -246,7 +245,7 @@ public class JWTValidateRequestFilter
             // Preserve the decoder method's message.
             String msg = e.getMessage();
             _log.error(msg); // No need to log the stack trace again.
-            requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
+            requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED).entity(msg).build());
             return;
         }
         
@@ -256,13 +255,13 @@ public class JWTValidateRequestFilter
         catch (Exception e) {
             String msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_GET_CLAIMS", unverifiedJwt);
             _log.error(msg, e);
-            requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
+            requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED).entity(msg).build());
             return;
         }
         if (claims == null) {
             String msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_NO_CLAIMS", unverifiedJwt);
             _log.error(msg);
-            requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
+            requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED).entity(msg).build());
             return;
         }
         
@@ -272,7 +271,7 @@ public class JWTValidateRequestFilter
             String msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_CLAIM_NOT_FOUND", unverifiedJwt, 
                                          CLAIM_TENANT);
             _log.error(msg);
-            requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
+            requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED).entity(msg).build());
             return;
         }
             
@@ -282,10 +281,10 @@ public class JWTValidateRequestFilter
         if (!skipJWTVerify) {
             try {verifyJwt(encodedJWT, jwtTenant, true);}
             catch (Exception e) {
-                Status status = Status.UNAUTHORIZED;
+                Response.Status status = Response.Status.UNAUTHORIZED;
                 String msg = e.getMessage();
                 if (msg.startsWith("TAPIS_SECURITY_JWT_KEY_ERROR"))
-                    status = Status.INTERNAL_SERVER_ERROR;
+                    status = Response.Status.INTERNAL_SERVER_ERROR;
                 _log.error(e.getMessage(), e);
                 requestContext.abortWith(Response.status(status).entity(e.getMessage()).build());
                 return;
@@ -299,7 +298,7 @@ public class JWTValidateRequestFilter
             String msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_INVALID_CLAIM", CLAIM_TOKEN_TYPE,
                                          tokenType);
             _log.error(msg);
-            requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
+            requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED).entity(msg).build());
             return;
         }
         
@@ -309,7 +308,7 @@ public class JWTValidateRequestFilter
             String msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_INVALID_CLAIM", CLAIM_ACCOUNT_TYPE,
                                          accountTypeStr);
             _log.error(msg);
-            requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
+            requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED).entity(msg).build());
             return;
         }
         AccountType accountType = null;
@@ -318,7 +317,7 @@ public class JWTValidateRequestFilter
             String msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_INVALID_CLAIM", CLAIM_ACCOUNT_TYPE,
                                          accountTypeStr);
             _log.error(msg, e);
-            requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
+            requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED).entity(msg).build());
             return;
         }
         
@@ -327,7 +326,7 @@ public class JWTValidateRequestFilter
         if (StringUtils.isBlank(jwtUser)) {
             String msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_INVALID_CLAIM", CLAIM_USERNAME, jwtUser);
             _log.error(msg);
-            requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
+            requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED).entity(msg).build());
             return;
         }
        
@@ -340,7 +339,7 @@ public class JWTValidateRequestFilter
                 String msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_INVALID_CLAIM", CLAIM_DELEGATION_SUB,
                                              delegator);
                 _log.error(msg);
-                requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
+                requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED).entity(msg).build());
                 return;
             }
             
@@ -367,7 +366,7 @@ public class JWTValidateRequestFilter
                 String msg = MsgUtils.getMsg("TAPIS_SECURITY_MISSING_HEADER", jwtUser, jwtTenant,
                                              accountType.name(), TAPIS_USER_HEADER);
                 _log.error(msg);
-                requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
+                requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED).entity(msg).build());
                 return;
             }
             
@@ -376,7 +375,7 @@ public class JWTValidateRequestFilter
                 String msg = MsgUtils.getMsg("TAPIS_SECURITY_MISSING_HEADER", jwtUser, jwtTenant,
                                              accountType.name(), TAPIS_TENANT_HEADER);
                 _log.error(msg);
-                requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
+                requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED).entity(msg).build());
                 return;
             }
             
@@ -398,14 +397,14 @@ public class JWTValidateRequestFilter
                 String msg = MsgUtils.getMsg("TAPIS_SECURITY_UNEXPECTED_HEADER", jwtUser, 
                                              jwtTenant, accountType.name(), TAPIS_USER_HEADER);
                 _log.error(msg);
-                requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
+                requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED).entity(msg).build());
                 return;
             }
             if (StringUtils.isNotBlank(oboTenantId)) {
                 String msg = MsgUtils.getMsg("TAPIS_SECURITY_UNEXPECTED_HEADER", jwtUser, 
                                              jwtTenant, accountType.name(), TAPIS_TENANT_HEADER);
                 _log.error(msg);
-                requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
+                requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED).entity(msg).build());
                 return;
             }
             
@@ -699,7 +698,7 @@ public class JWTValidateRequestFilter
             String msg = MsgUtils.getMsg("TAPIS_SECURITY_ALLOWABLE_TENANT_ERROR", 
                                          jwtUser, jwtTenantId, newTenantId);
             _log.error(msg, e);
-            requestContext.abortWith(Response.status(Status.INTERNAL_SERVER_ERROR).entity(msg).build());
+            requestContext.abortWith(Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(msg).build());
             return false;
         }
         
@@ -708,7 +707,7 @@ public class JWTValidateRequestFilter
             String msg = MsgUtils.getMsg("TAPIS_SECURITY_TENANT_NOT_ALLOWED", 
                                          jwtUser, jwtTenantId, newTenantId);
             _log.error(msg);
-            requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
+            requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED).entity(msg).build());
             return false;
         }
         
@@ -737,13 +736,13 @@ public class JWTValidateRequestFilter
     	if (StringUtils.isBlank(jwtSite)) {
             String msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_INVALID_CLAIM", CLAIM_SITE, jwtSite);
             _log.error(msg);
-            requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
+            requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED).entity(msg).build());
             return false;
     	}
     	if (!jwtSite.equals(_siteId)) {
             String msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_WRONG_SITE", jwtUser, jwtTenant, jwtSite, _siteId);
             _log.error(msg);
-            requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
+            requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED).entity(msg).build());
             return false;
     	}
     	
@@ -753,7 +752,7 @@ public class JWTValidateRequestFilter
     	if (StringUtils.isBlank(sourceSiteId)) {
             String msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_MISSING_SITE", jwtTenant);
             _log.error(msg);
-            requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
+            requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED).entity(msg).build());
             return false;
     	}
     	
@@ -765,7 +764,7 @@ public class JWTValidateRequestFilter
                 String msg = MsgUtils.getMsg("TAPIS_SECURITY_INVALID_CROSS_SITE_SERVICE", 
                 		                     jwtUser, jwtTenant, _siteId, _service);
                 _log.error(msg);
-                requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
+                requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED).entity(msg).build());
                 return false;
     		}
     		
@@ -775,7 +774,7 @@ public class JWTValidateRequestFilter
                 String msg = MsgUtils.getMsg("TAPIS_SECURITY_INTERSITE_COMM", 
 	                                         jwtUser, jwtTenant, _siteId, sourceSiteId);
                 _log.error(msg);
-                requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
+                requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED).entity(msg).build());
                 return false;
         	}
     	}
@@ -794,7 +793,7 @@ public class JWTValidateRequestFilter
             String msg = MsgUtils.getMsg("TAPIS_SECURITY_NO_LOCAL_SERVICE", 
                                          jwtUser, jwtTenant, _service, _siteId, slist);
             _log.error(msg);
-            requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
+            requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED).entity(msg).build());
             return false;
 		}
 
@@ -807,7 +806,7 @@ public class JWTValidateRequestFilter
                 String msg = MsgUtils.getMsg("TAPIS_SECURITY_UNKNOWN_SITE", 
                 		                     jwtUser, jwtTenant, sourceSiteId);
                 _log.error(msg);
-                requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
+                requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED).entity(msg).build());
                 return false;
     		}
 			
@@ -818,7 +817,7 @@ public class JWTValidateRequestFilter
 				String msg = MsgUtils.getMsg("TAPIS_SECURITY_SOURCE_SITE_SERVICE", 
                                           	 jwtUser, jwtTenant, sourceSiteId, _service);
 				_log.error(msg);
-				requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
+				requestContext.abortWith(Response.status(Response.Status.UNAUTHORIZED).entity(msg).build());
 				return false;
 			}
 		}

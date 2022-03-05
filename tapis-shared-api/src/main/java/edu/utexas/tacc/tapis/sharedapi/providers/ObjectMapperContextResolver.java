@@ -2,9 +2,8 @@ package edu.utexas.tacc.tapis.sharedapi.providers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.utexas.tacc.tapis.shared.utils.TapisObjectMapper;
-
-import javax.ws.rs.ext.ContextResolver;
-import javax.ws.rs.ext.Provider;
+import jakarta.ws.rs.ext.ContextResolver;
+import jakarta.ws.rs.ext.Provider;
 
 /*
  * Custom mapper for Jackson.
