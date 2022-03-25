@@ -1,5 +1,7 @@
 package edu.utexas.tacc.tapis.shared.utils;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
+import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -16,8 +18,10 @@ public class TapisObjectMapper
   static
   {
     mapper = new ObjectMapper();
+    mapper.setVisibility(PropertyAccessor.FIELD, Visibility.ANY);
     mapper.registerModule(new JavaTimeModule());
     mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+    mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
   }
   public static ObjectMapper getMapper() { return mapper; }
 }
