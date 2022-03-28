@@ -259,7 +259,7 @@ public class TenantManager
     /** Is the tenant specified in the JWT, jwtTenantId, allowed to specify the 
      * newTenantId in the X-Tapis-Tenant header or as a delegated tenant?  This method 
      * calculates whether a service or user in one tenant can make a request on behalf 
-     * of a servie or user in another tenant. 
+     * of a service or user in another tenant. 
      * 
      * If the number of allowable tenants become large (in the 100s), it may be
      * desirable to use hashes rather than lists to improve look up time. 
@@ -273,7 +273,7 @@ public class TenantManager
     public boolean allowTenantId(String jwtTenantId, String newTenantId)
      throws TapisException
     {
-    	// Easy case.
+    	// Easy case, a tenant can always act on its own behalf.
     	if (jwtTenantId.equals(newTenantId)) return true;
     	
     	// Use the precalculated mapping of site admin tenants to their
