@@ -410,7 +410,7 @@ public class JWTValidateRequestFilter
         }
         
         // Verify the site and tenant information AFTER the account-specific checking
-        // has been performed.  If false returned, the called method has already modified 
+        // has been performed. If is false returned, the called method has already modified 
         // the context to abort the request, in which case we immediately return from here.
         String jwtSite = (String)claims.get(CLAIM_SITE);
         if (!validateSite(requestContext, jwtTenant, jwtUser, jwtSite)) return;
