@@ -361,8 +361,6 @@ public class JWTValidateRequestFilter
         // These headers are only required on service tokens.
         String oboTenantId = headers.getFirst(TAPIS_TENANT_HEADER);
         String oboUser     = headers.getFirst(TAPIS_USER_HEADER);
-        
-        // ------------------------ Validate Site Services ---------------------
         if (accountType == AccountType.service) {
             // The X-Tapis-User header is mandatory when a service jwt is used.
             if (StringUtils.isBlank(oboUser)) {
@@ -386,6 +384,13 @@ public class JWTValidateRequestFilter
             // If false returned, the called method has already modified the context to
             // abort the request, in which case we immediately return from here.
             if (!allowTenant(requestContext, jwtUser, jwtTenant, oboTenantId)) return;
+            
+            // Verify the site and tenant information.  If false returned, the called
+            // method has already modified the context to abort the request, in which case 
+            // we immediately return from here.
+            String jwtSite = (String)claims.get(CLAIM_SITE);
+            if (!validateSite(requestContext, jwtTenant, jwtUser, jwtSite)) return;
+            
         } else {
             // Account type is user. Make sure the obo headers are not present.
         	// We tolerate but ignore any site claim that may be present.
@@ -409,12 +414,6 @@ public class JWTValidateRequestFilter
             oboUser     = jwtUser;
         }
         
-        // Verify the site and tenant information AFTER the account-specific checking
-        // has been performed. If false is returned, the called method has already modified 
-        // the context to abort the request, in which case we immediately return from here.
-        String jwtSite = (String)claims.get(CLAIM_SITE);
-        if (!validateSite(requestContext, jwtTenant, jwtUser, jwtSite)) return;
-
         // ------------------------ Assign Effective Values --------------------
         // Assign pertinent claims and header values to our threadlocal context.
         TapisThreadContext threadContext = TapisThreadLocal.tapisThreadContext.get();
@@ -725,9 +724,6 @@ public class JWTValidateRequestFilter
      * request context is updated with an error condition, the problem is logged  
      * and false is returned.  Success is indicated with a true result.
      * 
-     * The JWT can reflect a service or user account.  No OBO checks are made
-     * since those apply only to service JWTs.
-     * 
      * @param jwtTenant non-null tenant from jwt
      * @param jwtUser non-null user from jwt
      * @param jwtSite site from jwt (could be null)
@@ -752,9 +748,9 @@ public class JWTValidateRequestFilter
     	}
     	
     	// ----------------------- Cross-site checks -----------------------
-    	// Get the site that owns the jwt's tenant.
-    	String jwtTenantOwningSiteId = getTenantOwningSiteId(jwtTenant);
-    	if (StringUtils.isBlank(jwtTenantOwningSiteId)) {
+    	// Get the source site.
+    	String sourceSiteId = getSiteId(jwtTenant);
+    	if (StringUtils.isBlank(sourceSiteId)) {
             String msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_MISSING_SITE", jwtTenant);
             _log.error(msg);
             requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
@@ -762,7 +758,8 @@ public class JWTValidateRequestFilter
     	}
     	
     	// Checks on inter-site requests only. 
-    	if (!jwtTenantOwningSiteId.equals(_siteId)) {
+    	var primarySiteId = _tenantManager.getPrimarySiteId();
+    	if (!sourceSiteId.equals(_siteId)) {
     		// Make sure SK and Tokens are only referenced from the local site.
     		if (isLocalOnlyService()) {
                 String msg = MsgUtils.getMsg("TAPIS_SECURITY_INVALID_CROSS_SITE_SERVICE", 
@@ -772,12 +769,11 @@ public class JWTValidateRequestFilter
                 return false;
     		}
     		
-        	// If the local site is not the primary site, then the jwt owning site must be.	
+        	// If the local site is not the primary site, then the source site must be.	
         	// This prevents associate sites from communicating with each other.
-    		var primarySiteId = _tenantManager.getPrimarySiteId();
-        	if (!_siteId.equals(primarySiteId) && !jwtTenantOwningSiteId.equals(primarySiteId)) {
+        	if (!_siteId.equals(primarySiteId) && !sourceSiteId.equals(primarySiteId)) {
                 String msg = MsgUtils.getMsg("TAPIS_SECURITY_INTERSITE_COMM", 
-	                                         jwtUser, jwtTenant, _siteId, jwtTenantOwningSiteId);
+	                                         jwtUser, jwtTenant, _siteId, sourceSiteId);
                 _log.error(msg);
                 requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
                 return false;
@@ -785,10 +781,10 @@ public class JWTValidateRequestFilter
     	}
     	
     	// ------------------------- Service checks ----------------------
-		// Check service constraints.  Note that for service JWTs, the allowable 
-    	// tenants check called before this method already validates the oboTenant 
-    	// as being allowed.  The checks here only validate that this service 
-    	// should receive requests from the jwt tenant's owning site. 
+		// Check service constraints.  Note that the allowable tenants check called 
+		// before this method already validates the oboTenant as being allowed.  The 
+		// checks here only validate that this service should receive requests from 
+    	// the source site. 
     	//
     	// ---- First make sure the local (target) site runs this service.  This is
     	// somewhat redundant but requires no maintenance on site update.
@@ -802,14 +798,14 @@ public class JWTValidateRequestFilter
             return false;
 		}
 
-		// ---- Second make sure that if this is the primary site and the jwt owning site
+		// ---- Second make sure that if this is the primary site and the source site
 		// is an associate site, then the associate site does not run the service.
-		if (getLocalSite().getPrimary() && !_siteId.equals(jwtTenantOwningSiteId)) {
-    		// Get the jwt tenant's owning site object.
-    		var jwtTenantOwningSite = _tenantManager.getSite(jwtTenantOwningSiteId);
-    		if (jwtTenantOwningSite == null) {
+		if (getLocalSite().getPrimary() && !_siteId.equals(sourceSiteId)) {
+    		// Get the source site object.
+    		var sourceSite = _tenantManager.getSite(sourceSiteId);
+    		if (sourceSite == null) {
                 String msg = MsgUtils.getMsg("TAPIS_SECURITY_UNKNOWN_SITE", 
-                		                     jwtUser, jwtTenant, jwtTenantOwningSiteId);
+                		                     jwtUser, jwtTenant, sourceSiteId);
                 _log.error(msg);
                 requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
                 return false;
@@ -817,10 +813,10 @@ public class JWTValidateRequestFilter
 			
 			// If associate site runs this service, then the service's requests 
 			// are supposed to be routed there.
-			var jwtTenantOwningSiteServices = jwtTenantOwningSite.getServices();
-			if (jwtTenantOwningSiteServices.contains(_service)) {
+			var sourceSiteServices = sourceSite.getServices();
+			if (sourceSiteServices.contains(_service)) {
 				String msg = MsgUtils.getMsg("TAPIS_SECURITY_SOURCE_SITE_SERVICE", 
-                                          	 jwtUser, jwtTenant, jwtTenantOwningSiteId, _service);
+                                          	 jwtUser, jwtTenant, sourceSiteId, _service);
 				_log.error(msg);
 				requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
 				return false;
@@ -832,14 +828,14 @@ public class JWTValidateRequestFilter
     }
     
     /* ---------------------------------------------------------------------- */
-    /* getTenantOwningSiteId:                                                 */
+    /* getSiteId:                                                             */
     /* ---------------------------------------------------------------------- */
-    /** Get the home site of the specified tenant.
+    /** Get the site of the specified tenant.
      * 
      * @param tenantId
      * @return the site id or null if none could be found
      */
-    private String getTenantOwningSiteId(String tenantId)
+    private String getSiteId(String tenantId)
     {
     	// Get the jwt tenant's site.
         Tenant tenant = null;
