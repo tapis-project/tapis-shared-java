@@ -66,7 +66,7 @@ public final class TapisInput
   {
     // Validate input.
     if (StringUtils.isBlank(serviceName)) {
-      String msg = MsgUtils.getMsg("TAPIS__NULL_PARAMETER", "TapisInput", "serviceName");
+      String msg = MsgUtils.getMsg("TAPIS_NULL_PARAMETER", "TapisInput", "serviceName");
       _log.error(msg);
       throw new TapisRuntimeException(msg);
     }
