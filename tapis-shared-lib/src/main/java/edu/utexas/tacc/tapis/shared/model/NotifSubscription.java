@@ -34,7 +34,7 @@ public class NotifSubscription
         enabled     = appSub.getEnabled() == null ? true : appSub.getEnabled();
 //        uuid        = appSub.getUuid();  // TODO: Fix when apps changes type to string
         
-        ttlMinutes      = appSub.getTtlMinutes();
+        ttlMinutes      = appSub.getTtlMinutes() == null ? 0 : appSub.getTtlMinutes();
         typeFilter      = appSub.getTypeFilter();
         subjectFilter   = appSub.getSubjectFilter();
         if (appSub.getDeliveryTargets() != null)
