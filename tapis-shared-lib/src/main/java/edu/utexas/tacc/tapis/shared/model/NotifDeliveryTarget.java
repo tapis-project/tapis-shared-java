@@ -9,7 +9,7 @@ public class NotifDeliveryTarget
     
     // Constructors.
     public NotifDeliveryTarget() {}
-    public NotifDeliveryTarget(edu.utexas.tacc.tapis.apps.client.gen.model.NotifDeliveryTarget appTarget)
+    public NotifDeliveryTarget(edu.utexas.tacc.tapis.notifications.client.gen.model.DeliveryTarget appTarget)
     {
         deliveryMethod  = DeliveryMethod.valueOf(appTarget.getDeliveryMethod().name());
         deliveryAddress = appTarget.getDeliveryAddress();

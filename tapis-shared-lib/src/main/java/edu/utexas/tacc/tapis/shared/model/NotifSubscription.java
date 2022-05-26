@@ -9,6 +9,7 @@ public class NotifSubscription
     // Basic identity fields.
     private String  name;
     private String  owner;
+    private String  tenant;
     private String  description;
     private boolean enabled;
     private String  uuid;
@@ -26,27 +27,28 @@ public class NotifSubscription
     
     // Constructors.
     public NotifSubscription() {}
-    public NotifSubscription(edu.utexas.tacc.tapis.apps.client.gen.model.NotifSubscription appSub)
+    public NotifSubscription(edu.utexas.tacc.tapis.notifications.client.gen.model.TapisSubscription tapisSub)
     {
-        name        = appSub.getName();
-        owner       = appSub.getOwner();
-        description = appSub.getDescription();
-        enabled     = appSub.getEnabled() == null ? true : appSub.getEnabled();
-//        uuid        = appSub.getUuid();  // TODO: Fix when apps changes type to string
+        name        = tapisSub.getName();
+        owner       = tapisSub.getOwner();
+        tenant      = tapisSub.getTenant();
+        description = tapisSub.getDescription();
+        enabled     = tapisSub.getEnabled() == null ? true : tapisSub.getEnabled();
+        uuid        = tapisSub.getUuid();  
         
-        ttlMinutes      = appSub.getTtlMinutes();
-        typeFilter      = appSub.getTypeFilter();
-        subjectFilter   = appSub.getSubjectFilter();
-        if (appSub.getDeliveryTargets() != null)
-            for (var appTarget : appSub.getDeliveryTargets()) {
+        ttlMinutes    = tapisSub.getTtlMinutes() == null ? 0 : tapisSub.getTtlMinutes();
+        typeFilter    = tapisSub.getTypeFilter();
+        subjectFilter = tapisSub.getSubjectFilter();
+        if (tapisSub.getDeliveryTargets() != null)
+            for (var appTarget : tapisSub.getDeliveryTargets()) {
                 var target = new NotifDeliveryTarget(appTarget);
                 deliveryTargets.add(target);
             }
         
         // These should all be non-null timestamps.
-        expiry  = getInstant(appSub.getExpiry());
-        created = getInstant(appSub.getCreated());
-        updated = getInstant(appSub.getUpdated());
+        expiry  = getInstant(tapisSub.getExpiry());
+        created = getInstant(tapisSub.getCreated());
+        updated = getInstant(tapisSub.getUpdated());
     }
     
     /** Safely convert String to Instant.
@@ -91,6 +93,12 @@ public class NotifSubscription
     }
     public void setOwner(String owner) {
         this.owner = owner;
+    }
+    public String getTenant() {
+        return tenant;
+    }
+    public void setTenant(String tenant) {
+        this.tenant = tenant;
     }
     public String getDescription() {
         return description;
