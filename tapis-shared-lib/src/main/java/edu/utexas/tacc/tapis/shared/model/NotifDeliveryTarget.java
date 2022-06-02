@@ -14,6 +14,11 @@ public class NotifDeliveryTarget
         deliveryMethod  = DeliveryMethod.valueOf(appTarget.getDeliveryMethod().name());
         deliveryAddress = appTarget.getDeliveryAddress();
     }
+    public NotifDeliveryTarget(edu.utexas.tacc.tapis.apps.client.gen.model.NotifDeliveryTarget appTarget)
+    {
+        deliveryMethod  = DeliveryMethod.valueOf(appTarget.getDeliveryMethod().name());
+        deliveryAddress = appTarget.getDeliveryAddress();
+    }
     
     // Accessors.
     public DeliveryMethod getDeliveryMethod() {
