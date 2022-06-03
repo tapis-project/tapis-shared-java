@@ -15,8 +15,8 @@ public final class OrderBy
   private final String orderByAttr;
   private final OrderByDir orderByDir;
 
-  // Private constructor for use by valueOf, fromString. Direction defaults to ASC
-  private OrderBy(String attr, OrderByDir direction)
+  // Basic constructor. Direction defaults to ASC
+  public OrderBy(String attr, OrderByDir direction)
   {
     orderByAttr = attr;
     orderByDir = (direction == null ? DEFAULT_ORDERBY_DIRECTION : direction);
