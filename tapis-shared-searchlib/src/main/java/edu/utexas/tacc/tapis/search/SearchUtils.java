@@ -71,7 +71,7 @@ public class SearchUtils
   // ************************************************************************
 
   // Reserved query parameters that cannot be specified when using a dedicated search endpoint
-  public enum ReservedQueryParm {PRETTY, SELECT, SEARCH, ORDERBY, LIMIT, SKIP, STARTAFTER, COMPUTETOTAL}
+  public enum ReservedQueryParm {PRETTY, SELECT, SEARCH, ORDERBY, LIMIT, SKIP, STARTAFTER, COMPUTETOTAL,LISTTYPE}
   public static final Set<String> RESERVED_QUERY_PARMS = Stream.of(ReservedQueryParm.values()).map(Enum::name).collect(Collectors.toSet());
 
   // Supported operators for search

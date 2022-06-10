@@ -95,8 +95,12 @@ public class QueueManagerNames
   /* ---------------------------------------------------------------------- */
   /** Create the multi-tenant exchange name used to communicate with
    * the tenant's alternate exchange queue.  This exchange captures
-   * message that would otherwise be unrouteable.
+   * messages that would otherwise be unrouteable because :
    * 
+   *    - Been rejected (basic.reject or basic.nack) with requeue=false,
+   *    - Have their TTL expires, or
+   *    - Would have caused a queue length limit to be exceeded.   
+   *    
    * @return the tenant alternate exchange name
    */
   public static String getAltExchangeName()
@@ -109,11 +113,7 @@ public class QueueManagerNames
   /* ---------------------------------------------------------------------- */
   /** Create the multi-tenant exchange name used to communicate with
    * the tenant's dead letter queue.  This exchanges captures messages that
-   * have either:
-   * 
-   *    - Been rejected (basic.reject or basic.nack) with requeue=false,
-   *    - Have their TTL expires, or
-   *    - Would have caused a queue length limit to be exceeded.
+   * have either undeliverable because of unknown addressee.
    * 
    * @return the tenant dead letter exchange name
    */
@@ -121,5 +121,4 @@ public class QueueManagerNames
   {
     return DEADLETTER_EXCHANGE_NAME;
   }
-  
 }

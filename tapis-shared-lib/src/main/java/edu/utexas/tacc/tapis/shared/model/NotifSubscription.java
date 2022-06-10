@@ -4,8 +4,16 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
+
 public class NotifSubscription 
 {
+    // Local logger.
+    private static final Logger _log = LoggerFactory.getLogger(NotifSubscription.class);
+    
     // Basic identity fields.
     private String  name;
     private String  owner;
@@ -58,9 +66,14 @@ public class NotifSubscription
      */
     private Instant getInstant(String timestamp)
     {
-        if (timestamp == null) return null;
+        // Expecting a UTC timestamp.
         try {return Instant.parse(timestamp);} 
-            catch (Exception e) {return null;} 
+            catch (Exception e) {
+                // This should not happen!
+                _log.error(MsgUtils.getMsg("TAPIS_INVALID_PARAMETER", "getInstant",
+                                           "timestamp", timestamp));
+                return null;
+            } 
     }
     
     // Accessors.
