@@ -63,7 +63,6 @@ public class TapisConstants
 	public static final String META_SCHEMA_SERVICE   = "schemas/";
 	public static final String SYSTEMS_SERVICE       = "systems/" + API_VERSION + "/";
     public static final String TRANSFERS_SERVICE     = "transfers/" + API_VERSION + "/";
-
 	        
 	// Placeholder URLs used before tenant URL substitution takes place.
 	public static final String DUMMY_URL_PREFIX   = "none://dummy.nowhere/";
@@ -71,4 +70,8 @@ public class TapisConstants
 	public static final String DUMMY_URL_FILES    = DUMMY_URL_PREFIX + FILES_SERVICE;
 	public static final String DUMMY_URL_META     = DUMMY_URL_PREFIX + META_SERVICE;
 	public static final String DUMMY_URL_SYSTEMS  = DUMMY_URL_PREFIX + SYSTEMS_SERVICE;
+	
+	// ----------- Service URIs -----------
+    // Jobs URI for event source field and other identification uses.
+    public static final String JOBS_EVENT_SOURCE = "https://tapis.io/jobs";
 }
