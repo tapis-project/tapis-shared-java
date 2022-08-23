@@ -115,10 +115,7 @@ public class TapisRunCmdTest
         clt.addDefaultHeader("Content-Type", "application/json");
         
         // Get the system.
-        boolean getCreds = true;
-        AuthnMethod authnMethod = null;
-        boolean reqExecPerm = false;
-        var system = clt.getSystem(systemId, getCreds, authnMethod, reqExecPerm);
+        var system = clt.getSystemWithCredentials(systemId);
         clt.close();
         return system;
     }
