@@ -439,11 +439,24 @@ public class JWTValidateRequestFilter
     }
 
     /* ---------------------------------------------------------------------- */
+    /* getSiteId:                                                             */
+    /* ---------------------------------------------------------------------- */
+    /** The site id should be set once before any requests are processed. */
+    public static String getSiteId() {return _siteId;}
+    
+    /* ---------------------------------------------------------------------- */
     /* setSiteId:                                                             */
     /* ---------------------------------------------------------------------- */
-    /** This field must be set before any request can be processed. */
+    /** This field must be set before any request can be processed and is not
+     * expected to change during program execution. 
+     */
     public static void setSiteId(String siteId) 
-    {if (_siteId == null) _siteId = siteId;}
+    {
+        if (_siteId == null) {
+            _siteId = siteId;
+            _log.info(MsgUtils.getMsg("TAPIS_SECURITY_LOCAL_SITE", _siteId));
+        }
+    }
 
     /* ---------------------------------------------------------------------- */
     /* setService:                                                            */
