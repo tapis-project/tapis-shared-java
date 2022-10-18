@@ -75,8 +75,8 @@ public class SearchUtils
   public static final Set<String> RESERVED_QUERY_PARMS = Stream.of(ReservedQueryParm.values()).map(Enum::name).collect(Collectors.toSet());
 
   // Supported operators/constructs for search
-  // The ANY operator/construct is for tags columns which are of type TEXT[]
-  public enum SearchOperator {EQ, NEQ, GT, GTE, LT, LTE, IN, NIN, LIKE, NLIKE, BETWEEN, NBETWEEN, ANY}
+  // The CONTAINS operator/construct is for tags columns which are of type TEXT[]
+  public enum SearchOperator {EQ, NEQ, GT, GTE, LT, LTE, IN, NIN, LIKE, NLIKE, BETWEEN, NBETWEEN, CONTAINS}
   // All search operator strings as a set
   public static final Set<String> SEARCH_OP_SET = Stream.of(SearchOperator.values()).map(Enum::name).collect(Collectors.toSet());
 
@@ -101,12 +101,12 @@ public class SearchUtils
   public static final EnumSet<SearchOperator> BOOLEAN_OPSET =
         EnumSet.of(SearchOperator.EQ, SearchOperator.NEQ);
   // Operators allowed for search when column is an array type.
-  // The ANY operator/construct is for tags columns which are of type TEXT[]
-  public static final EnumSet<SearchOperator> ARRAY_OPSET = EnumSet.of(SearchOperator.ANY);
+  // The CONTAINS operator/construct is for tags columns which are of type TEXT[]
+  public static final EnumSet<SearchOperator> ARRAY_OPSET = EnumSet.of(SearchOperator.CONTAINS);
 
   // Operators for which the value may be a list
   public static final EnumSet<SearchOperator> listOpSet =
-        EnumSet.of(SearchOperator.IN, SearchOperator.NIN, SearchOperator.BETWEEN, SearchOperator.NBETWEEN, SearchOperator.ANY);
+        EnumSet.of(SearchOperator.IN, SearchOperator.NIN, SearchOperator.BETWEEN, SearchOperator.NBETWEEN, SearchOperator.CONTAINS);
 
   // Map of java sql type to list of allowed search operators
   public static final Map<Integer, EnumSet<SearchOperator>> ALLOWED_OPS_BY_TYPE =
@@ -645,7 +645,7 @@ public class SearchUtils
       case Types.CHAR:
       case Types.VARCHAR:
         // NOTE: ARRAY support is for tags columns which are of type TEXT[], so only support string types.
-        //       Please also see notes on support for the ANY operator/construct
+        //       Please also see notes on support for the CONTAINS operator/construct
       case Types.ARRAY:
         if (StringUtils.isNotBlank(valStr)) return true;
         break;
