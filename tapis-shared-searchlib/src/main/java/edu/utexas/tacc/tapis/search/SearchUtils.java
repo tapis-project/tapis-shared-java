@@ -75,8 +75,8 @@ public class SearchUtils
   public static final Set<String> RESERVED_QUERY_PARMS = Stream.of(ReservedQueryParm.values()).map(Enum::name).collect(Collectors.toSet());
 
   // Supported operators/constructs for search
-  // The CONTAINS operator/construct is for tags columns which are of type TEXT[]
-  public enum SearchOperator {EQ, NEQ, GT, GTE, LT, LTE, IN, NIN, LIKE, NLIKE, BETWEEN, NBETWEEN, CONTAINS}
+  // The CONTAINS operator/construct is for tags columns which are of type TEXT[] which show up as sql type clob array (2003)
+  public enum SearchOperator {EQ, NEQ, GT, GTE, LT, LTE, IN, NIN, LIKE, NLIKE, BETWEEN, NBETWEEN, CONTAINS, NCONTAINS}
   // All search operator strings as a set
   public static final Set<String> SEARCH_OP_SET = Stream.of(SearchOperator.values()).map(Enum::name).collect(Collectors.toSet());
 
@@ -102,11 +102,13 @@ public class SearchUtils
         EnumSet.of(SearchOperator.EQ, SearchOperator.NEQ);
   // Operators allowed for search when column is an array type.
   // The CONTAINS operator/construct is for tags columns which are of type TEXT[]
-  public static final EnumSet<SearchOperator> ARRAY_OPSET = EnumSet.of(SearchOperator.CONTAINS);
+  public static final EnumSet<SearchOperator> ARRAY_OPSET =
+        EnumSet.of(SearchOperator.CONTAINS, SearchOperator.NCONTAINS, SearchOperator.IN, SearchOperator.NIN);
 
   // Operators for which the value may be a list
   public static final EnumSet<SearchOperator> listOpSet =
-        EnumSet.of(SearchOperator.IN, SearchOperator.NIN, SearchOperator.BETWEEN, SearchOperator.NBETWEEN, SearchOperator.CONTAINS);
+        EnumSet.of(SearchOperator.IN, SearchOperator.NIN, SearchOperator.BETWEEN, SearchOperator.NBETWEEN,
+                   SearchOperator.CONTAINS, SearchOperator.NCONTAINS);
 
   // Map of java sql type to list of allowed search operators
   public static final Map<Integer, EnumSet<SearchOperator>> ALLOWED_OPS_BY_TYPE =
@@ -157,8 +159,6 @@ public class SearchUtils
   {
     var searchList = new ArrayList<String>();
     if (StringUtils.isBlank(searchListStr)) return searchList;
-    // TODO: remove
-    _log.trace("Parsing SearchList: " + searchListStr);
     // Parse search string into a list of conditions using a regex pattern to split
     // Set delimiter as ~ and escape as \
     //    SEARCH_REGEX = "(?:\\\\.|[^~\\\\]++)+"
@@ -216,8 +216,6 @@ public class SearchUtils
    */
   public static void validateSearchConditionForm(String cond) throws IllegalArgumentException
   {
-    // TODO remove
-    _log.trace("Validating form for search condition: " + cond);
     // A blank string is OK at this point and means we are done
     if (StringUtils.isBlank(cond)) return;
 

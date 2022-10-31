@@ -121,7 +121,7 @@ public class SearchUtilsTest
             Map.entry(25, new CaseInputData(2, "(description.like.my'\\\"system)~(port.lte.7)")), // more potentially problem chars ' "
             Map.entry(26, new CaseInputData(1, "description.like." + multiEscapeIn1)), // multiple escapes <1> <2> <2>
             Map.entry(27, new CaseInputData(1, "description.like." + multiEscapeIn2)), // multiple escapes <3> <1> <2> <4>
-// TODO Figure out why this one fails. Looks like final escape at end of line is getting eaten when there are an odd number.
+// NOTE This one fails. Looks like final escape at end of line is getting eaten when there are an odd number.
 //    validCases.put(28,new CaseInputData(1, "description.like." + multiEscapeIn3)); // multiple escapes <1> <2> <3> <4> <5>
             Map.entry(29, new CaseInputData(0, "()~( )~()")),
             Map.entry(30, new CaseInputData(0, "()~()")),
@@ -288,8 +288,6 @@ public class SearchUtilsTest
         System.out.println("Expected exception: " + e);
       }
     }
-    // TODO: Explicitly check for certain exceptions rather than just that an IllegalArg has been thrown.
-    //       E.g., (port.l@t.7) should throw an exception containing SEARCH_COND_INVALID_OP
   }
 
   /*
