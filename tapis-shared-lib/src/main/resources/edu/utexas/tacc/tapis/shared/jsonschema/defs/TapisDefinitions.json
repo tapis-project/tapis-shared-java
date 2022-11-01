@@ -9,7 +9,8 @@
             "type": "object",
                 "properties": {
                     "key":   {"type": "string", "minLength": 1},
-                    "value": {"type": "string", "minLength": 0}
+                    "value": {"type": "string", "minLength": 0},
+                    "description": {"type": "string", "minLength": 1, "maxLength": 2048}
              },
              "required": ["key", "value"],
              "additionalProperties": false

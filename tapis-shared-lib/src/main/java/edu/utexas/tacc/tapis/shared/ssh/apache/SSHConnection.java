@@ -55,19 +55,13 @@ public class SSHConnection
     /*                            Initializers                                */
     /* ********************************************************************** */
 
-    // Here is an example of how to hard code the log level for a specific package.
-    // Commented out because we want to allow for debug logging of org.apache.sshd.
-    // Logging can be turned down by updating the logback.xml files. E.g., the tapis-systems repo now has the
-    //   following two lines in all logback.xml files:
-    //     <!-- To turn off DEBUG logging for apache sshd uncomment following line -->
-    //<!--    <logger name="org.apache.sshd" level="ERROR" additivity="false" />-->
-//
-//    static {
-//        // Configure apache ssh logging by interfacing directly with logback.
-//        var sshLogger =
-//           (ch.qos.logback.classic.Logger) org.slf4j.LoggerFactory.getLogger("org.apache.sshd");
-//        if (sshLogger != null) sshLogger.setLevel(ch.qos.logback.classic.Level.ERROR);
-//    }
+    // Hard code the log level for a specific package.
+    static {
+        // Configure apache ssh logging by interfacing directly with logback.
+        var sshLogger =
+           (ch.qos.logback.classic.Logger) org.slf4j.LoggerFactory.getLogger("org.apache.sshd");
+        if (sshLogger != null) sshLogger.setLevel(ch.qos.logback.classic.Level.ERROR);
+    }
     
     /* ********************************************************************** */
     /*                                 Enums                                  */
