@@ -52,9 +52,11 @@ public class TapisRestUtils
     public static String createSuccessResponse(String message, boolean prettyPrint, RespAbstract resp)
     {
         // Fill in the base fields.
-        resp.status = RESPONSE_STATUS.success.name();
+        resp.status  = RESPONSE_STATUS.success.name();
         resp.message = message;
         resp.version = TapisUtils.getTapisVersion();
+        resp.commit  = TapisUtils.getGitCommit();
+        resp.build   = TapisUtils.getBuildTime();
         return TapisGsonUtils.getGson(prettyPrint).toJson(resp);
     }
     
@@ -71,9 +73,11 @@ public class TapisRestUtils
     {
         // Fill in the base fields.
         RespBasic resp = new RespBasic();
-        resp.status = RESPONSE_STATUS.success.name();
+        resp.status  = RESPONSE_STATUS.success.name();
         resp.message = message;
         resp.version = TapisUtils.getTapisVersion();
+        resp.commit  = TapisUtils.getGitCommit();
+        resp.build   = TapisUtils.getBuildTime();
         return TapisGsonUtils.getGson(prettyPrint).toJson(resp);
     }
     
@@ -91,9 +95,11 @@ public class TapisRestUtils
     public static String createErrorResponse(String message, boolean prettyPrint, RespAbstract resp)
     {
         // Fill in the base fields.
-        resp.status = RESPONSE_STATUS.error.name();
+        resp.status  = RESPONSE_STATUS.error.name();
         resp.message = message;
         resp.version = TapisUtils.getTapisVersion();
+        resp.commit  = TapisUtils.getGitCommit();
+        resp.build   = TapisUtils.getBuildTime();
         return TapisGsonUtils.getGson(prettyPrint).toJson(resp);
     }
     
@@ -111,9 +117,11 @@ public class TapisRestUtils
     {
         // Fill in the base fields.
         RespBasic resp = new RespBasic();
-        resp.status = RESPONSE_STATUS.error.name();
+        resp.status  = RESPONSE_STATUS.error.name();
         resp.message = message;
         resp.version = TapisUtils.getTapisVersion();
+        resp.commit  = TapisUtils.getGitCommit();
+        resp.build   = TapisUtils.getBuildTime();
         return TapisGsonUtils.getGson(prettyPrint).toJson(resp);
     }
     
