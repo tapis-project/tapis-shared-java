@@ -123,8 +123,18 @@
         <dependency>
             <groupId>net.i2p.crypto</groupId>
             <artifactId>eddsa</artifactId>
-        </dependency> 
-        
+        </dependency>
+
+        <!-- For S3 support -->
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>s3</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>auth</artifactId>
+        </dependency>
+
         <!-- To be relocated to another pom -->
         <dependency>
             <groupId>com.zaxxer</groupId>
@@ -134,7 +144,12 @@
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
         </dependency>
-        
+
+        <dependency>
+            <groupId>org.glassfish.jersey.media</groupId>
+            <artifactId>jersey-media-json-jackson</artifactId>
+        </dependency>
+
 	</dependencies>
     <build>
         <sourceDirectory>src/main/java</sourceDirectory>
