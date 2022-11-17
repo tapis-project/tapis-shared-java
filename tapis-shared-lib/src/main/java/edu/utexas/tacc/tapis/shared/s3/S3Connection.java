@@ -1,8 +1,11 @@
 package edu.utexas.tacc.tapis.shared.s3;
 
-
+import java.net.URI;
+import java.net.URISyntaxException;
 import javax.ws.rs.core.UriBuilder;
-
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
@@ -12,12 +15,6 @@ import software.amazon.awssdk.services.s3.S3ClientBuilder;
 
 import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.net.URI;
-import java.net.URISyntaxException;
 
 /**
  * This class represents an S3 connection to a host+bucket.
@@ -51,7 +48,6 @@ public class S3Connection implements AutoCloseable
     if (StringUtils.isBlank(host1) || StringUtils.isBlank(bucket1) || StringUtils.isBlank(username1) ||
         StringUtils.isBlank(accessKey1) || StringUtils.isBlank(accessSecret1))
     {
-      // TODO create msg
       throw new TapisException(MsgUtils.getMsg("TAPIS_S3_CLIENT_MISSING_INPUT"));
     }
     host = host1;
@@ -79,7 +75,6 @@ public class S3Connection implements AutoCloseable
     }
     catch (Exception e)
     {
-      // TODO create msg
       String msg = MsgUtils.getMsg("TAPIS_S3_CLIENT_ERR", host, port, bucket, effectiveUserId, e.getMessage());
       log.warn(msg);
       throw new TapisException(msg, e);
@@ -87,7 +82,6 @@ public class S3Connection implements AutoCloseable
     // If AWS returned null for credentials we cannot go on
     if (cred == null)
     {
-      // TODO create msg
       String msg = MsgUtils.getMsg("TAPIS_S3_CLIENT_ERR", host, port, bucket, effectiveUserId,
                                    "AwsBasicCredentials.create returned null");
       log.warn(msg);
@@ -99,21 +93,15 @@ public class S3Connection implements AutoCloseable
     // Have to do the endpoint override if it is not a real AWS route, as in the case for a minio instance
     if (!S3Utils.isAWSUrl(host))
     {
-      // TODO create msg
       log.debug(MsgUtils.getMsg("TAPIS_S3_CLIENT_EP_OVER", host, port, bucket, effectiveUserId, reg, endpoint.toString()));
       builder.endpointOverride(endpoint);
     }
     // Log info about client we are building
-    // TODO create msg
     log.debug(MsgUtils.getMsg("TAPIS_S3_CLIENT_BUILD", host, port, bucket, effectiveUserId, reg, endpoint.toString()));
     // Build the client
-    try
-    {
-      client = builder.build();
-    }
+    try { client = builder.build(); }
     catch (Exception e)
     {
-      // TODO create msg
       String msg = MsgUtils.getMsg("TAPIS_S3_CLIENT_ERR", host, port, bucket, effectiveUserId, e.getMessage());
       log.warn(msg);
       throw new TapisException(msg, e);
