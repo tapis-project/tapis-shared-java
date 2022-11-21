@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>edu.utexas.tacc.tapis</groupId>
   <artifactId>tapis-shared-db</artifactId>
-  <version>2.0.72</version>
+  <version>2.0.73</version>
   <name>Tapis Shared Database Library</name>
   <description>Library for shared database code</description>
   <url>https://github.com/tapis-project/tapis-shared-java/tapis-shared-db</url>
@@ -144,7 +144,7 @@
     <jersey-entity-filtering.version>2.35</jersey-entity-filtering.version>
     <maven-gpg-plugin.version>1.6</maven-gpg-plugin.version>
     <activemq-client.version>5.16.0</activemq-client.version>
-    <jackson.version>2.12.7</jackson.version>
+    <jackson.version>2.14.0</jackson.version>
     <jargon-core.version>4.3.0.1-RELEASE</jargon-core.version>
     <maven-compiler-plugin-release>17</maven-compiler-plugin-release>
     <jakarta.el.version>3.0.3</jakarta.el.version>
@@ -172,17 +172,17 @@
     <javax.validation.version>2.0.1.Final</javax.validation.version>
     <amqp-client.version>5.14.1</amqp-client.version>
     <eddsa.version>0.3.0</eddsa.version>
-    <timestamp>1667920776146</timestamp>
+    <timestamp>1669050195329</timestamp>
     <metrics-core.version>3.2.3</metrics-core.version>
     <threetenbp.version>1.3.5</threetenbp.version>
-    <snakeyaml.version>1.31</snakeyaml.version>
+    <snakeyaml.version>1.33</snakeyaml.version>
     <okhttp3.version>4.9.3</okhttp3.version>
     <reactor-extra.version>3.4.3</reactor-extra.version>
     <jetty-server.version>9.4.0.M1</jetty-server.version>
     <swagger-jaxrs2.version>2.1.13</swagger-jaxrs2.version>
     <undertow.version>2.2.18.Final</undertow.version>
     <commons-math3.version>3.6.1</commons-math3.version>
-    <buildNumber>1af6f9cb</buildNumber>
+    <buildNumber>88ae2c18</buildNumber>
     <reactor-core.version>3.4.6</reactor-core.version>
     <software.amazon.awssdk.version>2.17.219</software.amazon.awssdk.version>
     <testng.version>7.5</testng.version>
@@ -212,7 +212,7 @@
     <apache-sshd.version>2.8.0</apache-sshd.version>
     <mockito-core.version>3.0.0</mockito-core.version>
     <javax.websocket-api.version>1.1</javax.websocket-api.version>
-    <build.timestamp>2022-11-08T15:18:41Z</build.timestamp>
+    <build.timestamp>2022-11-21T17:02:09Z</build.timestamp>
     <statefulj.version>3.0</statefulj.version>
     <java-source.version>1.17</java-source.version>
     <reactor-rabbitmq.version>1.5.2</reactor-rabbitmq.version>
@@ -276,25 +276,25 @@
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-annotations</artifactId>
-      <version>2.12.7</version>
+      <version>2.14.0</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-core</artifactId>
-      <version>2.12.7</version>
+      <version>2.14.0</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
-      <version>2.12.7</version>
+      <version>2.14.0</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.datatype</groupId>
       <artifactId>jackson-datatype-jsr310</artifactId>
-      <version>2.12.7</version>
+      <version>2.14.0</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
@@ -414,73 +414,73 @@
     <dependency>
       <groupId>edu.utexas.tacc.tapis</groupId>
       <artifactId>apps-client</artifactId>
-      <version>2.0.62</version>
+      <version>2.0.63</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>edu.utexas.tacc.tapis</groupId>
       <artifactId>auth-client</artifactId>
-      <version>2.0.62</version>
+      <version>2.0.63</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>edu.utexas.tacc.tapis</groupId>
       <artifactId>files-client</artifactId>
-      <version>2.0.62</version>
+      <version>2.0.63</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>edu.utexas.tacc.tapis</groupId>
       <artifactId>jobs-client</artifactId>
-      <version>2.0.62</version>
+      <version>2.0.63</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>edu.utexas.tacc.tapis</groupId>
       <artifactId>meta-client</artifactId>
-      <version>2.0.62</version>
+      <version>2.0.63</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>edu.utexas.tacc.tapis</groupId>
       <artifactId>notifications-client</artifactId>
-      <version>2.0.62</version>
+      <version>2.0.63</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>edu.utexas.tacc.tapis</groupId>
       <artifactId>security-client</artifactId>
-      <version>2.0.62</version>
+      <version>2.0.63</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>edu.utexas.tacc.tapis</groupId>
       <artifactId>shared-clientlib</artifactId>
-      <version>2.0.62</version>
+      <version>2.0.63</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>edu.utexas.tacc.tapis</groupId>
       <artifactId>systems-client</artifactId>
-      <version>2.0.62</version>
+      <version>2.0.63</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>edu.utexas.tacc.tapis</groupId>
       <artifactId>tapis-shared-lib</artifactId>
-      <version>2.0.72</version>
+      <version>2.0.73</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>edu.utexas.tacc.tapis</groupId>
       <artifactId>tenants-client</artifactId>
-      <version>2.0.62</version>
+      <version>2.0.63</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>edu.utexas.tacc.tapis</groupId>
       <artifactId>tokens-client</artifactId>
-      <version>2.0.62</version>
+      <version>2.0.63</version>
       <scope>compile</scope>
     </dependency>
     <dependency>

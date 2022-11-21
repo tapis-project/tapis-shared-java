@@ -391,8 +391,22 @@ public class JWTValidateRequestFilter
             String jwtSite = (String)claims.get(CLAIM_SITE);
             if (!validateTargetSite(requestContext, jwtSite, jwtTenant, jwtUser)) return;
         } else {
-            // Account type is user. Make sure the obo headers are not present.
-        	// We tolerate but ignore any site claim that may be present.
+            // Account type is user. Reject any user tokens in the site-admin tenant. This
+            // tenant is reserved for use by services only. Note that this check is not 
+            // completely leak proof since several short circuiting conditions above accept
+            // any token without making this check. This exposure is minor since the leak 
+            // involves only globally permitted or unauthenticated requests. The vast 
+            // majority of user tokens are subject to this check.
+            if (jwtTenant.equals(_localSite.getSiteAdminTenantId())) {
+                String msg = MsgUtils.getMsg("TAPIS_SECURITY_USER_IN_ADMIN_TENANT", 
+                                             jwtUser, jwtTenant, _siteId);
+                _log.error(msg);
+                requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
+                return;
+            }
+            
+            // Make sure the obo headers are not present. We tolerate but ignore any site 
+            // claim that may be present.
             if (StringUtils.isNotBlank(oboUser)) {
                 String msg = MsgUtils.getMsg("TAPIS_SECURITY_UNEXPECTED_HEADER", jwtUser, 
                                              jwtTenant, accountType.name(), TAPIS_USER_HEADER);
