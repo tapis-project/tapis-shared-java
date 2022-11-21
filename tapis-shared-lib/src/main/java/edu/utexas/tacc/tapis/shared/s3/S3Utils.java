@@ -25,6 +25,10 @@ public class S3Utils
   private static final Pattern p3 = Pattern.compile("(https://)?s3.amazonaws.com/([^/]+)");
   private static final Pattern p4 = Pattern.compile("(https://)?s3.([^.]+).amazonaws.com/([^/]+)");
 
+  /**
+   * Is it an S3 URL?
+   * There are 4, yes 4 different flavors of S3 URIs
+   */
   public static boolean isAWSUrl(String host)
   {
     return p1.matcher(host).matches() || p2.matcher(host).matches() ||

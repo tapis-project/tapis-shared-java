@@ -128,4 +128,6 @@ public class S3Connection implements AutoCloseable
     if (StringUtils.isBlank(tmpURI.getScheme())) uriBuilder.scheme("https");
     return uriBuilder.build();
   }
+
+  public S3Client getClient() { return client; }
 }
