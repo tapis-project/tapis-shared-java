@@ -39,12 +39,13 @@ public class TapisResponse<T> {
     private String message = "ok";
     private T result;
     private final String version = TapisUtils.getTapisVersion();
+    private final String commit = TapisUtils.getGitCommit();
+    private final String build = TapisUtils.getBuildTime();
     private Object metadata = new Object();
 
     public String getStatus() {
         return status;
     }
-
     public void setStatus(String status) {
         this.status = status;
     }
@@ -52,7 +53,6 @@ public class TapisResponse<T> {
     public String getMessage() {
         return message;
     }
-
     public void setMessage(String message) {
         this.message = message;
     }
@@ -60,7 +60,6 @@ public class TapisResponse<T> {
     public T getResult() {
         return result;
     }
-
     public void setResult(T result) {
         this.result = result;
     }
@@ -68,6 +67,12 @@ public class TapisResponse<T> {
     public String getVersion() {
         return  version;
     }
+    public String getCommit() {
+    return  commit;
+  }
+    public String getBuild() {
+    return  build;
+  }
 
     public Object getMetadata() {
     return metadata;
