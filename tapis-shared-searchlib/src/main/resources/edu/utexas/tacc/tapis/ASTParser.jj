@@ -93,7 +93,7 @@ import edu.utexas.tacc.tapis.search.parser.ASTLeaf;
  *   - Specifying an escape character for LIKE is not supported.
  *   - String values must be surrounded by single quotes
  *   - Values for BETWEEN must be surrounded by single quotes
- *   - TODO/TBD: Following operations are not supported:
+ *   - NOTE: Following operations are not supported:
  *      IS NULL, IS NOT NULL
  *      Arithmetic operations (+, -, /, *, mod)
  *      Unary operators (-, NOT)
@@ -173,14 +173,12 @@ public class ASTParser
   {
     return new ASTBinaryExpression("NEQ", l, r);
   }
-  // TODO/TBD: IS NULL is not the same as = null
-  // TODO/TBD: Do not support IS NULL ?
+  //  NOTE: IS NULL is not the same as = null, do not support IS NULL ?
   private ASTBinaryExpression createIsNull(ASTNode l)
   {
     return new ASTBinaryExpression("=", l, new ASTLeaf("NULL"));
   }
-  // TODO/TBD: IS NOT NULL is not the same as <> null
-  // TODO/TBD: Do not support IS NOT NULL ?
+  //  NOTE: IS NULL is not the same as = null, do not support IS NULL ?
   private ASTBinaryExpression createIsNotNull(ASTNode l)
   {
     return new ASTBinaryExpression("<>", l, new ASTLeaf("NULL"));
@@ -251,7 +249,7 @@ public class ASTParser
   }
   // ======================
   // addExpression()
-  // TODO/TBD: Do not support numeric operations?
+  // NOTE: Numeric operations not supported
   // ======================
   private ASTBinaryExpression createPlus(ASTNode l, ASTNode r)
   {
@@ -263,7 +261,7 @@ public class ASTParser
   }
   // ======================
   // multExpression()
-  // TODO/TBD: Do not support numeric operations?
+  // NOTE: Numeric operations not supported
   // ======================
   private ASTBinaryExpression createMultiply(ASTNode l, ASTNode r)
   {
@@ -279,7 +277,7 @@ public class ASTParser
   }
   // ======================
   // unaryExpression()
-  // TODO/TBD: Do not support unary operations?
+  // NOTE: Unary operations not currently supported.
   // ======================
   private ASTUnaryExpression createNegate(ASTNode n)
   {

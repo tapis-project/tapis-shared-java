@@ -399,8 +399,22 @@ public class TenantManager
     /* getSiteAdminTenantId:                                                        */
     /* ---------------------------------------------------------------------------- */
 	@Override
-	public String getSiteAdminTenantId(String siteId) 
-	{return _sites.get(siteId).getSiteAdminTenantId();}
+	public String getSiteAdminTenantId(String siteId)
+	 throws TapisRuntimeException
+	{
+	    // This should never fail, but if it does it indicates a configuration
+	    // or routing error that requires immediate attention.
+	    if (StringUtils.isBlank(siteId))
+	        throw new TapisRuntimeException(MsgUtils.getMsg("TAPIS_NULL_PARAMETER", 
+	                                        "getSiteAdminTenantId", "siteId"));
+	    var site = _sites.get(siteId);
+	    if (site == null) 
+	        throw new TapisRuntimeException(MsgUtils.getMsg("TAPIS_SITE_UNKNOWN", siteId));
+	    var tenantId = site.getSiteAdminTenantId();
+	    if (StringUtils.isBlank(tenantId))
+	        throw new TapisRuntimeException(MsgUtils.getMsg("TAPIS_SITE_NO_ADMIN_TENANT", siteId));
+	    return tenantId;
+	}
 	
     /* **************************************************************************** */
     /*                               Private Methods                                */

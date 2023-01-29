@@ -415,16 +415,26 @@ public class TapisLoggingFilter
       buf.append("HTTP HEADERS: ");
       boolean first = true;
       for (String headerName : headerList) {
+        // Insert separator.
+        if (!first) buf.append(", ");
+          else first = false;
+
         // Avoid logging security information unless the 
         // controlling environment variable is set to true.
         if (!TapisEnv.getBoolean(EnvVar.TAPIS_ENVONLY_LOG_SECURITY_INFO)) {
-          if (headerName.toLowerCase().startsWith("x-tapis-token")) continue;
-          if (headerName.toLowerCase().startsWith("authorization")) continue;
+          if (headerName.toLowerCase().startsWith("x-tapis-token") ||
+              headerName.toLowerCase().startsWith("authorization")) {
+              // Show the header exists but hide its value.
+              buf.append(headerName);
+              buf.append("=");
+              String value = httpRequest.getHeader(headerName);
+              if (StringUtils.isBlank(value)) buf.append("null");
+               else buf.append("***");
+              continue;
+          }
         }
         
         // Allow this header key/value pair.
-        if (!first) buf.append(", ");
-          else first = false;
         buf.append(headerName);
         buf.append("=");
         

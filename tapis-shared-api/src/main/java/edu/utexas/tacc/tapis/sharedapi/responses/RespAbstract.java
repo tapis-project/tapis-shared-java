@@ -7,5 +7,7 @@ public abstract class RespAbstract
     public String status;
     public String message;
     public String version;
+    public String commit;
+    public String build;
     public ResultMetadata metadata;
 }

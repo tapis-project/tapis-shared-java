@@ -54,9 +54,11 @@ public class SSHConnection
     /* ********************************************************************** */
     /*                            Initializers                                */
     /* ********************************************************************** */
+
+    // Hard code the log level for a specific package.
     static {
         // Configure apache ssh logging by interfacing directly with logback.
-        var sshLogger = 
+        var sshLogger =
            (ch.qos.logback.classic.Logger) org.slf4j.LoggerFactory.getLogger("org.apache.sshd");
         if (sshLogger != null) sshLogger.setLevel(ch.qos.logback.classic.Level.ERROR);
     }

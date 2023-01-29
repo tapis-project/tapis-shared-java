@@ -51,6 +51,9 @@ public class FilesListSubtree
     private final ArrayList<FileInfo> _resultList = new ArrayList<>(INITIAL_LIST_SIZE);
     private final ArrayDeque<String>  _dirStack   = new ArrayDeque<>(INITIAL_STACK_SIZE);
     
+    // Dynamically set when in a shared application context.
+    private boolean _sharedAppCtx;
+    
     /* ********************************************************************** */
     /*                              Constructors                              */
     /* ********************************************************************** */
@@ -90,18 +93,29 @@ public class FilesListSubtree
         // ------------------------- Walk the Tree -----------------------
         // List parameters that don't change.
         final int offset = 0;
-        final boolean meta = false;
+        final boolean recurse = false;
         
         // Make the initial call to the top level recursive method.
-        listPath(_path, LIMIT, offset, meta);
+        listPath(_path, LIMIT, offset, recurse);
         
         // Process all directories previously discovered.
-        while (!_dirStack.isEmpty()) listPath(_dirStack.pop(), LIMIT, offset, meta);
+        while (!_dirStack.isEmpty()) listPath(_dirStack.pop(), LIMIT, offset, recurse);
         
         // Return the trimmed list of files in the subtree.
         _resultList.trimToSize();
         return _resultList;
     }
+    
+
+    /* ---------------------------------------------------------------------- */
+    /* isSharedAppCtx:                                                        */
+    /* ---------------------------------------------------------------------- */
+    public boolean isSharedAppCtx() {return _sharedAppCtx;}
+
+    /* ---------------------------------------------------------------------- */
+    /* setSharedAppCtx:                                                       */
+    /* ---------------------------------------------------------------------- */
+    public void setSharedAppCtx(boolean sharedAppCtx) {_sharedAppCtx = sharedAppCtx;}
     
     /* ********************************************************************** */
     /*                            Private Methods                             */
@@ -109,7 +123,7 @@ public class FilesListSubtree
     /* ---------------------------------------------------------------------- */
     /* listPath:                                                              */
     /* ---------------------------------------------------------------------- */
-    private void listPath(String path, int limit, int offset, boolean meta) 
+    private void listPath(String path, int limit, int offset, boolean recurse) 
      throws TapisClientException
     {
         // Get the list for the current path.
@@ -117,11 +131,12 @@ public class FilesListSubtree
         while (true) {
             // Trace for performance info.
             if (_log.isDebugEnabled())
-                _log.debug(MsgUtils.getMsg("FILES_LIST_SUBTREE", _systemId, path, limit, offset));
+                _log.debug(MsgUtils.getMsg("FILES_LIST_SUBTREE", _systemId, path, 
+                                           limit, offset, recurse, _sharedAppCtx));
                 
             // Make the remote call to the Files service.
             List<FileInfo> list = 
-                _filesClient.listFiles(_systemId, path, limit, offset+numRetrieved, meta);
+                _filesClient.listFiles(_systemId, path, limit, offset+numRetrieved, recurse, _sharedAppCtx);
             
             // Process result list.
             for (var item : list) {
