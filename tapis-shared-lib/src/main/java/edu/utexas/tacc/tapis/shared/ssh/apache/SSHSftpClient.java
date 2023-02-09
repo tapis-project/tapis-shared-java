@@ -10,7 +10,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
 import org.apache.sshd.common.util.buffer.Buffer;
 import org.apache.sshd.sftp.client.SftpClient.Attributes;
 import org.apache.sshd.sftp.client.SftpClient.CloseableHandle;
@@ -54,12 +53,16 @@ public class SSHSftpClient
             throw new TapisRuntimeException(msg);
         }
        
+        // Get connection information.
         _sshConnection = sshConnection;
         var session  = _sshConnection.getSession();
         if (session == null) {
-          String msg =  MsgUtils.getMsg("TAPIS_SSH_NO_SESSION");
-          throw new TapisRuntimeException(msg);
+            _sshConnection.close(); // probably not strictly necessary
+            String msg =  MsgUtils.getMsg("TAPIS_SSH_NO_SESSION");
+            throw new TapisRuntimeException(msg);
         }
+        
+        // Create local client.
         _sftpClient = (DefaultSftpClient)
             DefaultSftpClientFactory.INSTANCE.createSftpClient(session);
     }
@@ -75,7 +78,11 @@ public class SSHSftpClient
     }
 
     public void close() throws IOException {
-        _sftpClient.close();
+        try {_sftpClient.close();}
+        catch (Exception e) {
+            _sshConnection.close();
+            throw e;
+        }
     }
     
     public String getName() {
@@ -83,220 +90,490 @@ public class SSHSftpClient
     }
 
     public int send(int cmd, Buffer buffer) throws IOException {
-        return _sftpClient.send(cmd, buffer);
+        try {return _sftpClient.send(cmd, buffer);}
+        catch (Exception e) {
+            try {_sftpClient.close();} catch (Exception e1) {}
+            _sshConnection.close();
+            throw e;
+        }
     }
 
     public Buffer receive(int id) throws IOException {
-        return _sftpClient.receive(id);
+        try {return _sftpClient.receive(id);}
+        catch (Exception e) {
+            try {_sftpClient.close();} catch (Exception e1) {}
+            _sshConnection.close();
+            throw e;
+        }
     }
 
     public Buffer receive(int id, long idleTimeout) throws IOException {
-        return _sftpClient.receive(id, idleTimeout);
+        try {return _sftpClient.receive(id, idleTimeout);}
+        catch (Exception e) {
+            try {_sftpClient.close();} catch (Exception e1) {}
+            _sshConnection.close();
+            throw e;
+        }
     }
 
     public Buffer receive(int id, Duration idleTimeout) throws IOException {
-        return _sftpClient.receive(id, idleTimeout);
+        try {return _sftpClient.receive(id, idleTimeout);}
+        catch (Exception e) {
+            try {_sftpClient.close();} catch (Exception e1) {}
+            _sshConnection.close();
+            throw e;
+        }
     }
 
     public CloseableHandle open(String path) throws IOException {
-        return _sftpClient.open(path);
+        try {return _sftpClient.open(path);}
+        catch (Exception e) {
+            try {_sftpClient.close();} catch (Exception e1) {}
+            _sshConnection.close();
+            throw e;
+        }
     }
 
     public CloseableHandle open(String path, OpenMode... options) throws IOException {
-        return _sftpClient.open(path, options);
+        try {return _sftpClient.open(path, options);}
+        catch (Exception e) {
+            try {_sftpClient.close();} catch (Exception e1) {}
+            _sshConnection.close();
+            throw e;
+        }
     }
 
     public int negotiateVersion(SftpVersionSelector selector) throws IOException {
-        return _sftpClient.negotiateVersion(selector);
+        try {return _sftpClient.negotiateVersion(selector);}
+        catch (Exception e) {
+            try {_sftpClient.close();} catch (Exception e1) {}
+            _sshConnection.close();
+            throw e;
+        }
     }
 
     public void rename(String oldPath, String newPath) throws IOException {
-        _sftpClient.rename(oldPath, newPath);
+        try {_sftpClient.rename(oldPath, newPath);}
+        catch (Exception e) {
+            try {_sftpClient.close();} catch (Exception e1) {}
+            _sshConnection.close();
+            throw e;
+        }
     }
 
     public void rename(String oldPath, String newPath, CopyMode... options) throws IOException {
-        _sftpClient.rename(oldPath, newPath, options);
+        try {_sftpClient.rename(oldPath, newPath, options);}
+        catch (Exception e) {
+            try {_sftpClient.close();} catch (Exception e1) {}
+            _sshConnection.close();
+            throw e;
+        }
     }
 
     public int read(Handle handle, long fileOffset, byte[] dst) throws IOException {
-        return _sftpClient.read(handle, fileOffset, dst);
+        try {return _sftpClient.read(handle, fileOffset, dst);}
+        catch (Exception e) {
+            try {_sftpClient.close();} catch (Exception e1) {}
+            _sshConnection.close();
+            throw e;
+        }
     }
 
     public int read(Handle handle, long fileOffset, byte[] dst, AtomicReference<Boolean> eofSignalled)
             throws IOException {
-        return _sftpClient.read(handle, fileOffset, dst, eofSignalled);
+        try {return _sftpClient.read(handle, fileOffset, dst, eofSignalled);}
+        catch (Exception e) {
+            try {_sftpClient.close();} catch (Exception e1) {}
+            _sshConnection.close();
+            throw e;
+        }
     }
 
     public int read(Handle handle, long fileOffset, byte[] dst, int dstOffset, int len) throws IOException {
-        return _sftpClient.read(handle, fileOffset, dst, dstOffset, len);
+        try {return _sftpClient.read(handle, fileOffset, dst, dstOffset, len);}
+        catch (Exception e) {
+            try {_sftpClient.close();} catch (Exception e1) {}
+            _sshConnection.close();
+            throw e;
+        }
     }
 
     public void write(Handle handle, long fileOffset, byte[] src) throws IOException {
-        _sftpClient.write(handle, fileOffset, src);
+        try {_sftpClient.write(handle, fileOffset, src);}
+        catch (Exception e) {
+            try {_sftpClient.close();} catch (Exception e1) {}
+            _sshConnection.close();
+            throw e;
+        }
     }
 
     public List<DirEntry> readDir(Handle handle) throws IOException {
-        return _sftpClient.readDir(handle);
+        try {return _sftpClient.readDir(handle);}
+        catch (Exception e) {
+            try {_sftpClient.close();} catch (Exception e1) {}
+            _sshConnection.close();
+            throw e;
+        }
     }
 
     public CloseableHandle open(String path, Collection<OpenMode> options) throws IOException {
-        return _sftpClient.open(path, options);
+        try {return _sftpClient.open(path, options);}
+        catch (Exception e) {
+            try {_sftpClient.close();} catch (Exception e1) {}
+            _sshConnection.close();
+            throw e;
+        }
     }
 
     public void symLink(String linkPath, String targetPath) throws IOException {
-        _sftpClient.symLink(linkPath, targetPath);
+        try {_sftpClient.symLink(linkPath, targetPath);}
+        catch (Exception e) {
+            try {_sftpClient.close();} catch (Exception e1) {}
+            _sshConnection.close();
+            throw e;
+        }
     }
 
     public FileChannel openRemotePathChannel(String path, OpenOption... options) throws IOException {
-        return _sftpClient.openRemotePathChannel(path, options);
+        try {return _sftpClient.openRemotePathChannel(path, options);}
+        catch (Exception e) {
+            try {_sftpClient.close();} catch (Exception e1) {}
+            _sshConnection.close();
+            throw e;
+        }
     }
 
     public FileChannel openRemotePathChannel(String path, Collection<? extends OpenOption> options) throws IOException {
-        return _sftpClient.openRemotePathChannel(path, options);
+        try {return _sftpClient.openRemotePathChannel(path, options);}
+        catch (Exception e) {
+            try {_sftpClient.close();} catch (Exception e1) {}
+            _sshConnection.close();
+            throw e;
+        }
     }
 
     public FileChannel openRemoteFileChannel(String path, OpenMode... modes) throws IOException {
-        return _sftpClient.openRemoteFileChannel(path, modes);
+        try {return _sftpClient.openRemoteFileChannel(path, modes);}
+        catch (Exception e) {
+            try {_sftpClient.close();} catch (Exception e1) {}
+            _sshConnection.close();
+            throw e;
+        }
     }
 
     public void close(Handle handle) throws IOException {
-        _sftpClient.close(handle);
+        try {_sftpClient.close(handle);}
+        catch (Exception e) {
+            try {_sftpClient.close();} catch (Exception e1) {}
+            _sshConnection.close();
+            throw e;
+        }
     }
 
     public void remove(String path) throws IOException {
-        _sftpClient.remove(path);
+        try {_sftpClient.remove(path);}
+        catch (Exception e) {
+            try {_sftpClient.close();} catch (Exception e1) {}
+            _sshConnection.close();
+            throw e;
+        }
     }
 
     public Collection<DirEntry> readEntries(String path) throws IOException {
-        return _sftpClient.readEntries(path);
+        try {return _sftpClient.readEntries(path);}
+        catch (Exception e) {
+            try {_sftpClient.close();} catch (Exception e1) {}
+            _sshConnection.close();
+            throw e;
+        }
     }
 
     public void rename(String oldPath, String newPath, Collection<CopyMode> options) throws IOException {
-        _sftpClient.rename(oldPath, newPath, options);
+        try {_sftpClient.rename(oldPath, newPath, options);}
+        catch (Exception e) {
+            try {_sftpClient.close();} catch (Exception e1) {}
+            _sshConnection.close();
+            throw e;
+        }
     }
 
     public InputStream read(String path) throws IOException {
-        return _sftpClient.read(path);
+        try {return _sftpClient.read(path);}
+        catch (Exception e) {
+            try {_sftpClient.close();} catch (Exception e1) {}
+            _sshConnection.close();
+            throw e;
+        }
     }
 
     public InputStream read(String path, int bufferSize) throws IOException {
-        return _sftpClient.read(path, bufferSize);
+        try {return _sftpClient.read(path, bufferSize);}
+        catch (Exception e) {
+            try {_sftpClient.close();} catch (Exception e1) {}
+            _sshConnection.close();
+            throw e;
+        }
     }
 
     public InputStream read(String path, OpenMode... mode) throws IOException {
-        return _sftpClient.read(path, mode);
+        try {return _sftpClient.read(path, mode);}
+        catch (Exception e) {
+            try {_sftpClient.close();} catch (Exception e1) {}
+            _sshConnection.close();
+            throw e;
+        }
     }
 
     public InputStream read(String path, int bufferSize, OpenMode... mode) throws IOException {
-        return _sftpClient.read(path, bufferSize, mode);
+        try {return _sftpClient.read(path, bufferSize, mode);}
+        catch (Exception e) {
+            try {_sftpClient.close();} catch (Exception e1) {}
+            _sshConnection.close();
+            throw e;
+        }
     }
 
     public OutputStream write(String path) throws IOException {
-        return _sftpClient.write(path);
+        try {return _sftpClient.write(path);}
+        catch (Exception e) {
+            try {_sftpClient.close();} catch (Exception e1) {}
+            _sshConnection.close();
+            throw e;
+        }
     }
 
     public OutputStream write(String path, int bufferSize) throws IOException {
-        return _sftpClient.write(path, bufferSize);
+        try {return _sftpClient.write(path, bufferSize);}
+        catch (Exception e) {
+            try {_sftpClient.close();} catch (Exception e1) {}
+            _sshConnection.close();
+            throw e;
+        }
     }
 
     public OutputStream write(String path, OpenMode... mode) throws IOException {
-        return _sftpClient.write(path, mode);
+        try {return _sftpClient.write(path, mode);}
+        catch (Exception e) {
+            try {_sftpClient.close();} catch (Exception e1) {}
+            _sshConnection.close();
+            throw e;
+        }
     }
 
     public OutputStream write(String path, int bufferSize, OpenMode... mode) throws IOException {
-        return _sftpClient.write(path, bufferSize, mode);
+        try {return _sftpClient.write(path, bufferSize, mode);}
+        catch (Exception e) {
+            try {_sftpClient.close();} catch (Exception e1) {}
+            _sshConnection.close();
+            throw e;
+        }
     }
 
     public int read(Handle handle, long fileOffset, byte[] dst, int dstOffset, int len,
             AtomicReference<Boolean> eofSignalled) throws IOException {
-        return _sftpClient.read(handle, fileOffset, dst, dstOffset, len, eofSignalled);
+        try {return _sftpClient.read(handle, fileOffset, dst, dstOffset, len, eofSignalled);}
+        catch (Exception e) {
+            try {_sftpClient.close();} catch (Exception e1) {}
+            _sshConnection.close();
+            throw e;
+        }
     }
 
     public void write(Handle handle, long fileOffset, byte[] src, int srcOffset, int len) throws IOException {
-        _sftpClient.write(handle, fileOffset, src, srcOffset, len);
+        try {_sftpClient.write(handle, fileOffset, src, srcOffset, len);}
+        catch (Exception e) {
+            try {_sftpClient.close();} catch (Exception e1) {}
+            _sshConnection.close();
+            throw e;
+        }
     }
 
     public void mkdir(String path) throws IOException {
-        _sftpClient.mkdir(path);
+        try {_sftpClient.mkdir(path);}
+        catch (Exception e) {
+            try {_sftpClient.close();} catch (Exception e1) {}
+            _sshConnection.close();
+            throw e;
+        }
     }
 
     public void rmdir(String path) throws IOException {
-        _sftpClient.rmdir(path);
+        try {_sftpClient.rmdir(path);}
+        catch (Exception e) {
+            try {_sftpClient.close();} catch (Exception e1) {}
+            _sshConnection.close();
+            throw e;
+        }
     }
 
     public CloseableHandle openDir(String path) throws IOException {
-        return _sftpClient.openDir(path);
+        try {return _sftpClient.openDir(path);}
+        catch (Exception e) {
+            try {_sftpClient.close();} catch (Exception e1) {}
+            _sshConnection.close();
+            throw e;
+        }
     }
 
     public List<DirEntry> readDir(Handle handle, AtomicReference<Boolean> eolIndicator) throws IOException {
-        return _sftpClient.readDir(handle, eolIndicator);
+        try {return _sftpClient.readDir(handle, eolIndicator);}
+        catch (Exception e) {
+            try {_sftpClient.close();} catch (Exception e1) {}
+            _sshConnection.close();
+            throw e;
+        }
     }
 
     public String canonicalPath(String path) throws IOException {
-        return _sftpClient.canonicalPath(path);
+        try {return _sftpClient.canonicalPath(path);}
+        catch (Exception e) {
+            try {_sftpClient.close();} catch (Exception e1) {}
+            _sshConnection.close();
+            throw e;
+        }
     }
 
     public Attributes stat(String path) throws IOException {
-        return _sftpClient.stat(path);
+        try {return _sftpClient.stat(path);}
+        catch (Exception e) {
+            try {_sftpClient.close();} catch (Exception e1) {}
+            _sshConnection.close();
+            throw e;
+        }
     }
 
     public Attributes lstat(String path) throws IOException {
-        return _sftpClient.lstat(path);
+        try {return _sftpClient.lstat(path);}
+        catch (Exception e) {
+            try {_sftpClient.close();} catch (Exception e1) {}
+            _sshConnection.close();
+            throw e;
+        }
     }
 
     public Attributes stat(Handle handle) throws IOException {
-        return _sftpClient.stat(handle);
+        try {return _sftpClient.stat(handle);}
+        catch (Exception e) {
+            try {_sftpClient.close();} catch (Exception e1) {}
+            _sshConnection.close();
+            throw e;
+        }
     }
 
     public void setStat(String path, Attributes attributes) throws IOException {
-        _sftpClient.setStat(path, attributes);
+        try {_sftpClient.setStat(path, attributes);}
+        catch (Exception e) {
+            try {_sftpClient.close();} catch (Exception e1) {}
+            _sshConnection.close();
+            throw e;
+        }
     }
 
     public void setStat(Handle handle, Attributes attributes) throws IOException {
-        _sftpClient.setStat(handle, attributes);
+        try {_sftpClient.setStat(handle, attributes);}
+        catch (Exception e) {
+            try {_sftpClient.close();} catch (Exception e1) {}
+            _sshConnection.close();
+            throw e;
+        }
     }
 
     public String readLink(String path) throws IOException {
-        return _sftpClient.readLink(path);
+        try {return _sftpClient.readLink(path);}
+        catch (Exception e) {
+            try {_sftpClient.close();} catch (Exception e1) {}
+            _sshConnection.close();
+            throw e;
+        }
     }
 
     public void link(String linkPath, String targetPath, boolean symbolic) throws IOException {
-        _sftpClient.link(linkPath, targetPath, symbolic);
+        try {_sftpClient.link(linkPath, targetPath, symbolic);}
+        catch (Exception e) {
+            try {_sftpClient.close();} catch (Exception e1) {}
+            _sshConnection.close();
+            throw e;
+        }
     }
 
     public void lock(Handle handle, long offset, long length, int mask) throws IOException {
-        _sftpClient.lock(handle, offset, length, mask);
+        try {_sftpClient.lock(handle, offset, length, mask);}
+        catch (Exception e) {
+            try {_sftpClient.close();} catch (Exception e1) {}
+            _sshConnection.close();
+            throw e;
+        }
     }
 
     public void unlock(Handle handle, long offset, long length) throws IOException {
-        _sftpClient.unlock(handle, offset, length);
+        try {_sftpClient.unlock(handle, offset, length);}
+        catch (Exception e) {
+            try {_sftpClient.close();} catch (Exception e1) {}
+            _sshConnection.close();
+            throw e;
+        }
     }
 
     public Iterable<DirEntry> readDir(String path) throws IOException {
-        return _sftpClient.readDir(path);
+        try {return _sftpClient.readDir(path);}
+        catch (Exception e) {
+            try {_sftpClient.close();} catch (Exception e1) {}
+            _sshConnection.close();
+            throw e;
+        }
     }
 
     public Iterable<DirEntry> listDir(Handle handle) throws IOException {
-        return _sftpClient.listDir(handle);
+        try {return _sftpClient.listDir(handle);}
+        catch (Exception e) {
+            try {_sftpClient.close();} catch (Exception e1) {}
+            _sshConnection.close();
+            throw e;
+        }
     }
 
     public FileChannel openRemoteFileChannel(String path, Collection<OpenMode> modes) throws IOException {
-        return _sftpClient.openRemoteFileChannel(path, modes);
+        try {return _sftpClient.openRemoteFileChannel(path, modes);}
+        catch (Exception e) {
+            try {_sftpClient.close();} catch (Exception e1) {}
+            _sshConnection.close();
+            throw e;
+        }
     }
 
     public InputStream read(String path, int bufferSize, Collection<OpenMode> mode) throws IOException {
-        return _sftpClient.read(path, bufferSize, mode);
+        try {return _sftpClient.read(path, bufferSize, mode);}
+        catch (Exception e) {
+            try {_sftpClient.close();} catch (Exception e1) {}
+            _sshConnection.close();
+            throw e;
+        }
     }
 
     public InputStream read(String path, Collection<OpenMode> mode) throws IOException {
-        return _sftpClient.read(path, mode);
+        try {return _sftpClient.read(path, mode);}
+        catch (Exception e) {
+            try {_sftpClient.close();} catch (Exception e1) {}
+            _sshConnection.close();
+            throw e;
+        }
     }
 
     public OutputStream write(String path, int bufferSize, Collection<OpenMode> mode) throws IOException {
-        return _sftpClient.write(path, bufferSize, mode);
+        try {return _sftpClient.write(path, bufferSize, mode);}
+        catch (Exception e) {
+            try {_sftpClient.close();} catch (Exception e1) {}
+            _sshConnection.close();
+            throw e;
+        }
     }
 
     public OutputStream write(String path, Collection<OpenMode> mode) throws IOException {
-        return _sftpClient.write(path, mode);
+        try {return _sftpClient.write(path, mode);}
+        catch (Exception e) {
+            try {_sftpClient.close();} catch (Exception e1) {}
+            _sshConnection.close();
+            throw e;
+        }
     }
 }

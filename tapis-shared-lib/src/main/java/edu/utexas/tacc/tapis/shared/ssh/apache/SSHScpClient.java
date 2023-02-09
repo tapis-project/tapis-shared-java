@@ -17,6 +17,7 @@ import org.apache.sshd.scp.common.ScpTransferEventListener;
 import org.apache.sshd.scp.common.helpers.DefaultScpFileOpener;
 import org.apache.sshd.scp.common.helpers.ScpTimestampCommandDetails;
 
+import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
 import edu.utexas.tacc.tapis.shared.exceptions.runtime.TapisRuntimeException;
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
 
@@ -65,8 +66,18 @@ public class SSHScpClient
             String msg = MsgUtils.getMsg("TAPIS_NULL_PARAMETER", "SSHScpClient", "sshConnection");
             throw new TapisRuntimeException(msg);
         }
+        
+        // Get connection information.
         _sshConnection = sshConnection;
-        _scpClient = ScpClientCreator.instance().createScpClient(_sshConnection.getSession());
+        var session  = _sshConnection.getSession();
+        if (session == null) {
+            _sshConnection.close(); // probably not strictly necessary
+            String msg =  MsgUtils.getMsg("TAPIS_SSH_NO_SESSION");
+            throw new TapisRuntimeException(msg);
+        }
+
+        // Create local client.
+        _scpClient = ScpClientCreator.instance().createScpClient(session);
     }
     
     /* ---------------------------------------------------------------------- */
@@ -93,10 +104,18 @@ public class SSHScpClient
         if (listener == null) listener = ScpTransferEventListener.EMPTY;
           else ScpTransferEventListener.validateListener(listener);
         
-        // Assign the required fields.
+        // Get connection information.
         _sshConnection = sshConnection;
+        var session  = _sshConnection.getSession();
+        if (session == null) {
+            _sshConnection.close(); // probably not strictly necessary
+            String msg =  MsgUtils.getMsg("TAPIS_SSH_NO_SESSION");
+            throw new TapisRuntimeException(msg);
+        }
+        
+        // Create local client.
         _scpClient = ScpClientCreator.instance().createScpClient(
-            _sshConnection.getSession(), DefaultScpFileOpener.INSTANCE, listener);
+                        session, DefaultScpFileOpener.INSTANCE, listener);
     }
     
     /* ********************************************************************** */
@@ -109,10 +128,15 @@ public class SSHScpClient
                                    boolean preserveAttributes)
      throws IOException
     {
-        if (preserveAttributes)
-            _scpClient.download(remoteFile, localFile, Option.PreserveAttributes);
-        else 
-            _scpClient.download(remoteFile, localFile);
+        try {
+            if (preserveAttributes)
+                _scpClient.download(remoteFile, localFile, Option.PreserveAttributes);
+            else 
+                _scpClient.download(remoteFile, localFile);
+        } catch (Exception e) {
+            _sshConnection.close();
+            throw e;
+        }
     }
 
     /* ---------------------------------------------------------------------- */
@@ -122,11 +146,16 @@ public class SSHScpClient
                                   boolean preserveAttributes)
      throws IOException
     {
-        if (preserveAttributes)
-            _scpClient.download(remoteFile, localDir, Option.PreserveAttributes, 
-                                Option.TargetIsDirectory);
-        else 
-            _scpClient.download(remoteFile, localDir, Option.TargetIsDirectory);
+        try {
+            if (preserveAttributes)
+                _scpClient.download(remoteFile, localDir, Option.PreserveAttributes, 
+                                    Option.TargetIsDirectory);
+            else 
+                _scpClient.download(remoteFile, localDir, Option.TargetIsDirectory);
+        } catch (Exception e) {
+            _sshConnection.close();
+            throw e;
+        }
     }
 
     /* ---------------------------------------------------------------------- */
@@ -136,11 +165,16 @@ public class SSHScpClient
                                    boolean preserveAttributes)
      throws IOException
     {
-        if (preserveAttributes)
-            _scpClient.download(remoteFiles, localDir, Option.PreserveAttributes, 
-                                Option.TargetIsDirectory);
-        else 
-            _scpClient.download(remoteFiles, localDir, Option.TargetIsDirectory);
+        try {
+            if (preserveAttributes)
+                _scpClient.download(remoteFiles, localDir, Option.PreserveAttributes, 
+                                    Option.TargetIsDirectory);
+            else 
+                _scpClient.download(remoteFiles, localDir, Option.TargetIsDirectory);
+        } catch (Exception e) {
+            _sshConnection.close();
+            throw e;
+        }
     }
 
     /* ---------------------------------------------------------------------- */
@@ -150,12 +184,17 @@ public class SSHScpClient
                                  boolean preserveAttributes)
      throws IOException
     {
-        if (preserveAttributes)
-            _scpClient.download(remoteDir, localDir, Option.PreserveAttributes, 
-                                Option.TargetIsDirectory, Option.Recursive);
-        else 
-            _scpClient.download(remoteDir, localDir, Option.TargetIsDirectory,
-                                Option.Recursive);
+        try {
+            if (preserveAttributes)
+                _scpClient.download(remoteDir, localDir, Option.PreserveAttributes, 
+                                    Option.TargetIsDirectory, Option.Recursive);
+            else 
+                _scpClient.download(remoteDir, localDir, Option.TargetIsDirectory,
+                                    Option.Recursive);
+        } catch (Exception e) {
+            _sshConnection.close();
+            throw e;
+        }
     }
 
     /* ---------------------------------------------------------------------- */
@@ -164,7 +203,11 @@ public class SSHScpClient
     public void downloadFileToStream(String remoteFile, OutputStream ostream)
      throws IOException
     {
-        _scpClient.download(remoteFile, ostream);
+        try {_scpClient.download(remoteFile, ostream);} 
+        catch (Exception e) {
+            _sshConnection.close();
+            throw e;
+        }
     }
 
     /* ---------------------------------------------------------------------- */
@@ -173,7 +216,11 @@ public class SSHScpClient
     public byte[] downloadFileToBytes(String remoteFile)
      throws IOException
     {
-        return _scpClient.downloadBytes(remoteFile);
+        try {return _scpClient.downloadBytes(remoteFile);} 
+        catch (Exception e) {
+            _sshConnection.close();
+            throw e;
+        }
     }
     
     /* ---------------------------------------------------------------------- */
@@ -183,10 +230,15 @@ public class SSHScpClient
                                  boolean preserveAttributes)
      throws IOException
     {
-        if (preserveAttributes)
-            _scpClient.upload(localFile, remoteFile, Option.PreserveAttributes);
-        else 
-            _scpClient.upload(localFile, remoteFile);
+        try {
+            if (preserveAttributes)
+                _scpClient.upload(localFile, remoteFile, Option.PreserveAttributes);
+            else 
+                _scpClient.upload(localFile, remoteFile);
+        } catch (Exception e) {
+            _sshConnection.close();
+            throw e;
+        }
     }
     
     /* ---------------------------------------------------------------------- */
@@ -196,11 +248,16 @@ public class SSHScpClient
                                 boolean preserveAttributes)
      throws IOException
     {
-        if (preserveAttributes)
-            _scpClient.upload(localFile, remoteDir, Option.PreserveAttributes, 
-                              Option.TargetIsDirectory);
-        else 
-            _scpClient.upload(localFile, remoteDir, Option.TargetIsDirectory);
+        try {
+            if (preserveAttributes)
+                _scpClient.upload(localFile, remoteDir, Option.PreserveAttributes, 
+                                  Option.TargetIsDirectory);
+            else 
+                _scpClient.upload(localFile, remoteDir, Option.TargetIsDirectory);
+        } catch (Exception e) {
+            _sshConnection.close();
+            throw e;
+        }
     }
     
     /* ---------------------------------------------------------------------- */
@@ -210,11 +267,16 @@ public class SSHScpClient
                                  boolean preserveAttributes)
      throws IOException
     {
-        if (preserveAttributes)
-            _scpClient.upload(localFiles, remoteDir, Option.PreserveAttributes, 
-                              Option.TargetIsDirectory);
-        else 
-            _scpClient.upload(localFiles, remoteDir, Option.TargetIsDirectory);
+        try {
+            if (preserveAttributes)
+                _scpClient.upload(localFiles, remoteDir, Option.PreserveAttributes, 
+                                  Option.TargetIsDirectory);
+            else 
+                _scpClient.upload(localFiles, remoteDir, Option.TargetIsDirectory);
+        } catch (Exception e) {
+            _sshConnection.close();
+            throw e;
+        }
     }
 
     /* ---------------------------------------------------------------------- */
@@ -224,12 +286,17 @@ public class SSHScpClient
                                 boolean preserveAttributes)
      throws IOException
     {
-        if (preserveAttributes)
-            _scpClient.upload(localDir, remoteDir, Option.PreserveAttributes, 
-                              Option.TargetIsDirectory, Option.Recursive);
-        else 
-            _scpClient.upload(localDir, remoteDir, Option.TargetIsDirectory,
-                              Option.Recursive);
+        try {
+            if (preserveAttributes)
+                _scpClient.upload(localDir, remoteDir, Option.PreserveAttributes, 
+                                  Option.TargetIsDirectory, Option.Recursive);
+            else 
+                _scpClient.upload(localDir, remoteDir, Option.TargetIsDirectory,
+                                  Option.Recursive);
+        } catch (Exception e) {
+            _sshConnection.close();
+            throw e;
+        }
     }
     
     /* ---------------------------------------------------------------------- */
@@ -263,7 +330,11 @@ public class SSHScpClient
             new ScpTimestampCommandDetails(times.lastModifiedMillis, times.lastAccessMillis);
         
         // Push the bytes out.
-        _scpClient.upload(bytes, remoteFile, perms, timeDetails);
+        try {_scpClient.upload(bytes, remoteFile, perms, timeDetails);} 
+        catch (Exception e) {
+            _sshConnection.close();
+            throw e;
+        }
     }
     
     /* ---------------------------------------------------------------------- */
@@ -298,7 +369,12 @@ public class SSHScpClient
             new ScpTimestampCommandDetails(times.lastModifiedMillis, times.lastAccessMillis);
         
         // Upload the specified number of bytes.
-        _scpClient.upload(stream, remoteFile, size, perms, timeDetails);
+        try {_scpClient.upload(stream, remoteFile, size, perms, timeDetails);} 
+        catch (Exception e) {
+            _sshConnection.close();
+            throw e;
+        }
+
     }
     
     /* ---------------------------------------------------------------------- */
