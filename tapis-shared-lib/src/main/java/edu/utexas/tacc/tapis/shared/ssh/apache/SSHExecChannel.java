@@ -94,7 +94,9 @@ public class SSHExecChannel
     /** Execute a remote command and return its standard out and standard err 
      * content in their respective streams.
      * 
-     * If an exception is thrown, the sshConnection is closed.
+     * If an exception is thrown before the command can be issued, the 
+     * sshConnection is closed.  After the command is issued, the exceptions
+     * pass through to the caller.
      * 
      * @param cmd the command to execute on the remote host
      * @param outStream the stream containing standard out of the remote command
@@ -142,7 +144,7 @@ public class SSHExecChannel
         channel.setOut(outStream);
         channel.setErr(errStream);
         
-        // Issue the command.
+        // Issue the command and let execution exception flow to caller.
         try {    
             // Open the channel.
             channel.open().verify(_sshConnection.getTimeouts().getOpenChannelMillis());
@@ -158,11 +160,6 @@ public class SSHExecChannel
             Integer status = channel.getExitStatus();
             if (status != null) exitCode = status;
         } 
-        catch (Exception e) {
-            // Intercept exception to close connection.
-            _sshConnection.close();
-            throw e;
-        }
         finally {channel.close(true);} // double down by closing immediately
             
         // Return the remote exit code or the default value.
