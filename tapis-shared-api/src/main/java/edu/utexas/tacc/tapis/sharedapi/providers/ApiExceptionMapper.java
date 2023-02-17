@@ -12,6 +12,7 @@ import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.NotAuthorizedException;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.NotSupportedException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
@@ -20,6 +21,7 @@ import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.FORBIDDEN;
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+import static javax.ws.rs.core.Response.Status.NOT_IMPLEMENTED;
 import static javax.ws.rs.core.Response.Status.UNAUTHORIZED;
 
 /*
@@ -41,6 +43,7 @@ public class ApiExceptionMapper implements ExceptionMapper<Exception>
     else if (exception instanceof NotAuthorizedException) status = UNAUTHORIZED;
     else if (exception instanceof ForbiddenException) status = FORBIDDEN;
     else if (exception instanceof BadRequestException) status = BAD_REQUEST;
+    else if (exception instanceof NotSupportedException) status = NOT_IMPLEMENTED;
     else if (exception instanceof WebApplicationException) status = INTERNAL_SERVER_ERROR;
     else if (exception instanceof TapisClientException tce) status = Response.Status.valueOf(tce.getStatus());
     else log.error("UNCAUGHT_EXCEPTION", exception);
