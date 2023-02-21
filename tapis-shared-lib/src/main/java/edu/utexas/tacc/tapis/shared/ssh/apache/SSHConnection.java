@@ -138,11 +138,9 @@ public class SSHConnection
         // Initialize and start a client. Use client.connect() to start a session.
         try {initSession();}
             catch (TapisException e) {
-                stop();
                 throw e;
             }
             catch (Exception e) {
-                stop();
                 String msg = MsgUtils.getMsg("TAPIS_SSH_CONNECT_ERROR", host, port,
                                              username, _authMethod, e.getMessage());
                 throw new TapisException(msg, e);
@@ -207,8 +205,11 @@ public class SSHConnection
         _authMethod = AuthMethod.PUBLICKEY_AUTH;
         
         // Establish a connected and authenticated session.
+        // Initialize and start a client. Use client.connect() to start a session.
         try {initSession();}
-            catch (TapisException e) {throw e;}
+            catch (TapisException e) {
+                throw e;
+            }
             catch (Exception e) {
                 String msg = MsgUtils.getMsg("TAPIS_SSH_CONNECT_ERROR", host, port,
                                              username, _authMethod, e.getMessage());
@@ -246,6 +247,7 @@ public class SSHConnection
     /* ---------------------------------------------------------------------- */
     /* stop:                                                                  */
     /* ---------------------------------------------------------------------- */
+    /** Close session and client if necessary without throwing exceptions.    */
     public synchronized void stop()
     {
         // Close the session immediately.
@@ -258,7 +260,7 @@ public class SSHConnection
     }
     
     /* ---------------------------------------------------------------------- */
-    /* close:                                                                 */
+    /* isClosed:                                                              */
     /* ---------------------------------------------------------------------- */
     public synchronized boolean isClosed()
     {
@@ -271,6 +273,7 @@ public class SSHConnection
     /* ---------------------------------------------------------------------- */
     /* close:                                                                 */
     /* ---------------------------------------------------------------------- */
+    /** Method on the AutoCloseable interface. */
     @Override
     public void close() {stop();}
     
@@ -304,7 +307,6 @@ public class SSHConnection
      */
     protected synchronized void restart() throws TapisException, IOException
     {
-        if (_client.isStarted()) stop();
         initSession();
     }
     
@@ -327,6 +329,7 @@ public class SSHConnection
         }
         
         // Create a new client.
+        if (_client != null) stop();
         _client = SshClient.setUpDefaultClient();
         _client.start();
         
@@ -336,6 +339,7 @@ public class SSHConnection
                        .verify(_timeouts.getConnectMillis())
                        .getSession();
         } catch (Exception e) {
+            stop();
             TapisRecoverableException rex = getRecoverable(e, ExceptionSource.CONNECT);
             if (rex == null) throw e;
             rex.state.put("hostname", _host);
@@ -358,6 +362,7 @@ public class SSHConnection
         // Authenticate the user.
         try {_session.auth().verify(_timeouts.getAuthenticateMillis());}
             catch (Exception e) {
+                stop();
                 TapisRecoverableException rex = getRecoverable(e, ExceptionSource.AUTH);
                 if (rex == null) throw e;
                 rex.state.put("hostname", _host);

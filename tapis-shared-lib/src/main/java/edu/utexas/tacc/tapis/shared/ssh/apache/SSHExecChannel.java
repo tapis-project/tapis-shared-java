@@ -94,6 +94,10 @@ public class SSHExecChannel
     /** Execute a remote command and return its standard out and standard err 
      * content in their respective streams.
      * 
+     * If an exception is thrown before the command can be issued, the 
+     * sshConnection is closed.  After the command is issued, the exceptions
+     * pass through to the caller.
+     * 
      * @param cmd the command to execute on the remote host
      * @param outStream the stream containing standard out of the remote command
      * @param errStream the stream containing standard err of the remote command
@@ -106,10 +110,12 @@ public class SSHExecChannel
     {
         // Check call-specific input.
         if (outStream == null) {
+            _sshConnection.close();
             String msg = MsgUtils.getMsg("TAPIS_NULL_PARAMETER", "execute", "outStream");
             throw new IOException(msg);
         }
         if (errStream == null) {
+            _sshConnection.close();
             String msg = MsgUtils.getMsg("TAPIS_NULL_PARAMETER", "execute", "errStream");
             throw new IOException(msg);
         }
@@ -121,14 +127,24 @@ public class SSHExecChannel
         int exitCode = -1;  // default value when no remote code returned 
         var session  = _sshConnection.getSession();
         if (session == null) {
+            _sshConnection.close(); // probably not strictly necessary
             String msg =  MsgUtils.getMsg("TAPIS_SSH_NO_SESSION");
             throw new TapisException(msg);
         }
         
         // Create the channel.
-        ChannelExec channel = session.createExecChannel(cmd);
+        ChannelExec channel;
+        try {channel = session.createExecChannel(cmd);}
+            catch (Exception e) {
+                _sshConnection.close();
+                String msg =  MsgUtils.getMsg("TAPIS_SSH_CHANNEL_CREATE_ERROR", 
+                               _sshConnection.getHost(), _sshConnection.getUsername(), e.getMessage());
+                throw new TapisException(msg);
+            }
         channel.setOut(outStream);
         channel.setErr(errStream);
+        
+        // Issue the command and let execution exception flow to caller.
         try {    
             // Open the channel.
             channel.open().verify(_sshConnection.getTimeouts().getOpenChannelMillis());

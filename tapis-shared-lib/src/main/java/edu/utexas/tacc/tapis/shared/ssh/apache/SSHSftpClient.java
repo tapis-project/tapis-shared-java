@@ -10,7 +10,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
 import org.apache.sshd.common.util.buffer.Buffer;
 import org.apache.sshd.sftp.client.SftpClient.Attributes;
 import org.apache.sshd.sftp.client.SftpClient.CloseableHandle;
@@ -57,8 +56,8 @@ public class SSHSftpClient
         _sshConnection = sshConnection;
         var session  = _sshConnection.getSession();
         if (session == null) {
-          String msg =  MsgUtils.getMsg("TAPIS_SSH_NO_SESSION");
-          throw new TapisRuntimeException(msg);
+            String msg =  MsgUtils.getMsg("TAPIS_SSH_NO_SESSION");
+            throw new TapisRuntimeException(msg);
         }
         _sftpClient = (DefaultSftpClient)
             DefaultSftpClientFactory.INSTANCE.createSftpClient(session);
