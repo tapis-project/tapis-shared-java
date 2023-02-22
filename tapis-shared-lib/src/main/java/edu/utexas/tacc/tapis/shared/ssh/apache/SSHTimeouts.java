@@ -7,7 +7,8 @@ public class SSHTimeouts
     public static final long DEFAULT_CONNECT_MILLIS = 15000;
     public static final long DEFAULT_AUTHENTICATE_MILLIS = 10000;
     public static final long DEFAULT_OPEN_CHANNEL_MILLIS = 10000;
-    public static final long DEFAULT_EXECUTION_MILLIS = 20000;
+    public static final long DEFAULT_EXECUTION_MILLIS = 600000; // 10 minutes.
+    //public static final long DEFAULT_EXECUTION_MILLIS = 20000;
     
     // Timed operations.
     private long _connectMillis = DEFAULT_CONNECT_MILLIS;
