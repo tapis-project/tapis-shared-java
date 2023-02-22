@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>edu.utexas.tacc.tapis</groupId>
   <artifactId>tapis-shared-java</artifactId>
-  <version>2.0.83</version>
+  <version>2.0.84</version>
   <packaging>pom</packaging>
   <name>Tapis shared</name>
   <description>TAPIS shared Java code</description>
@@ -166,7 +166,7 @@
     <google-findbugs.version>3.0.2</google-findbugs.version>
     <maven-war-plugin.version>3.3.2</maven-war-plugin.version>
     <exec-maven-plugin.version>1.6.0</exec-maven-plugin.version>
-    <tapis-shared-java.version>[2.0.77,3.0)</tapis-shared-java.version>
+    <tapis-shared-java.version>[2.0.83,3.0)</tapis-shared-java.version>
     <p6spy.version>3.8.3</p6spy.version>
     <maven-dependency-plugin.version>3.2.0</maven-dependency-plugin.version>
     <httpclient.version>4.5.8</httpclient.version>
@@ -213,13 +213,13 @@
     <httpmime.version>4.5.8</httpmime.version>
     <hk2.version>2.6.1</hk2.version>
     <commons-codec.version>1.15</commons-codec.version>
-    <tapis-client-java.version>[2.0.64,3.0)</tapis-client-java.version>
+    <tapis-client-java.version>[2.0.69,3.0)</tapis-client-java.version>
     <javax.xml.bind.jaxb-core.version>2.3.0.1</javax.xml.bind.jaxb-core.version>
     <maven-shade-plugin.version>3.2.4</maven-shade-plugin.version>
     <apache-sshd.version>2.8.0</apache-sshd.version>
     <mockito-core.version>3.0.0</mockito-core.version>
     <javax.websocket-api.version>1.1</javax.websocket-api.version>
-    <build.timestamp>2023-02-20T19:36:15Z</build.timestamp>
+    <build.timestamp>2023-02-22T20:57:31Z</build.timestamp>
     <statefulj.version>3.0</statefulj.version>
     <java-source.version>1.17</java-source.version>
     <reactor-rabbitmq.version>1.5.2</reactor-rabbitmq.version>
@@ -393,7 +393,7 @@
       </testResource>
     </testResources>
     <directory>target</directory>
-    <finalName>tapis-shared-java-2.0.83</finalName>
+    <finalName>tapis-shared-java-2.0.84</finalName>
     <plugins>
       <plugin>
         <groupId>com.amashchenko.maven.plugin</groupId>
