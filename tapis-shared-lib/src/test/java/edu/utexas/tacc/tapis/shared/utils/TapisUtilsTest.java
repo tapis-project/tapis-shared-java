@@ -264,6 +264,16 @@ public class TapisUtilsTest
 	   t = TapisUtils.safelySingleQuoteString(s);
 	   if (!QUIET) System.out.println(s + " -> " + t);
 	   Assert.assertEquals(t, "''\\'''");
+	   
+	   s = "";
+	   t = TapisUtils.safelySingleQuoteString(s);
+	   if (!QUIET) System.out.println(s + " -> " + t);
+	   Assert.assertEquals(t, "''");
+
+	   s = null;
+	   t = TapisUtils.safelySingleQuoteString(s);
+	   if (!QUIET) System.out.println(s + " -> " + t);
+	   Assert.assertEquals(t, null);
    }
    
    /* ---------------------------------------------------------------------------- */
@@ -302,5 +312,15 @@ public class TapisUtilsTest
 	   t = TapisUtils.safelyDoubleQuoteString(s);
 	   if (!QUIET) System.out.println(s + " -> " + t);
 	   Assert.assertEquals(t, "\"\\\"\"");
+
+	   s = "";
+	   t = TapisUtils.safelyDoubleQuoteString(s);
+	   if (!QUIET) System.out.println(s + " -> " + t);
+	   Assert.assertEquals(t, "\"\"");
+
+	   s = null;
+	   t = TapisUtils.safelyDoubleQuoteString(s);
+	   if (!QUIET) System.out.println(s + " -> " + t);
+	   Assert.assertEquals(t, null);
    }
 }

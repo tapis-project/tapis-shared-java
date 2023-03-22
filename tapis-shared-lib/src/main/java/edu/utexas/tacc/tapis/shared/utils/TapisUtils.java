@@ -994,7 +994,7 @@ public class TapisUtils
    */
   public static String safelySingleQuoteString(String unquotedString) 
   {
-	  if (unquotedString == null || unquotedString.isEmpty()) return unquotedString;
+	  if (unquotedString == null) return unquotedString;
 	  StringBuilder sb = new StringBuilder();
 	  sb.append("'");
 	  sb.append(unquotedString.replace("'", "'\\''"));
@@ -1015,7 +1015,7 @@ public class TapisUtils
    */
   public static String safelyDoubleQuoteString(String unquotedString) 
   {
-	  if (unquotedString == null || unquotedString.isEmpty()) return unquotedString;
+	  if (unquotedString == null) return unquotedString;
 	  StringBuilder sb = new StringBuilder();
 	  sb.append("\"");
 	  sb.append(unquotedString.replace("\"", "\\\""));
