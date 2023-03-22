@@ -16,6 +16,9 @@ import edu.utexas.tacc.tapis.shared.uri.TapisUrl;
 @Test(groups={"unit"})
 public class TapisUtilsTest 
 {
+	// Control some of the output.
+	private static final boolean QUIET = true;
+	
     /* **************************************************************************** */
     /*                                    Tests                                     */
     /* **************************************************************************** */
@@ -223,5 +226,81 @@ public class TapisUtilsTest
        url = "xxx://mysystem////";
        fileName = TapisUtils.extractFilename(url);
        Assert.assertEquals(fileName, "");
+   }
+   
+   /* ---------------------------------------------------------------------------- */
+   /* safelySingleQuoteStringTest:                                                 */
+   /* ---------------------------------------------------------------------------- */
+   @Test(enabled=true)
+   public void safelySingleQuoteStringTest()
+   {
+	   // Basically, each embedded ' is replaced with '\\''.
+	   var s = "xxyy";
+	   var t = TapisUtils.safelySingleQuoteString(s);
+	   if (!QUIET) System.out.println(s + " -> " + t);
+	   Assert.assertEquals(t, "'" + s + "'");
+	   
+	   s = "'xxyy";
+	   t = TapisUtils.safelySingleQuoteString(s);
+	   if (!QUIET) System.out.println(s + " -> " + t);
+	   Assert.assertEquals(t, "''\\''xxyy'");
+	   
+	   s = "'xxyy'";
+	   t = TapisUtils.safelySingleQuoteString(s);
+	   if (!QUIET) System.out.println(s + " -> " + t);
+	   Assert.assertEquals(t, "''\\''xxyy'\\'''");
+
+	   s = "xx'yy";
+	   t = TapisUtils.safelySingleQuoteString(s);
+	   if (!QUIET) System.out.println(s + " -> " + t);
+	   Assert.assertEquals(t, "'xx'\\''yy'");
+
+	   s = "xx''yy";
+	   t = TapisUtils.safelySingleQuoteString(s);
+	   if (!QUIET) System.out.println(s + " -> " + t);
+	   Assert.assertEquals(t, "'xx'\\'''\\''yy'");
+
+	   s = "'";
+	   t = TapisUtils.safelySingleQuoteString(s);
+	   if (!QUIET) System.out.println(s + " -> " + t);
+	   Assert.assertEquals(t, "''\\'''");
+   }
+   
+   /* ---------------------------------------------------------------------------- */
+   /* safelyDoubleQuoteStringTest:                                                 */
+   /* ---------------------------------------------------------------------------- */
+   @Test(enabled=true)
+   public void safelyDoubleQuoteStringTest()
+   {
+	   // Basically, each embedded ' is replaced with '\\''.
+	   var s = "xxyy";
+	   var t = TapisUtils.safelyDoubleQuoteString(s);
+	   if (!QUIET) System.out.println(s + " -> " + t);
+	   Assert.assertEquals(t, "\"" + s + "\"");
+	   
+	   s = "\"xxyy";
+	   t = TapisUtils.safelyDoubleQuoteString(s);
+	   if (!QUIET) System.out.println(s + " -> " + t);
+	   Assert.assertEquals(t, "\"\\\"xxyy\"");
+	   
+	   s = "\"xxyy\"";
+	   t = TapisUtils.safelyDoubleQuoteString(s);
+	   if (!QUIET) System.out.println(s + " -> " + t);
+	   Assert.assertEquals(t, "\"\\\"xxyy\\\"\"");
+
+	   s = "xx\"yy";
+	   t = TapisUtils.safelyDoubleQuoteString(s);
+	   if (!QUIET) System.out.println(s + " -> " + t);
+	   Assert.assertEquals(t, "\"xx\\\"yy\"");
+
+	   s = "xx\"\"yy";
+	   t = TapisUtils.safelyDoubleQuoteString(s);
+	   if (!QUIET) System.out.println(s + " -> " + t);
+	   Assert.assertEquals(t, "\"xx\\\"\\\"yy\"");
+
+	   s = "\"";
+	   t = TapisUtils.safelyDoubleQuoteString(s);
+	   if (!QUIET) System.out.println(s + " -> " + t);
+	   Assert.assertEquals(t, "\"\\\"\"");
    }
 }

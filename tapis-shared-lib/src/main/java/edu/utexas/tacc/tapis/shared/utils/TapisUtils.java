@@ -975,4 +975,51 @@ public class TapisUtils
     if (index < 0) return s;
     return s.substring(index + 1);
   }
+
+  /* ---------------------------------------------------------------------------- */
+  /* safelySingleQuoteString:                                                     */
+  /* ---------------------------------------------------------------------------- */
+  /** This method will single quote a string and convert all embedded single quotes
+   * into '\''.  For example, file'name would be converted to 'file'\''name'.  This 
+   * works because the escaped single quote \' is technically between two single-quoted 
+   * arguments in a script.  
+   * 
+   * This escaping is to prevent unix command injection in shell scripts.  Something 
+   * like embedding ;rm -rf / in a command that gets executed in a bash shell.
+   * 
+   * If the input string is null or empty, it is returned as is.
+   * 
+   * @param unquotedString non-null string
+   * @return the quoted string or null
+   */
+  public static String safelySingleQuoteString(String unquotedString) 
+  {
+	  if (unquotedString == null || unquotedString.isEmpty()) return unquotedString;
+	  StringBuilder sb = new StringBuilder();
+	  sb.append("'");
+	  sb.append(unquotedString.replace("'", "'\\''"));
+	  sb.append("'");
+	  return sb.toString();
+  }
+
+  /* ---------------------------------------------------------------------------- */
+  /* safelyDoubleQuoteString:                                                     */
+  /* ---------------------------------------------------------------------------- */
+  /** This method will double quote a string and convert all embedded double quotes
+   * into \\\".  For example, file"name would be converted to "file\\\"name".  
+   * 
+   * If the input string is null or empty, it is returned as is.
+   * 
+   * @param unquotedString non-null string
+   * @return the quoted string or null
+   */
+  public static String safelyDoubleQuoteString(String unquotedString) 
+  {
+	  if (unquotedString == null || unquotedString.isEmpty()) return unquotedString;
+	  StringBuilder sb = new StringBuilder();
+	  sb.append("\"");
+	  sb.append(unquotedString.replace("\"", "\\\""));
+	  sb.append("\"");
+	  return sb.toString();
+  }
 }
