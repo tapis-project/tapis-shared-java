@@ -52,7 +52,7 @@ public class FilesListSubtree
     private final ArrayDeque<String>  _dirStack   = new ArrayDeque<>(INITIAL_STACK_SIZE);
     
     // Dynamically set when in a shared application context.
-    private boolean _sharedAppCtx;
+    private String _sharedAppCtx;
     
     /* ********************************************************************** */
     /*                              Constructors                              */
@@ -110,12 +110,12 @@ public class FilesListSubtree
     /* ---------------------------------------------------------------------- */
     /* isSharedAppCtx:                                                        */
     /* ---------------------------------------------------------------------- */
-    public boolean isSharedAppCtx() {return _sharedAppCtx;}
+    public String getSharedAppCtx() {return _sharedAppCtx;}
 
     /* ---------------------------------------------------------------------- */
     /* setSharedAppCtx:                                                       */
     /* ---------------------------------------------------------------------- */
-    public void setSharedAppCtx(boolean sharedAppCtx) {_sharedAppCtx = sharedAppCtx;}
+    public void setSharedAppCtx(String sharedAppCtx) {_sharedAppCtx = sharedAppCtx;}
     
     /* ********************************************************************** */
     /*                            Private Methods                             */
@@ -126,6 +126,7 @@ public class FilesListSubtree
     private void listPath(String path, int limit, int offset, boolean recurse) 
      throws TapisClientException
     {
+        String nullImpersonationId = null;
         // Get the list for the current path.
         int numRetrieved = 0;
         while (true) {
@@ -136,7 +137,7 @@ public class FilesListSubtree
                 
             // Make the remote call to the Files service.
             List<FileInfo> list = 
-                _filesClient.listFiles(_systemId, path, limit, offset+numRetrieved, recurse, _sharedAppCtx);
+                _filesClient.listFiles(_systemId, path, limit, offset+numRetrieved, recurse, nullImpersonationId, _sharedAppCtx);
             
             // Process result list.
             for (var item : list) {
