@@ -13,7 +13,7 @@ import edu.utexas.tacc.tapis.sharedapi.responses.TapisResponse;
  * This will catch any validation errors and return a standard Tapis response. This needs to be registered
  * in the jersey application like register(ValidationExceptionMapper.class). Since jersey 2.x uses its own
  * ValidationExceptionMapper, we have to basically override that specifically. Other exceptions can get caught by the
- * TapisExceptionMapper.
+ * ApiExceptionMapper.
  *
  */
 @Provider
