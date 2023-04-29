@@ -3,6 +3,7 @@ package edu.utexas.tacc.tapis.shared.ssh.apache;
 import java.io.IOException;
 import java.security.KeyPair;
 import java.util.Base64;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sshd.client.SshClient;
@@ -18,6 +19,7 @@ import edu.utexas.tacc.tapis.shared.exceptions.recoverable.TapisSSHAuthException
 import edu.utexas.tacc.tapis.shared.exceptions.recoverable.TapisSSHConnectionException;
 import edu.utexas.tacc.tapis.shared.exceptions.recoverable.TapisSSHTimeoutException;
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
+import edu.utexas.tacc.tapis.shared.utils.ThrottleMap;
 
 /** This class abstracts the idea of an authenticated SSH connection to a host.
  * Currently, this class supports exactly one session per client instance.  This is
@@ -51,10 +53,16 @@ public class SSHConnection
     // that we are running on.  If not set, no extra logging occurs.
     private static String LOCAL_NODE_NAME; 
     
+    // Throttle settings.
+    private static final String THROTTLEMAP_NAME = "SSHConnectThrottleMap";
+    private static final int    THROTTLE_SECONDS = 4; // Sliding window size
+    private static final int    THROTTLE_LIMIT   = 8; // Max connects in window
+    private static final int    CONNECT_DELAY_MS    = 4000; // Mininum delay
+    private static final int    CONNECT_MAX_SKEW_MS = 6000; // Added skew maximum
+    
     /* ********************************************************************** */
     /*                            Initializers                                */
     /* ********************************************************************** */
-
     // Hard code the log level for a specific package.
     static {
         // Configure apache ssh logging by interfacing directly with logback.
@@ -75,6 +83,10 @@ public class SSHConnection
     /* ********************************************************************** */
     /*                                Fields                                  */
     /* ********************************************************************** */
+    // Map of host name to throttle entries used to control the number of launch 
+    // issued to a host within a time window.
+    private static final ThrottleMap _connectThrottles = initConnectThrottles();
+
     // Fixed at construction.
     private final String      _host;
     private final int         _port;
@@ -328,6 +340,9 @@ public class SSHConnection
             throw new TapisException(msg);
         }
         
+        // Throttle the rate at which we connect to this host.
+        throttleLaunch(_host);
+        
         // Create a new client.
         if (_client != null) stop();
         _client = SshClient.setUpDefaultClient();
@@ -374,6 +389,18 @@ public class SSHConnection
         if (LOCAL_NODE_NAME != null) logAuth();
     }
 
+    /* ---------------------------------------------------------------------- */
+    /* connectSession:                                                        */
+    /* ---------------------------------------------------------------------- */
+    private ClientSession connectSession() throws IOException
+    {
+    	var future = _client.connect(_username, _host, _port)
+                     .verify(_timeouts.getConnectMillis());
+    	
+        var session = future.getSession();
+        return session;
+    }
+    
     /* ---------------------------------------------------------------------- */
     /* closeSession:                                                          */
     /* ---------------------------------------------------------------------- */
@@ -461,6 +488,38 @@ public class SSHConnection
         String id = (bytes == null) ? null : Base64.getEncoder().encodeToString(bytes);
         _log.debug(MsgUtils.getMsg("TAPIS_SSH_AUTH", LOCAL_NODE_NAME, _username, 
                                    _host, _port, id, _authMethod.name()));
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* throttleLaunch:                                                        */
+    /* ---------------------------------------------------------------------- */
+    /** Delay launches when too many have recently taken place on a host.
+     */
+    private void throttleLaunch(String host)
+    {
+        // Return from here if there's room in the throttle's sliding window 
+    	// to connect to this host.
+        if (_connectThrottles.record(host)) return;
+        
+        // This host needs to be throttled.
+        // Calculate a randomized but short delay in milliseconds.
+        var skewMs = ThreadLocalRandom.current().nextInt(CONNECT_MAX_SKEW_MS);
+        skewMs += CONNECT_DELAY_MS;
+        
+        // Log the delay.
+        if (_log.isDebugEnabled())
+            _log.debug(MsgUtils.getMsg("TAPIS_SSH_DELAYED_CONNECT", skewMs, host));
+        
+        // Delay for the randomized period.
+        try {Thread.sleep(skewMs);} catch (InterruptedException e) {}
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* initConnectThrottles:                                                  */
+    /* ---------------------------------------------------------------------- */
+    private static ThrottleMap initConnectThrottles()
+    {
+    	return new ThrottleMap(THROTTLEMAP_NAME, THROTTLE_SECONDS, THROTTLE_LIMIT);
     }
 }
 
