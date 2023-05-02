@@ -58,7 +58,7 @@ public class SSHConnection
     private static final int    THROTTLE_SECONDS = 4; // Sliding window size
     private static final int    THROTTLE_LIMIT   = 8; // Max connects in window
     private static final int    CONNECT_DELAY_MS    = 4000; // Mininum delay
-    private static final int    CONNECT_MAX_SKEW_MS = 6000; // Added skew maximum
+    private static final int    CONNECT_MAX_SKEW_MS = 8000; // Added skew maximum
     
     /* ********************************************************************** */
     /*                            Initializers                                */
@@ -493,7 +493,28 @@ public class SSHConnection
     /* ---------------------------------------------------------------------- */
     /* throttleLaunch:                                                        */
     /* ---------------------------------------------------------------------- */
-    /** Delay launches when too many have recently taken place on a host.
+    /** Delay launches when too many have recently taken place on a host.  This
+     * works best for occasional spikes in SSH connection requests, but is less
+     * effective if a large number of requests occur over an extended period. 
+     * 
+     * The implementation simply delays a connection attempt CONNECT_DELAY_MS +
+     * random(CONNECT_MAX_SKEW_MS) milliseconds.  This approach smoothes out 
+     * spikes but ultimately attempts every connection after a short delay.  
+     * 
+     * This approach has known limitations.  Say, for example, 1000 connection 
+     * requests occur nearly at once and 8 connections are allowed in a sliding 
+     * window of 4 seconds.  There will be a short delay after the first 8 connection
+     * requests fill the window, but requests received while the window is closed
+     * will still proceed after a short delay.  We can think of this as window 
+     * spillage or overflow because even though the window is closed, more than
+     * the configured maximum connections will likely be attempted soon.
+     * 
+     * If handling occasional spikes is not sufficient and we really need to strictly 
+     * limit the number of connections within the sliding window, then we would
+     * need to queue or reject overflow connections.  Queuing complicates matters 
+     * because queue time might need to be bounded for some connection requests, 
+     * making this facility more of a full-blown connection manager.  Until the 
+     * need arises, we'll stick with the current simple approach.  
      */
     private void throttleLaunch(String host)
     {
