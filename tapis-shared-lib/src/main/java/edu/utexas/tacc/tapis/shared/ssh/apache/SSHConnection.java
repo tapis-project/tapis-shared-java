@@ -390,18 +390,6 @@ public class SSHConnection
     }
 
     /* ---------------------------------------------------------------------- */
-    /* connectSession:                                                        */
-    /* ---------------------------------------------------------------------- */
-    private ClientSession connectSession() throws IOException
-    {
-    	var future = _client.connect(_username, _host, _port)
-                     .verify(_timeouts.getConnectMillis());
-    	
-        var session = future.getSession();
-        return session;
-    }
-    
-    /* ---------------------------------------------------------------------- */
     /* closeSession:                                                          */
     /* ---------------------------------------------------------------------- */
     private void closeSession(boolean immediate)
