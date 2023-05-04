@@ -415,6 +415,22 @@ public class TenantManager
 	        throw new TapisRuntimeException(MsgUtils.getMsg("TAPIS_SITE_NO_ADMIN_TENANT", siteId));
 	    return tenantId;
 	}
+
+    /* ---------------------------------------------------------------------------- */
+    /* isPrimarySite:                                                               */
+    /* ---------------------------------------------------------------------------- */
+	@Override
+	public boolean isPrimarySite(String siteId)
+	{
+	    // This should never fail, but if it does it indicates a configuration
+	    // or routing error that requires immediate attention.
+	    if (StringUtils.isBlank(siteId))
+	        throw new TapisRuntimeException(MsgUtils.getMsg("TAPIS_NULL_PARAMETER", 
+	                                        "getSiteAdminTenantId", "siteId"));
+	    if (StringUtils.isBlank(_primarySiteId))
+	    	throw new TapisRuntimeException(MsgUtils.getMsg("TAPIS_SITE_NO_PRIMARY_SETTING", siteId));
+	    return siteId.equals(_primarySiteId);
+	}
 	
     /* **************************************************************************** */
     /*                               Private Methods                                */

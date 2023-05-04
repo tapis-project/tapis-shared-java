@@ -44,6 +44,9 @@ public interface SkConstants
     // Other Tapis internally used roles.
     public static final String TENANT_TOKEN_GENERATOR_ROLE_SUFFIX  = "_token_generator";
     public static final String TENANT_CREATOR_ROLE = "tenant_creator";
+    
+    // The role assigned to the tokens service allowing it to update tenant definitions.
+    public static final String SK_TENANT_UPDATER_ROLE = "tenant_definition_updater";
 
     // Role name max characters allowed in database.
     public static final int MAX_USER_NAME_LEN = 58;
