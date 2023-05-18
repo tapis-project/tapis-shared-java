@@ -987,7 +987,7 @@ public class TapisUtils
    * This escaping is to prevent unix command injection in shell scripts.  Something 
    * like embedding ;rm -rf / in a command that gets executed in a bash shell.
    * 
-   * If the input string is null or empty, it is returned as is.
+   * If the input string is null, it is returned as is.
    * 
    * @param unquotedString non-null string
    * @return the quoted string or null
@@ -1008,7 +1008,7 @@ public class TapisUtils
   /** This method will double quote a string and convert all embedded double quotes
    * into \\\".  For example, file"name would be converted to "file\\\"name".  
    * 
-   * If the input string is null or empty, it is returned as is.
+   * If the input string is null, it is returned as is.
    * 
    * @param unquotedString non-null string
    * @return the quoted string or null
