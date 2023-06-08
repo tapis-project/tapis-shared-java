@@ -7,6 +7,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sshd.client.SshClient;
+import org.apache.sshd.client.config.hosts.HostConfigEntry;
 import org.apache.sshd.client.session.ClientSession;
 import org.apache.sshd.common.SshConstants;
 import org.apache.sshd.common.SshException;
@@ -350,9 +351,11 @@ public class SSHConnection
         
         // Connect the session.
         try {
-            _session = _client.connect(_username, _host, _port)
-                       .verify(_timeouts.getConnectMillis())
-                       .getSession();
+            HostConfigEntry hostConfig = new HostConfigEntry(_host, _host, _port, _username);
+            hostConfig.setIdentitiesOnly(true);
+            _session = _client.connect(hostConfig)
+                    .verify(_timeouts.getConnectMillis())
+                    .getSession();
         } catch (Exception e) {
             stop();
             TapisRecoverableException rex = getRecoverable(e, ExceptionSource.CONNECT);
