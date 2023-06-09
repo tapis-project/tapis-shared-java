@@ -2,11 +2,13 @@ package edu.utexas.tacc.tapis.shared.model;
 
 public class KeyValuePair 
 {
-    private String key;
-    private String value;
-    private String description;
+    private String  key;
+    private String  value;
+    private String  description;
+    private Boolean include;
+    private Object  notes;
     
-    public String getKey() {
+	public String getKey() {
         return key;
     }
     public void setKey(String key) {
@@ -24,4 +26,16 @@ public class KeyValuePair
     public void setDescription(String description) {
         this.description = description;
     }
+	public Boolean getInclude() {
+		return include;
+	}
+	public void setInclude(Boolean include) {
+		this.include = include;
+	}
+    public Object getNotes() {
+		return notes;
+	}
+	public void setNotes(Object notes) {
+		this.notes = notes;
+	}
 }

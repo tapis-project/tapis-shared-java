@@ -10,7 +10,9 @@
                 "properties": {
                     "key":   {"type": "string", "minLength": 1},
                     "value": {"type": "string", "minLength": 0},
-                    "description": {"type": "string", "minLength": 1, "maxLength": 2048}
+                    "description": {"type": "string", "minLength": 1, "maxLength": 2048},
+                    "include": { "type": "boolean" },
+                    "notes": { "type": "object" }
              },
              "required": ["key", "value"],
              "additionalProperties": false
