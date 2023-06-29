@@ -1,9 +1,14 @@
 package edu.utexas.tacc.tapis.shared.schema;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonSyntaxException;
+import com.google.gson.TypeAdapter;
 import org.everit.json.schema.Schema;
 import org.everit.json.schema.ValidationException;
 import org.everit.json.schema.loader.SchemaLoader;
@@ -32,8 +37,11 @@ public final class JsonValidator
   /* **************************************************************************** */
   // Local logger.
   private static final Logger _log = LoggerFactory.getLogger(JsonValidator.class);
-  
-  // -------- Demand-loaded schema objects. 
+
+  // Strict gson type adapter for validating a string as JSON.
+  final private static TypeAdapter<JsonElement> gsonStrictAdapter = new Gson().getAdapter(JsonElement.class);
+
+    // -------- Demand-loaded schema objects.
   private static final HashMap<String,Schema> _schemaCache = new HashMap<>();
   
   /* **************************************************************************** */
@@ -44,7 +52,17 @@ public final class JsonValidator
   /* ---------------------------------------------------------------------------- */
   public static void validate(JsonValidatorSpec spec) throws TapisJSONException
   {
+    // Use gson strict type adapter to validate string as JSON.
+    //  - will catch trailing comma in array
+    try {gsonStrictAdapter.fromJson(spec.getJson());}
+        catch (JsonSyntaxException | IOException e) {
+            String msg = MsgUtils.getMsg("TAPIS_JSON_VALIDATION_ERROR", e.getMessage());
+            _log.error(msg, e);
+            throw new TapisJSONException(msg, e);
+      }
+
     Schema schema = getSchema(spec.getSchemaFile());
+
     try {schema.validate(new JSONObject(spec.getJson()));}
         catch (ValidationException e) {
             // Get the detailed list of parse failures. 
