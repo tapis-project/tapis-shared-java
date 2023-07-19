@@ -9,7 +9,8 @@
     </groups>
 	<test name="shared">
 		<packages>
-		   <package name="edu.utexas.tacc.tapis.shared.*" /> 
-		</packages>
+		   <package name="edu.utexas.tacc.tapis.shared.*" />
+           <package name="edu.utexas.tacc.tapis.shared.ssh.*" />
+        </packages>
 	</test>
 </suite>
