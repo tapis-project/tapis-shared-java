@@ -79,8 +79,8 @@ public class SshSessionPool {
     // SYNCHRONIZATION NOTES:
     // Super Important!!!
     // synchronize on pool if you add or remove anything from the map
-    // synchronize on the list (what is returned by pool.get(key) call) if you make any changes to any context in
-    //   the list.  This could be adding or removing items in the list, or making actual changes to the context
+    // synchronize on the list (what is returned by pool.get(key) call) if you make any changes to any connection group in
+    //   the list.  This could be adding or removing items in the list, or making actual changes to the connection group
     //   objects.
     private Map<SshSessionPoolKey, SshConnectionGroup> pool;
 

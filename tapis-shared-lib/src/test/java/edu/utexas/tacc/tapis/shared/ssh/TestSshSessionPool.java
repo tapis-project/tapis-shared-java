@@ -1,6 +1,7 @@
 package edu.utexas.tacc.tapis.shared.ssh;
 
 import edu.utexas.tacc.tapis.shared.ssh.apache.SSHExecChannel;
+import edu.utexas.tacc.tapis.shared.ssh.apache.SSHSftpClient;
 import edu.utexas.tacc.tapis.systems.client.gen.model.AuthnEnum;
 import edu.utexas.tacc.tapis.systems.client.gen.model.Credential;
 import org.testng.Assert;
@@ -143,21 +144,43 @@ public class TestSshSessionPool {
 
     }
 
-//    private TapisSystem getSshSystem(String tenant, String systemId, String host, Integer port,
-//                                     String effectiveUserId, Credential credential,
-//                                     String rootDir, AuthnEnum defaultAuthMethod) {
-//        TapisSystem tapisSystem = new TapisSystem();
-//        tapisSystem.setId(systemId);
-//        tapisSystem.setHost(host);
-//        tapisSystem.setEffectiveUserId(effectiveUserId);
-//        tapisSystem.setPort(port);
-//        tapisSystem.setRootDir(rootDir);
-////        Credential credential = new Credential();
-////        credential.setLoginUser(effectiveUserId);
-////        credential.setPassword(password);
-//        tapisSystem.setAuthnCredential(credential);
-//        tapisSystem.setDefaultAuthnMethod(defaultAuthMethod);
-//        tapisSystem.setTenant(tenant);
-//        return tapisSystem;
-//    }
+    @Test
+    public void testAutoCloseSessions() throws Exception {
+        SshSessionPoolPolicy poolPolicy = SshSessionPoolPolicy.defaultPolicy()
+                .setMaxConnectionDuration(Duration.ofSeconds(30))
+                .setMaxConnectionsPerKey(2)
+                .setMaxSessionsPerConnection(2);
+        SshSessionPool.init(poolPolicy);
+        SshSessionPool pool = SshSessionPool.INSTANCE;
+        Assert.assertTrue(pool.getConnectionStats().getConnectionCount() <= 0);
+        Assert.assertEquals(pool.getConnectionStats().getSessionCount(),0);
+
+        try (SshSessionPool.AutoCloseSession<SSHExecChannel> channel1 = pool.borrowAutoCloseableExecChannel(tenant_1, host_1, port_1,
+                userId_1, authnMethod_1, credential_1, Duration.ZERO)) {
+            Assert.assertTrue(pool.getConnectionStats().getConnectionCount() <= 2);
+            Assert.assertEquals(pool.getConnectionStats().getSessionCount(), 1);
+        }
+        Assert.assertTrue(pool.getConnectionStats().getConnectionCount() <= 2);
+        Assert.assertEquals(pool.getConnectionStats().getSessionCount(), 0);
+
+        try (SshSessionPool.AutoCloseSession<SSHSftpClient> channel1 = pool.borrowAutoCloseableSftpClient(tenant_1, host_1, port_1,
+                userId_1, authnMethod_1, credential_1, Duration.ZERO)) {
+            Assert.assertTrue(pool.getConnectionStats().getConnectionCount() <= 2);
+            Assert.assertEquals(pool.getConnectionStats().getSessionCount(), 1);
+        }
+        Assert.assertTrue(pool.getConnectionStats().getConnectionCount() <= 2);
+        Assert.assertEquals(pool.getConnectionStats().getSessionCount(), 0);
+
+
+        try (SshSessionPool.AutoCloseSession<SSHExecChannel> channel1 = pool.borrowAutoCloseableExecChannel(tenant_1, host_1, port_1,
+                userId_1, authnMethod_1, credential_1, Duration.ZERO);
+             SshSessionPool.AutoCloseSession<SSHSftpClient> channel2 = pool.borrowAutoCloseableSftpClient(tenant_1, host_1, port_1,
+                userId_1, authnMethod_1, credential_1, Duration.ZERO)) {
+            Assert.assertTrue(pool.getConnectionStats().getConnectionCount() <= 2);
+            Assert.assertEquals(pool.getConnectionStats().getSessionCount(), 2);
+        }
+        Assert.assertTrue(pool.getConnectionStats().getConnectionCount() <= 2);
+        Assert.assertEquals(pool.getConnectionStats().getSessionCount(), 0);
+
+    }
 }
