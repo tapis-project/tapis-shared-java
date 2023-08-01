@@ -20,25 +20,27 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
-public class SshSessionPool {
+public final class SshSessionPool {
     private static final Logger log = LoggerFactory.getLogger(SshSessionPool.class);
-    public static SshSessionPool INSTANCE;
+    private static SshSessionPool instance;
+
     private final SshSessionPoolPolicy poolPolicy;
     ScheduledFuture<?> poolCleanupTaskFuture;
-    private int traceOnCleanupCounter = 0;
+    private AtomicInteger traceOnCleanupCounter = new AtomicInteger(0);
 
     public class AutoCloseSession<T> implements AutoCloseable {
-        private final SshSessionPool pool;
+        private final SshSessionPool sshSessionPool;
         private final T session;
 
-        AutoCloseSession(SshSessionPool pool, SSHExecChannel execChannel) {
-            this.pool = pool;
+        AutoCloseSession(SshSessionPool sshSessionPool, SSHExecChannel execChannel) {
+            this.sshSessionPool = sshSessionPool;
             this.session = (T)execChannel;
         }
 
-        AutoCloseSession(SshSessionPool pool, SSHSftpClient sftpClient) {
-            this.pool = pool;
+        AutoCloseSession(SshSessionPool sshSessionPool, SSHSftpClient sftpClient) {
+            this.sshSessionPool = sshSessionPool;
             this.session = (T)sftpClient;
         }
 
@@ -51,9 +53,9 @@ public class SshSessionPool {
         public void close() {
             if(session != null) {
                 if (session instanceof SSHExecChannel) {
-                    pool.returnExecChannel((SSHExecChannel) session);
+                    sshSessionPool.returnExecChannel((SSHExecChannel) session);
                 } else if (session instanceof SSHSftpClient) {
-                    pool.returnSftpClient((SSHSftpClient) session);
+                    sshSessionPool.returnSftpClient((SSHSftpClient) session);
                 }
             }
 
@@ -82,30 +84,64 @@ public class SshSessionPool {
     // synchronize on the list (what is returned by pool.get(key) call) if you make any changes to any connection group in
     //   the list.  This could be adding or removing items in the list, or making actual changes to the connection group
     //   objects.
-    private Map<SshSessionPoolKey, SshConnectionGroup> pool;
+    private final Map<SshSessionPoolKey, SshConnectionGroup> pool;
 
+    /**
+     * Initiallizes the SshSessionPool.  One of the two init methods must be called exactly one time.
+     * Subsequent calls * will result in an error.  After a call to init, the pool will be accessed
+     * with getInstance();
+     *
+     * For Example:
+     *
+     * SshSessionPool.init();
+     * SshSessionPool.getInstance().getConnectionStatus()
+     */
     public static void init() {
-        INSTANCE = new SshSessionPool(SshSessionPoolPolicy.defaultPolicy());
+        // constructing a new pool object will set "instance".
+        new SshSessionPool(SshSessionPoolPolicy.defaultPolicy());
     }
 
+    /**
+     * Initiallizes the SshSessionPool.  One of the two init methods must be called exactly one time.
+     * Subsequent calls * will result in an error.  After a call to init, the pool will be accessed
+     * with getInstance();
+     *
+     * For Example:
+     *
+     * SshSessionPool.init(policy);
+     * SshSessionPool.getInstance().getConnectionStatus()
+     */
     public static void init(SshSessionPoolPolicy poolPolicy) {
-        INSTANCE = new SshSessionPool(poolPolicy);
+        // constructing a new pool object will set "instance"
+        new SshSessionPool(poolPolicy);
     }
 
     private SshSessionPool(SshSessionPoolPolicy poolPolicy) {
+        if(instance != null) {
+            // TODO: Dan - fix message
+            String msg = "SshSessionPool has already been created.";
+            throw new RuntimeException(msg);
+        }
         this.poolPolicy = poolPolicy;
         pool = new HashMap<>();
+        instance = this;
 
         poolCleanupTaskFuture = poolMaintaanenceExecutor.scheduleAtFixedRate(() -> {
             cleanup();
         }, poolPolicy.getCleanupInterval().toMillis(), poolPolicy.getCleanupInterval().toMillis(), TimeUnit.MILLISECONDS);
     }
 
+    public static SshSessionPool getInstance() {
+        return instance;
+    }
+
     public SshSessionPoolStats getConnectionStats() {
         List<ConnectionGroupStats> groupStatsList = new ArrayList<>();
-        for(SshSessionPoolKey key : pool.keySet()) {
-            SshConnectionGroup connectionGroup = pool.get(key);
-            groupStatsList.add(connectionGroup.getGroupStats());
+        synchronized (pool) {
+            for (SshSessionPoolKey key : pool.keySet()) {
+                SshConnectionGroup connectionGroup = pool.get(key);
+                groupStatsList.add(connectionGroup.getGroupStats());
+            }
         }
         return new SshSessionPoolStats(groupStatsList);
     }
@@ -126,13 +162,16 @@ public class SshSessionPool {
     public void returnExecChannel(SSHExecChannel channel) {
         if(channel == null) {
             String msg = MsgUtils.getMsg("SSH_POOL_NULL_PARAM", "SSHExecChannel");
-            log.info(msg);
+            log.warn(msg);
+            return;
         }
 
-        for(SshSessionPoolKey key : pool.keySet()) {
-            SshConnectionGroup connectionGroup = pool.get(key);
-            if(connectionGroup.findConnectionContext(channel) != null) {
-                connectionGroup.releaseSession(channel);
+        synchronized (pool) {
+            for (SshSessionPoolKey key : pool.keySet()) {
+                SshConnectionGroup connectionGroup = pool.get(key);
+                if (connectionGroup.findConnectionContext(channel) != null) {
+                    connectionGroup.releaseSession(channel);
+                }
             }
         }
     }
@@ -152,13 +191,16 @@ public class SshSessionPool {
     public void returnSftpClient(SSHSftpClient sftpClient) {
         if(sftpClient == null) {
             String msg = MsgUtils.getMsg("SSH_POOL_NULL_PARAM", "SSHSftpClient");
-            log.info(msg);
+            log.warn(msg);
+            return;
         }
 
-        for(SshSessionPoolKey key : pool.keySet()) {
-            SshConnectionGroup connectionGroup = pool.get(key);
-            if(connectionGroup.findConnectionContext(sftpClient) != null) {
-                connectionGroup.releaseSession(sftpClient);
+        synchronized (pool) {
+            for (SshSessionPoolKey key : pool.keySet()) {
+                SshConnectionGroup connectionGroup = pool.get(key);
+                if (connectionGroup.findConnectionContext(sftpClient) != null) {
+                    connectionGroup.releaseSession(sftpClient);
+                }
             }
         }
     }
@@ -178,6 +220,9 @@ public class SshSessionPool {
             }
         }
 
+        // reserveSessionOnConnection may block, so  be careful calling it - we don't want any locks
+        // held while we make the call for example - this is why it's outside the synchronized block.
+        // It doesn't modify the pool, so it's safe.
         T session = connectionGroup.reserveSessionOnConnection(tenant, host, port, effectiveUserId,
                 authnMethod, credential, channelConstructor, wait);
 
@@ -203,6 +248,7 @@ public class SshSessionPool {
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
+        builder.append(System.lineSeparator());
         builder.append("Policy:");
         builder.append(System.lineSeparator());
         builder.append(poolPolicy);
@@ -214,17 +260,19 @@ public class SshSessionPool {
         builder.append(System.lineSeparator());
         builder.append(getConnectionStats());
         builder.append(System.lineSeparator());
-        for(SshSessionPoolKey key : pool.keySet()) {
-            builder.append(" -> ");
-            builder.append(key);
-            builder.append(System.lineSeparator());
-            SshConnectionGroup connectionGroup = pool.get(key);
-            builder.append(connectionGroup.toString());
+        synchronized (pool) {
+            for (SshSessionPoolKey key : pool.keySet()) {
+                builder.append(" -> ");
+                builder.append(key);
+                builder.append(System.lineSeparator());
+                SshConnectionGroup connectionGroup = pool.get(key);
+                builder.append(connectionGroup.toString());
+            }
         }
         return builder.toString();
     }
 
-    public void cleanup() {
+    private void cleanup() {
         for (SshSessionPoolKey key : pool.keySet()) {
             SshConnectionGroup connectionGroup = pool.get(key);
             connectionGroup.cleanup();
@@ -233,11 +281,10 @@ public class SshSessionPool {
         synchronized (pool) {
             pool.entrySet().removeIf(entry -> { return entry.getValue().isEmpty(); });
         }
-        traceOnCleanupCounter++;
-        if(traceOnCleanupCounter >= poolPolicy.getTraceDuringCleanupFrequency()) {
-            traceOnCleanupCounter = 0;
+        if(traceOnCleanupCounter.incrementAndGet() >= poolPolicy.getTraceDuringCleanupFrequency()) {
+            traceOnCleanupCounter.set(0);
             log.debug("====================================================");
-            log.debug(INSTANCE.toString());
+            log.debug(instance.toString());
             log.debug("====================================================");
         }
     }

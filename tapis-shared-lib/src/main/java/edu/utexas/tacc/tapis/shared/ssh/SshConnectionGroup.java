@@ -21,17 +21,15 @@ import java.util.List;
 /**
  * This class represents all connections and sessions for a given key in the pool.
  */
-class SshConnectionGroup {
+final class SshConnectionGroup {
     private static final Logger log = LoggerFactory.getLogger(SshConnectionGroup.class);
 
     private List<SshConnectionContext> connectionContextList;
     private SshSessionPoolPolicy poolPolicy;
-    private SshSessionPool pool;
 
     protected SshConnectionGroup(SshSessionPool pool, SshSessionPoolPolicy poolPolicy) {
         connectionContextList = new ArrayList<>();
         this.poolPolicy = poolPolicy;
-        this.pool = pool;
     }
 
     /**
@@ -45,17 +43,19 @@ class SshConnectionGroup {
         int sessionsOnExpiredConnections = 0;
         int sessionsOnActiveConnections = 0;
 
-       for(SshConnectionContext context : connectionContextList) {
-           if (context.isExpired()) {
-               expiredConnectionCount++;
-               sessionsOnExpiredConnections += context.getSessionCount();
-           } else {
-               activeConnectionCount++;
-               sessionsOnActiveConnections += context.getSessionCount();
-           }
-           connectionCount++;
-           sessionCount += context.getSessionCount();
-       }
+        synchronized (connectionContextList) {
+            for (SshConnectionContext context : connectionContextList) {
+                if (context.isExpired()) {
+                    expiredConnectionCount++;
+                    sessionsOnExpiredConnections += context.getSessionCount();
+                } else {
+                    activeConnectionCount++;
+                    sessionsOnActiveConnections += context.getSessionCount();
+                }
+                connectionCount++;
+                sessionCount += context.getSessionCount();
+            }
+        }
 
        return new ConnectionGroupStats(connectionCount, expiredConnectionCount, activeConnectionCount,
                 sessionCount, sessionsOnExpiredConnections, sessionsOnActiveConnections);
@@ -113,6 +113,7 @@ class SshConnectionGroup {
     }
 
     protected SshConnectionContext findConnectionContext(SSHExecChannel session) {
+        // the callers already synchronize on connectionContextList, so we don't need to do that here.
         for(SshConnectionContext connectionContext : connectionContextList) {
             if(connectionContext.containsChannel(session)) {
                 return connectionContext;
@@ -122,6 +123,7 @@ class SshConnectionGroup {
     }
 
     protected SshConnectionContext findConnectionContext(SSHSftpClient session) {
+        // the callers already synchronize on connectionContextList, so we don't need to do that here.
         for(SshConnectionContext connectionContext : connectionContextList) {
             if(connectionContext.containsChannel(session)) {
                 return connectionContext;
@@ -169,6 +171,8 @@ class SshConnectionGroup {
         T session = null;
         while(session == null) {
             synchronized (connectionContextList) {
+                // clear out any expired connections
+                cleanup();
                 switch(poolPolicy.getSessionCreationStrategy()) {
                     case MINIMIZE_SESSIONS -> session = getSessionMinimizingSessions(tenant, host, port, effectiveUserId,
                             authnMethod, credential, sessionConstructor);
@@ -219,7 +223,8 @@ class SshConnectionGroup {
         if ((session == null) && (connectionContextList.size() < poolPolicy.getMaxConnectionsPerKey())) {
             SSHConnection sshConnection = createNewConnection(tenant, host, port, effectiveUserId, authnMethod, credential);
             SshConnectionContext sshConnectionContext = new SshConnectionContext(sshConnection,
-                    poolPolicy.getMaxSessionsPerConnection(), poolPolicy.getMaxConnectionDuration());
+                    poolPolicy.getMaxSessionsPerConnection(), poolPolicy.getMaxConnectionDuration(),
+                    poolPolicy.getMaxConnectionIdleTime());
             connectionContextList.add(sshConnectionContext);
             session = sshConnectionContext.reserveSession(sessionConstructor);
         }
@@ -247,7 +252,8 @@ class SshConnectionGroup {
             if ((connectionContextList.size() < poolPolicy.getMaxConnectionsPerKey())) {
                 SSHConnection sshConnection = createNewConnection(tenant, host, port, effectiveUserId, authnMethod, credential);
                 sshConnectionContext = new SshConnectionContext(sshConnection,
-                        poolPolicy.getMaxSessionsPerConnection(), poolPolicy.getMaxConnectionDuration());
+                        poolPolicy.getMaxSessionsPerConnection(), poolPolicy.getMaxConnectionDuration(),
+                        poolPolicy.getMaxConnectionIdleTime());
                 connectionContextList.add(sshConnectionContext);
                 session = sshConnectionContext.reserveSession(sessionConstructor);
             }

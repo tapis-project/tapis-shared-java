@@ -1,6 +1,6 @@
 package edu.utexas.tacc.tapis.shared.ssh;
 
-class ConnectionGroupStats {
+public final class ConnectionGroupStats {
     private final int connectionCount;
     private final int expiredConnectionCount;
     private final int activeConnectionCount;

@@ -5,7 +5,7 @@ import java.util.List;
 /**
  * Contains statistics about the contents of the Session Pool.
  */
-public class SshSessionPoolStats {
+public final class SshSessionPoolStats {
 
     // Total number of connections (active + expired)
     private int connectionCount = 0;
