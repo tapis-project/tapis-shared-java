@@ -39,7 +39,7 @@ import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
  * @author rcardone
  */
 public class SSHSftpClient
- implements AutoCloseable
+ implements AutoCloseable, SSHSession
 {
     // Fields.
     private final SSHConnection     _sshConnection;

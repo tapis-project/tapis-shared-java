@@ -5,6 +5,7 @@ import edu.utexas.tacc.tapis.shared.exceptions.recoverable.TapisRecoverableExcep
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
 import edu.utexas.tacc.tapis.shared.ssh.apache.SSHConnection;
 import edu.utexas.tacc.tapis.shared.ssh.apache.SSHExecChannel;
+import edu.utexas.tacc.tapis.shared.ssh.apache.SSHSession;
 import edu.utexas.tacc.tapis.shared.ssh.apache.SSHSftpClient;
 import edu.utexas.tacc.tapis.systems.client.gen.model.AuthnEnum;
 import edu.utexas.tacc.tapis.systems.client.gen.model.Credential;
@@ -158,7 +159,7 @@ final class SshConnectionGroup {
      * @param <T>
      * @throws TapisException
      */
-    protected  <T> T reserveSessionOnConnection(String tenant, String host, Integer port, String effectiveUserId,
+    protected  <T extends SSHSession> T reserveSessionOnConnection(String tenant, String host, Integer port, String effectiveUserId,
                                              AuthnEnum authnMethod, Credential credential,
                                              SshConnectionContext.SessionConstructor<T> sessionConstructor,
                                              Duration wait) throws TapisException {
@@ -207,8 +208,8 @@ final class SshConnectionGroup {
         return session;
     }
 
-    private <T> T getSessionMinimizingConnections(String tenant,
-            String host, Integer port, String effectiveUserId, AuthnEnum authnMethod, Credential credential,
+    private <T extends SSHSession> T getSessionMinimizingConnections(String tenant, String host, Integer port,
+            String effectiveUserId, AuthnEnum authnMethod, Credential credential,
             SshConnectionContext.SessionConstructor<T> sessionConstructor) throws TapisException {
         T session = null;
         for (SshConnectionContext sshConnectionContext : connectionContextList) {
@@ -232,7 +233,7 @@ final class SshConnectionGroup {
         return session;
     }
 
-    private <T> T getSessionMinimizingSessions(String tenant,
+    private <T extends SSHSession> T getSessionMinimizingSessions(String tenant,
             String host, Integer port, String effectiveUserId, AuthnEnum authnMethod, Credential credential,
             SshConnectionContext.SessionConstructor<T> sessionConstructor) throws TapisException {
         T session = null;

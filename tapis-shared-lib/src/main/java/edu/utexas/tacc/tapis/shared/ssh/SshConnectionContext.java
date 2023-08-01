@@ -4,6 +4,7 @@ import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
 import edu.utexas.tacc.tapis.shared.ssh.apache.SSHConnection;
 import edu.utexas.tacc.tapis.shared.ssh.apache.SSHExecChannel;
+import edu.utexas.tacc.tapis.shared.ssh.apache.SSHSession;
 import edu.utexas.tacc.tapis.shared.ssh.apache.SSHSftpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +32,7 @@ final class SshConnectionContext {
     // getIdleTime will return 0 if there are sessions, or it will return idleSince minus the current time
     // if there are no sessions (the elapsed time in milliseconds since the last session was closed).
     private long idleSinceTime;
-    private final Set<Object> sessions;
+    private final Set<SSHSession> sessions;
     private final long lifetimeMs;
     private final long maxIdleTimeMs;
 
@@ -90,7 +91,7 @@ final class SshConnectionContext {
        return sessions.contains(channel);
     }
 
-    public synchronized  <T> T reserveSession(SessionConstructor<T> sessionConstructor) throws TapisException {
+    public synchronized  <T extends SSHSession> T reserveSession(SessionConstructor<T> sessionConstructor) throws TapisException {
         if(hasAvailableSessions()) {
             T session = null;
             try {

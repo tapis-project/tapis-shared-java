@@ -3,6 +3,7 @@ package edu.utexas.tacc.tapis.shared.ssh;
 import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
 import edu.utexas.tacc.tapis.shared.ssh.apache.SSHExecChannel;
+import edu.utexas.tacc.tapis.shared.ssh.apache.SSHSession;
 import edu.utexas.tacc.tapis.shared.ssh.apache.SSHSftpClient;
 import edu.utexas.tacc.tapis.systems.client.gen.model.AuthnEnum;
 import edu.utexas.tacc.tapis.systems.client.gen.model.Credential;
@@ -205,10 +206,10 @@ public final class SshSessionPool {
         }
     }
 
-    private <T> T reserveSessionOnConnection(String tenant, String host, Integer port, String effectiveUserId,
-                                             AuthnEnum authnMethod, Credential credential,
-                                             SshConnectionContext.SessionConstructor<T> channelConstructor,
-                                             Duration wait) throws TapisException {
+    private <T extends SSHSession> T reserveSessionOnConnection(String tenant, String host, Integer port, String effectiveUserId,
+                                                                   AuthnEnum authnMethod, Credential credential,
+                                                                   SshConnectionContext.SessionConstructor<T> channelConstructor,
+                                                                   Duration wait) throws TapisException {
 
         SshSessionPoolKey key = new SshSessionPoolKey(tenant, host, port, effectiveUserId, authnMethod, credential);
         SshConnectionGroup connectionGroup = null;
