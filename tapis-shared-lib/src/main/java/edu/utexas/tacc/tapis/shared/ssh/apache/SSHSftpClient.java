@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
+import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
 import org.apache.sshd.common.util.buffer.Buffer;
 import org.apache.sshd.sftp.client.SftpClient.Attributes;
 import org.apache.sshd.sftp.client.SftpClient.CloseableHandle;
@@ -38,7 +39,7 @@ import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
  * @author rcardone
  */
 public class SSHSftpClient
- implements AutoCloseable
+ implements AutoCloseable, SSHSession
 {
     // Fields.
     private final SSHConnection     _sshConnection;
@@ -54,6 +55,16 @@ public class SSHSftpClient
         }
        
         _sshConnection = sshConnection;
+        // See if we still have a connection and session, if not restart one.
+        try {
+            if (_sshConnection.isClosed()) {
+                _sshConnection.restart();
+            }
+        } catch (TapisException ex) {
+            String msg = MsgUtils.getMsg("SSH_POOL_UNABLE_TO_CREATE_SFTP_CLIENT", sshConnection.getHost(),
+                    sshConnection.getPort(), sshConnection.getUsername(), sshConnection.getAuthMethod());
+            throw new IOException(msg, ex);
+        }
         var session  = _sshConnection.getSession();
         if (session == null) {
             String msg =  MsgUtils.getMsg("TAPIS_SSH_NO_SESSION");

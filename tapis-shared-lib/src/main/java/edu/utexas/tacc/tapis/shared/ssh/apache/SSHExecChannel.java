@@ -21,7 +21,7 @@ import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
  * 
  * @author rcardone
  */
-public class SSHExecChannel 
+public class SSHExecChannel implements SSHSession
 {
     /* ********************************************************************** */
     /*                               Constants                                */
