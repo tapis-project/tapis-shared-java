@@ -68,7 +68,7 @@ final class SshConnectionGroup {
      * @param session session to be released
      * @return true if it could be release, false if not.
      */
-    public boolean releaseSession(SSHExecChannel session) {
+    protected boolean releaseSession(SSHExecChannel session) {
         synchronized(connectionContextList) {
             SshConnectionContext connectionContext = findConnectionContext(session);
             if (connectionContext != null) {
@@ -87,7 +87,7 @@ final class SshConnectionGroup {
      * @param session session to be released
      * @return true if it could be release, false if not.
      */
-    public boolean releaseSession(SSHSftpClient session) {
+    protected boolean releaseSession(SSHSftpClient session) {
         synchronized(connectionContextList) {
             SshConnectionContext connectionContext = findConnectionContext(session);
             if (connectionContext != null) {
@@ -115,9 +115,11 @@ final class SshConnectionGroup {
 
     protected SshConnectionContext findConnectionContext(SSHExecChannel session) {
         // the callers already synchronize on connectionContextList, so we don't need to do that here.
-        for(SshConnectionContext connectionContext : connectionContextList) {
-            if(connectionContext.containsChannel(session)) {
-                return connectionContext;
+        synchronized (connectionContextList) {
+            for (SshConnectionContext connectionContext : connectionContextList) {
+                if (connectionContext.containsChannel(session)) {
+                    return connectionContext;
+                }
             }
         }
         return null;
@@ -125,9 +127,11 @@ final class SshConnectionGroup {
 
     protected SshConnectionContext findConnectionContext(SSHSftpClient session) {
         // the callers already synchronize on connectionContextList, so we don't need to do that here.
-        for(SshConnectionContext connectionContext : connectionContextList) {
-            if(connectionContext.containsChannel(session)) {
-                return connectionContext;
+        synchronized (connectionContextList) {
+            for (SshConnectionContext connectionContext : connectionContextList) {
+                if (connectionContext.containsChannel(session)) {
+                    return connectionContext;
+                }
             }
         }
         return null;

@@ -42,18 +42,18 @@ public final class SshSessionPool {
 
     private AtomicInteger traceOnCleanupCounter = new AtomicInteger(0);
 
-    public class AutoCloseSession<T> implements AutoCloseable {
+    public class AutoCloseSession<T extends SSHSession> implements AutoCloseable {
         private final SshSessionPool sshSessionPool;
-        private final T session;
+        private final SSHSession session;
 
         AutoCloseSession(SshSessionPool sshSessionPool, SSHExecChannel execChannel) {
             this.sshSessionPool = sshSessionPool;
-            this.session = (T)execChannel;
+            this.session = execChannel;
         }
 
         AutoCloseSession(SshSessionPool sshSessionPool, SSHSftpClient sftpClient) {
             this.sshSessionPool = sshSessionPool;
-            this.session = (T)sftpClient;
+            this.session = sftpClient;
         }
 
         public T getSession() {
@@ -166,7 +166,7 @@ public final class SshSessionPool {
                 Integer port, String effectiveUserId, AuthnEnum authnMethod,
                 Credential credential, Duration wait) throws TapisException {
         SSHExecChannel execChannel = borrowExecChannel(tenant, host, port, effectiveUserId, authnMethod, credential, wait);
-        return new AutoCloseSession(this, execChannel);
+        return new AutoCloseSession<SSHExecChannel>(this, execChannel);
     }
 
     public SSHExecChannel borrowExecChannel(String tenant, String host, Integer port, String effectiveUserId,
@@ -198,7 +198,7 @@ public final class SshSessionPool {
     public AutoCloseSession<SSHSftpClient> borrowAutoCloseableSftpClient(String tenant, String host, Integer port,
             String effectiveUserId, AuthnEnum authnMethod, Credential credential, Duration wait) throws TapisException {
         SSHSftpClient sftpClient = borrowSftpClient(tenant, host, port, effectiveUserId, authnMethod, credential, wait);
-        return new AutoCloseSession(this, sftpClient);
+        return new AutoCloseSession<SSHSftpClient>(this, sftpClient);
     }
 
     public SSHSftpClient borrowSftpClient(String tenant, String host, Integer port, String effectiveUserId,
@@ -267,9 +267,11 @@ public final class SshSessionPool {
                 }
             }
 
-            // reserveSessionOnConnection may block, so  be careful calling it - we don't want any locks
-            // held while we make the call for example - this is why it's outside the synchronized block.
-            // It doesn't modify the pool, so it's safe.
+            // reserveSessionOnConnection may block, so  be careful calling it - it's called while the
+            // readlock is held so that cleanup doesnt remove the connectionGroup while we are waiting
+            // for our session.  We don't want to hold a write lock here though because it could block
+            // while waiting for a session to become available and that would shut down the entire pool
+            // until the session is acquired.
             session = connectionGroup.reserveSessionOnConnection(tenant, host, port, effectiveUserId,
                     authnMethod, credential, channelConstructor, wait);
         } finally {
