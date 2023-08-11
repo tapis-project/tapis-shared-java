@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import edu.utexas.tacc.tapis.client.shared.exceptions.TapisClientException;
 import edu.utexas.tacc.tapis.files.client.FilesClient;
 import edu.utexas.tacc.tapis.files.client.gen.model.FileInfo;
+import edu.utexas.tacc.tapis.files.client.gen.model.FileTypeEnum;
 import edu.utexas.tacc.tapis.shared.exceptions.runtime.TapisRuntimeException;
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
 
@@ -141,9 +142,9 @@ public class FilesListSubtree
             
             // Process result list.
             for (var item : list) {
-                if (DIR.equals(item.getType()))
+                if (FileTypeEnum.DIR == item.getType())
                     _dirStack.push(item.getPath());
-                else if (FILE.equals(item.getType()))
+                else if (FileTypeEnum.FILE == item.getType())
                     _resultList.add(item);
                 else 
                     if (_log.isWarnEnabled())
