@@ -131,8 +131,7 @@ public final class SshSessionPool {
 
     private SshSessionPool(SshSessionPoolPolicy poolPolicy) {
         if(instance != null) {
-            // TODO: Dan - fix message
-            String msg = "SshSessionPool has already been created.";
+            String msg = MsgUtils.getMsg("SSH_POOL_ALREADY_CREATED");
             throw new RuntimeException(msg);
         }
         this.poolPolicy = poolPolicy;
