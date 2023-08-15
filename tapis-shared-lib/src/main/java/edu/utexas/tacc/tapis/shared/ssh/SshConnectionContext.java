@@ -129,6 +129,12 @@ final class SshConnectionContext {
         return 0;
     }
 
+    protected void close() {
+        // Close the SshConnection associated with this context.
+        log.trace("Closing SSH connection");
+        sshConnection.close();
+    }
+
     public static SSHExecChannel constructExecChannel(SSHConnection sshConnection) {
         return sshConnection.getExecChannel();
     }
