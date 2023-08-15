@@ -139,9 +139,18 @@ final class SshConnectionGroup {
 
     protected void cleanup() {
         synchronized (connectionContextList) {
-            connectionContextList.removeIf(sessionContext -> {
-                return ((sessionContext.isExpired()) && (sessionContext.getSessionCount() == 0));
-            });
+            List<SshConnectionContext> contextsToRemove = new ArrayList<>();
+            for(SshConnectionContext connectionContext : connectionContextList) {
+                // if the connection is expired, and there are no sessions left on it, close the connection,
+                // and add it to the list of connections to remove from the group.
+                if((connectionContext.isExpired()) && (connectionContext.getSessionCount() == 0)) {
+                    connectionContext.close();
+                    contextsToRemove.add(connectionContext);
+                }
+            }
+
+            // remove all connections that were identified above.
+            connectionContextList.removeAll(contextsToRemove);
         }
     }
 
