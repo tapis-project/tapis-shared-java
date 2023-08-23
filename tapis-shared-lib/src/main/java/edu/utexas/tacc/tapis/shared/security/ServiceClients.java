@@ -284,89 +284,56 @@ public class ServiceClients
         {
             case TapisConstants.SERVICE_NAME_APPS: {
                 client = new AppsClient(router.getServiceBaseUrl(), router.getAccessJWT());
-                client.addDefaultHeader("X-Tapis-User", user);
-                client.addDefaultHeader("X-Tapis-Tenant", tenant);
-                client.addDefaultHeader("Content-Type", "application/json");
                 break;
             }
                 
             case TapisConstants.SERVICE_NAME_JOBS: {
                 client = new JobsClient(router.getServiceBaseUrl(), router.getAccessJWT());
-                client.addDefaultHeader("X-Tapis-User", user);
-                client.addDefaultHeader("X-Tapis-Tenant", tenant);
-                client.addDefaultHeader("Content-Type", "application/json");
                 break;
             }
                 
             case TapisConstants.SERVICE_NAME_SECURITY: {
                 client = new SKClient(router.getServiceBaseUrl(), router.getAccessJWT());
-                client.addDefaultHeader("X-Tapis-User", user);
-                client.addDefaultHeader("X-Tapis-Tenant", tenant);
-                client.addDefaultHeader("Content-Type", "application/json");
                 break;
             }
                 
             case TapisConstants.SERVICE_NAME_SYSTEMS: {
                 client = new SystemsClient(router.getServiceBaseUrl(), router.getAccessJWT());
-                client.addDefaultHeader("X-Tapis-User", user);
-                client.addDefaultHeader("X-Tapis-Tenant", tenant);
-                client.addDefaultHeader("Content-Type", "application/json");
                 break;
             }
             
             case TapisConstants.SERVICE_NAME_AUTHN: {
                 client = new AuthClient(router.getServiceBaseUrl());
-                client.addDefaultHeader("X-Tapis-User", user);
-                client.addDefaultHeader("X-Tapis-Tenant", tenant);
-                client.addDefaultHeader("Content-Type", "application/json");
                 break;
             }
                 
             case TapisConstants.SERVICE_NAME_TENANTS: {
                 client = new TenantsClient(router.getServiceBaseUrl());
-                client.addDefaultHeader("X-Tapis-User", user);
-                client.addDefaultHeader("X-Tapis-Tenant", tenant);
-                client.addDefaultHeader("Content-Type", "application/json");
                 break;
             }
                 
             case TapisConstants.SERVICE_NAME_TOKENS: {
                 client = new TokensClient(router.getServiceBaseUrl());
-                client.addDefaultHeader("X-Tapis-User", user);
-                client.addDefaultHeader("X-Tapis-Tenant", tenant);
-                client.addDefaultHeader("Content-Type", "application/json");
                 break;
             }
                 
             case TapisConstants.SERVICE_NAME_META: {
                 client = new MetaClient(router.getServiceBaseUrl(), router.getAccessJWT());
-                client.addDefaultHeader("X-Tapis-User", user);
-                client.addDefaultHeader("X-Tapis-Tenant", tenant);
-                client.addDefaultHeader("Content-Type", "application/json");
                 break;
             }   
                 
             case TapisConstants.SERVICE_NAME_FILES: {
                 client = new FilesClient(router.getServiceBaseUrl(), router.getAccessJWT());
-                client.addDefaultHeader("X-Tapis-User", user);
-                client.addDefaultHeader("X-Tapis-Tenant", tenant);
-                client.addDefaultHeader("Content-Type", "application/json");
                 break;
             }
                 
             case TapisConstants.SERVICE_NAME_NOTIFICATIONS: {
                 client = new NotificationsClient(router.getServiceBaseUrl(), router.getAccessJWT());
-                client.addDefaultHeader("X-Tapis-User", user);
-                client.addDefaultHeader("X-Tapis-Tenant", tenant);
-                client.addDefaultHeader("Content-Type", "application/json");
                 break;
             }
 
             case TapisConstants.SERVICE_NAME_GLOBUSPROXY: {
               client = new GlobusProxyClient(router.getServiceBaseUrl(), router.getAccessJWT());
-              client.addDefaultHeader("X-Tapis-User", user);
-              client.addDefaultHeader("X-Tapis-Tenant", tenant);
-              client.addDefaultHeader("Content-Type", "application/json");
               break;
             }
 
@@ -376,6 +343,11 @@ public class ServiceClients
         // Make sure we found the client.
         if (client == null) 
             throw new TapisException(MsgUtils.getMsg("TAPIS_CLIENT_NOT_FOUND", service, tenant, user));
+        
+        // Assign required headers.
+        client.addDefaultHeader("X-Tapis-User", user);
+        client.addDefaultHeader("X-Tapis-Tenant", tenant);
+        client.addDefaultHeader("Content-Type", "application/json");
         
         // Return the client.
         return client;
