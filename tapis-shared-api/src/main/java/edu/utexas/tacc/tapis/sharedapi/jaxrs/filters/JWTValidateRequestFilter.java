@@ -40,6 +40,7 @@ import edu.utexas.tacc.tapis.sharedapi.security.TapisSecurityContext;
 import edu.utexas.tacc.tapis.sharedapi.utils.TapisRestUtils;
 import edu.utexas.tacc.tapis.tenants.client.gen.model.Site;
 import edu.utexas.tacc.tapis.tenants.client.gen.model.Tenant;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwt;
 import io.jsonwebtoken.Jwts;
@@ -516,8 +517,15 @@ public class JWTValidateRequestFilter
                 // The decode may have detected an expired JWT.
                 String msg;
                 String emsg = e.getMessage();
-                if (emsg != null && emsg.startsWith("JWT expired at")) 
-                    msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_EXPIRED", emsg);
+                if (emsg != null && emsg.startsWith("JWT expired at")) {
+                    // If an expired JWT and we can extract the claims then include them in the message.
+                    ExpiredJwtException e2 = null;
+                    Claims claims = null;
+                    if (e instanceof ExpiredJwtException) e2 = (ExpiredJwtException) e;
+                    if (e2 != null) claims = e2.getClaims();
+                    String claimsMsg = buildClaimsMsg(claims);
+                    msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_EXPIRED", emsg, claimsMsg);
+                }
                   else msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_PARSE_ERROR", emsg);
                 
                 _log.error(msg, e);
@@ -965,5 +973,25 @@ public class JWTValidateRequestFilter
         var afterUpdateTime  = _tenantManager.getLastUpdateTime();
         if (afterUpdateTime.isAfter(beforeUpdateTime)) return true;
           else return false;
+    }
+
+    /* ---------------------------------------------------------------------- */
+    /* buildClaimsMsg:                                                        */
+    /* ---------------------------------------------------------------------- */
+    /** Construct a human-readable string from a Claims object.
+     *
+     * @param c  - Claims object
+     * @return Message containing relevant claims (if any)
+     */
+    private String buildClaimsMsg(Claims c)
+    {
+        if (c == null) return null;
+        String msg =
+                String.format("Claims: iss: %s sub: %s tapis/tenant_id: %s tapis/username: %s tapis/account_type: %s",
+                   c.getIssuer(), c.getSubject(),
+                   c.get("tapis/tenant_id", String.class),
+                   c.get("tapis/username", String.class),
+                   c.get("tapis/account_type", String.class));
+        return msg;
     }
 }
