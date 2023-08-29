@@ -160,7 +160,8 @@ public class SSHExecChannel implements SSHSession
             Integer status = channel.getExitStatus();
             if (status != null) exitCode = status;
         } 
-        finally {channel.close(true);} // double down by closing immediately
+        finally { try {channel.close(true);} catch (Exception e){} } // double down by closing immediately,
+                                                                     // ignoring any secondary exceptions.
             
         // Return the remote exit code or the default value.
         return exitCode;
