@@ -3,10 +3,13 @@ package edu.utexas.tacc.tapis.shared.ssh.apache.system;
 import java.io.ByteArrayOutputStream;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.sshd.common.SshException;
+import org.apache.sshd.common.channel.exception.SshChannelException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
+import edu.utexas.tacc.tapis.shared.exceptions.TapisSSHChannelException;
 import edu.utexas.tacc.tapis.shared.exceptions.runtime.TapisRuntimeException;
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
 import edu.utexas.tacc.tapis.shared.ssh.apache.SSHConnection;
@@ -151,15 +154,20 @@ public class TapisRunCommand
         // Issue the command.
         var channel = conn.getExecChannel();
         try {_exitCode = channel.execute(command, _out, _err);}
-            catch (TapisException e) {throw e;}
+        	catch (TapisException e) {throw e;}
+            catch (SshException | SshChannelException e) {
+                String msg = MsgUtils.getMsg("TAPIS_SSH_EXEC_CHANNEL_ERROR", getSystemHostMessage(),
+                                              conn.getUsername(), e.getMessage());
+                throw new TapisSSHChannelException(msg, e);
+            }
             catch (Exception e) {
                 String msg = MsgUtils.getMsg("TAPIS_SSH_EXEC_CMD_ERROR", getSystemHostMessage(),
                                              conn.getUsername(), e.getMessage());
                 throw new TapisException(msg, e);
             }
             finally {
-                // Always close the connection if so requested.
-                if (closeConnection) conn.close();
+                // Always close the connection if so requested without superseding other exceptions. 
+                if (closeConnection) try {conn.close();} catch (Exception e){}
             }
         
         return _exitCode;
