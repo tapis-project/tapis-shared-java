@@ -101,6 +101,9 @@ public class JWTValidateRequestFilter
     private static final String CLAIM_DELEGATION     = "tapis/delegation";
     private static final String CLAIM_DELEGATION_SUB = "tapis/delegation_sub";
     private static final String CLAIM_SITE           = "tapis/target_site";
+
+    // Default message when logging claims for an expired jwt
+    private static final String DEFAULT_CLAIMS_MSG = "<no claims found>";
     
     // No-auth openapi resource names.
     private static final String OPENAPI_JSON = "/openapi.json";
@@ -511,7 +514,7 @@ public class JWTValidateRequestFilter
         
         // Parse the header and claims. If for some reason the remnant
         // isn't of the form header.body. then parsing will fail.
-        Jwt jwt = null;
+        Jwt jwt;
         try {jwt = Jwts.parser().parse(remnant);}
             catch (Exception e) {
                 // The decode may have detected an expired JWT.
@@ -519,15 +522,14 @@ public class JWTValidateRequestFilter
                 String emsg = e.getMessage();
                 if (emsg != null && emsg.startsWith("JWT expired at")) {
                     // If an expired JWT and we can extract the claims then include them in the message.
-                    ExpiredJwtException e2 = null;
-                    Claims claims = null;
-                    if (e instanceof ExpiredJwtException) e2 = (ExpiredJwtException) e;
-                    if (e2 != null) claims = e2.getClaims();
-                    String claimsMsg = buildClaimsMsg(claims);
+                    String claimsMsg = null;
+                    if (e instanceof ExpiredJwtException) {
+                        var claims = ((ExpiredJwtException)e).getClaims();
+                        claimsMsg = buildClaimsMsg(claims); // returns a default if claims == null
+                    }
                     msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_EXPIRED", emsg, claimsMsg);
                 }
-                  else msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_PARSE_ERROR", emsg);
-                
+                else msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_PARSE_ERROR", emsg);
                 _log.error(msg, e);
                 throw new TapisSecurityException(msg, e);
             }
@@ -985,13 +987,11 @@ public class JWTValidateRequestFilter
      */
     private String buildClaimsMsg(Claims c)
     {
-        if (c == null) return null;
-        String msg =
-                String.format("Claims: iss: %s sub: %s tapis/tenant_id: %s tapis/username: %s tapis/account_type: %s",
+        if (c == null) return DEFAULT_CLAIMS_MSG;
+        return String.format("iss: %s sub: %s tapis/tenant_id: %s tapis/username: %s tapis/account_type: %s",
                    c.getIssuer(), c.getSubject(),
                    c.get("tapis/tenant_id", String.class),
                    c.get("tapis/username", String.class),
                    c.get("tapis/account_type", String.class));
-        return msg;
     }
 }
