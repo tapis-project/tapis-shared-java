@@ -230,7 +230,7 @@ public final class SshSessionPool {
                                                                    AuthnEnum authnMethod, Credential credential,
                                                                    SshConnectionContext.SessionConstructor<T> channelConstructor,
                                                                    Duration wait) throws TapisException {
-
+        long startTime = System.currentTimeMillis();
         SshSessionPoolKey key = new SshSessionPoolKey(tenant, host, port, effectiveUserId, authnMethod, credential);
         SshConnectionGroup connectionGroup = null;
         T session = null;
@@ -273,6 +273,8 @@ public final class SshSessionPool {
             // until the session is acquired.
             session = connectionGroup.reserveSessionOnConnection(tenant, host, port, effectiveUserId,
                     authnMethod, credential, channelConstructor, wait);
+            String msg = MsgUtils.getMsg("SSH_POOL_RESERVE_ELAPSED_TIME", System.currentTimeMillis() - startTime);
+            log.debug(msg);
         } finally {
             poolRWLock.readLock().unlock();
         }

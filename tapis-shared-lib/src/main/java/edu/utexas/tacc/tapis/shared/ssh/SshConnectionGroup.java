@@ -176,6 +176,7 @@ final class SshConnectionGroup {
                                              AuthnEnum authnMethod, Credential credential,
                                              SshConnectionContext.SessionConstructor<T> sessionConstructor,
                                              Duration wait) throws TapisException {
+        long startTime = System.currentTimeMillis();
         long abortTime = System.currentTimeMillis() + wait.toMillis();
 
         // NOTE:  It's not impossible that you could have a situation where all connections are expired,
@@ -186,13 +187,16 @@ final class SshConnectionGroup {
         while(session == null) {
             synchronized (connectionContextList) {
                 // clear out any expired connections
+                log.trace(String.format("pre-cleanup elapsedTime: %d", System.currentTimeMillis() - startTime));
                 cleanup();
+                log.trace(String.format("post-cleanup elapsedTime: %d", System.currentTimeMillis() - startTime));
                 switch(poolPolicy.getSessionCreationStrategy()) {
                     case MINIMIZE_SESSIONS -> session = getSessionMinimizingSessions(tenant, host, port, effectiveUserId,
                             authnMethod, credential, sessionConstructor);
                     case MINIMIZE_CONNECTIONS -> session = getSessionMinimizingConnections(tenant, host, port, effectiveUserId,
                             authnMethod, credential, sessionConstructor);
                 }
+                log.trace(String.format("post-session search: %d", System.currentTimeMillis() - startTime));
 
                 long waitTime = abortTime - System.currentTimeMillis();
                 if ((session == null) && (waitTime > 0)) {
@@ -212,6 +216,7 @@ final class SshConnectionGroup {
             }
         }
 
+        log.debug(String.format("done: %d", System.currentTimeMillis() - startTime));
         if(session == null) {
             String msg = MsgUtils.getMsg("SSH_POOL_RESERVE_TIMEOUT", tenant, host, port, effectiveUserId, authnMethod, wait);
             log.warn(msg);
