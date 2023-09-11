@@ -27,6 +27,7 @@ final class SshConnectionContext {
     private final SSHConnection sshConnection;
     private final int maxSessions;
     private final long creationTime;
+    private boolean expired;
 
     // This will be set to the currentTimeMillis() each time a release is done.   It's used by getIdleTime()
     // getIdleTime will return 0 if there are sessions, or it will return idleSince minus the current time
@@ -54,6 +55,7 @@ final class SshConnectionContext {
         this.lifetimeMs = connectionDuration.toMillis();
         this.maxIdleTimeMs = maxConnectionIdleTime.toMillis();
         this.idleSinceTime = System.currentTimeMillis();
+        this.expired = false;
         sessions = new HashSet<>();
     }
 
@@ -66,9 +68,14 @@ final class SshConnectionContext {
     }
 
     public boolean isExpired() {
-        if(getConnectionAge() > lifetimeMs) {
+        if(expired) {
+            String msg = MsgUtils.getMsg("SSH_POOL_CONNECTION_EXPIRED");
+            log.debug(msg);
+            return true;
+        } else if(getConnectionAge() > lifetimeMs) {
             String msg = MsgUtils.getMsg("SSH_POOL_CONNECTION_AGE_EXCEEDED");
             log.debug(msg);
+            expireConnection();
             return true;
         } else if (getIdleTime() > maxIdleTimeMs) {
             String msg = MsgUtils.getMsg("SSH_POOL_CONNECTION_IDLE_TIME_EXCEEDED");
@@ -97,8 +104,10 @@ final class SshConnectionContext {
             try {
                 session = sessionConstructor.constructChannel(this.sshConnection);
             } catch (Exception ex) {
+                // if we are unable to create new sessions on this connection, we will expire it
+                this.expireConnection();
                 String msg = MsgUtils.getMsg("SSH_POOL_UNABLE_TO_CREATE_CHANNEL");
-               throw new TapisException(msg, ex);
+                throw new TapisException(msg, ex);
             }
             sessions.add(session);
             return session;
@@ -127,6 +136,12 @@ final class SshConnectionContext {
         }
 
         return 0;
+    }
+
+    protected void expireConnection() {
+        this.expired = true;
+        String msg = MsgUtils.getMsg("SSH_POOL_CONNECTION_EXPIRATION_REQUESTED");
+        log.debug(msg);
     }
 
     protected void close() {
