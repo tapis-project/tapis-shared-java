@@ -522,7 +522,7 @@ public class JWTValidateRequestFilter
                 String emsg = e.getMessage();
                 if (emsg != null && emsg.startsWith("JWT expired at")) {
                     // If an expired JWT and we can extract the claims then include them in the message.
-                    String claimsMsg = null;
+                    String claimsMsg = DEFAULT_CLAIMS_MSG;
                     if (e instanceof ExpiredJwtException) {
                         var claims = ((ExpiredJwtException)e).getClaims();
                         claimsMsg = buildClaimsMsg(claims); // returns a default if claims == null
