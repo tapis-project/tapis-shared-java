@@ -14,7 +14,6 @@ import org.apache.commons.lang3.math.NumberUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,10 +26,11 @@ final class SshConnectionGroup {
 
     private List<SshConnectionContext> connectionContextList;
     private SshSessionPoolPolicy poolPolicy;
-
+    private boolean newlyCreated;
     protected SshConnectionGroup(SshSessionPool pool, SshSessionPoolPolicy poolPolicy) {
         connectionContextList = new ArrayList<>();
         this.poolPolicy = poolPolicy;
+        newlyCreated = true;
     }
 
     /**
@@ -72,7 +72,22 @@ final class SshConnectionGroup {
         synchronized(connectionContextList) {
             SshConnectionContext connectionContext = findConnectionContext(session);
             if (connectionContext != null) {
-                connectionContext.releaseSession(session);
+                try {
+                    session.close();
+                } catch (RuntimeException ex) {
+                    // nothing we can really do about this, so just log it.
+                    String msg = MsgUtils.getMsg("SSH_POOL_UNABLE_TO_CLOSE_SESSION", "SSHSftpClient");
+                    log.warn(msg);
+                }
+
+                if(connectionContext.releaseSession(session)) {
+                    log.trace("Session released, notifying");
+                } else {
+                    // we will still notify in this case.  worst case is that a thread will wake and relaize it's
+                    // not able to get a session, and go back to waiting.  No harm done.
+                    log.trace("Unable to release session, notifying");
+                }
+
                 connectionContextList.notify();
                 return true;
             }
@@ -93,7 +108,7 @@ final class SshConnectionGroup {
             if (connectionContext != null) {
                 try {
                     session.close();
-                } catch (IOException ex) {
+                } catch (Exception ex) {
                     // nothing we can really do about this, so just log it.
                     String msg = MsgUtils.getMsg("SSH_POOL_UNABLE_TO_CLOSE_SESSION", "SSHSftpClient");
                     log.warn(msg);
@@ -105,6 +120,7 @@ final class SshConnectionGroup {
                     // not able to get a session, and go back to waiting.  No harm done.
                     log.trace("Unable to release session, notifying");
                 }
+
                 connectionContextList.notify();
                 return true;
             }
@@ -138,12 +154,14 @@ final class SshConnectionGroup {
     }
 
     protected void cleanup() {
+        // if this group is newly created - i.e. it was created, but not connections have ever been
+        // requested on it, skip the cleanup.
         synchronized (connectionContextList) {
             List<SshConnectionContext> contextsToRemove = new ArrayList<>();
-            for(SshConnectionContext connectionContext : connectionContextList) {
+            for (SshConnectionContext connectionContext : connectionContextList) {
                 // if the connection is expired, and there are no sessions left on it, close the connection,
                 // and add it to the list of connections to remove from the group.
-                if((connectionContext.isExpired()) && (connectionContext.getSessionCount() == 0)) {
+                if ((connectionContext.isExpired()) && (connectionContext.getSessionCount() == 0)) {
                     connectionContext.close();
                     contextsToRemove.add(connectionContext);
                 }
@@ -155,6 +173,9 @@ final class SshConnectionGroup {
     }
 
     protected boolean isEmpty() {
+        if(newlyCreated) {
+            return false;
+        }
         return connectionContextList.isEmpty();
     }
 
@@ -190,30 +211,45 @@ final class SshConnectionGroup {
                 log.trace(String.format("pre-cleanup elapsedTime: %d", System.currentTimeMillis() - startTime));
                 cleanup();
                 log.trace(String.format("post-cleanup elapsedTime: %d", System.currentTimeMillis() - startTime));
-                switch(poolPolicy.getSessionCreationStrategy()) {
+                switch (poolPolicy.getSessionCreationStrategy()) {
                     case MINIMIZE_SESSIONS -> session = getSessionMinimizingSessions(tenant, host, port, effectiveUserId,
                             authnMethod, credential, sessionConstructor);
                     case MINIMIZE_CONNECTIONS -> session = getSessionMinimizingConnections(tenant, host, port, effectiveUserId,
                             authnMethod, credential, sessionConstructor);
                 }
                 log.trace(String.format("post-session search: %d", System.currentTimeMillis() - startTime));
-
-                long waitTime = abortTime - System.currentTimeMillis();
-                if ((session == null) && (waitTime > 0)) {
-                    try {
-                        log.trace("Waiting for a session");
-                        connectionContextList.wait(waitTime);
+                if(session == null) {
+                    if (hasAvailableSessions()) {
+                        // in this case, there are session slots available to reserve, but we didn't get a session
+                        // for some reason.  This means we must notify again so that some other thread can try it.
+                        // notify gives up the montitor though, so in this case we must continue the while loop.
+                        connectionContextList.notify();
+                        log.warn("Reserved slot for session but unable to create the session");
+                        continue;
+                    }
+                    long waitTime = abortTime - System.currentTimeMillis();
+                    if (waitTime > 0) {
+                        try {
+                            log.trace("Waiting for a session");
+                            connectionContextList.wait(waitTime);
+                        } catch (InterruptedException ex) {
+                            String msg = MsgUtils.getMsg("SSH_POOL_RESERVE_TIMEOUT_INTERRUPTED",
+                                    tenant, host, port, effectiveUserId, authnMethod, wait);
+                            log.warn(msg);
+                            break;
+                        }
+                    } else {
                         log.trace("Wait complete - session was " + (session == null ? "NOT" : "") + " found");
-                    } catch (InterruptedException ex) {
-                        String msg = MsgUtils.getMsg("SSH_POOL_RESERVE_TIMEOUT_INTERRUPTED",
-                                tenant, host, port, effectiveUserId, authnMethod, wait);
-                        log.warn(msg);
                         break;
                     }
-                } else {
-                    break;
+
                 }
             }
+
+            // don't need to synchronize, we absolutley want to make certain we set it to false regardless of
+            // it's current state or it wont get cleaned up.  It only gets set to true in the constructor so
+            // there's no worry of multi-threading issues.
+            newlyCreated = false;
         }
 
         log.debug(String.format("done: %d", System.currentTimeMillis() - startTime));
@@ -279,7 +315,7 @@ final class SshConnectionGroup {
         }
 
         // if we still dont have a session, just find the connection with the minimum number of sessions, and
-        // create the sessio there (if it can have one).
+        // create the session there (if it can have one).
         if(session == null) {
             // look for the connection with the minimum number of sessions;
             contextToUse = connectionContextList.stream().min((contextOne, contextTwo) -> {
@@ -349,6 +385,17 @@ final class SshConnectionGroup {
 
         // Non-null if we get here.
         return conn;
+    }
+    private boolean hasAvailableSessions() {
+        synchronized (connectionContextList) {
+            for(SshConnectionContext connectionContext : connectionContextList) {
+                if(connectionContext.hasAvailableSessions()) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     @Override

@@ -240,44 +240,34 @@ public final class SshSessionPool {
         // start with the write version, and downgrade to read after we have modified the pool.
         //
         // Note this code was derived from examples in the javadoc for ReentrantReadWriteLock.
-        poolRWLock.readLock().lock();
+        poolRWLock.writeLock().lock();
         try {
             connectionGroup = pool.get(key);
             // if we didn't get the group, we must insert it which requires a write lock, so release read lock
             // and aquire write lock (rw lock doesn't allow upgrading the lock, only downgrading)
             if(connectionGroup == null) {
-                poolRWLock.readLock().unlock();
-                poolRWLock.writeLock().lock();
-                try {
-                    // we must check again - something could have added the key between the point where we
-                    // released the read lock and aquired the write lock.
-                    connectionGroup = pool.get(key);
-                    if (connectionGroup == null) {
-                        connectionGroup = new SshConnectionGroup(this, poolPolicy);
-                        pool.put(key, connectionGroup);
-                    }
-                } finally {
-                    // downgrade lock from write to read lock.  More info from javadoc for reentrant read write lock:
-                    // Lock downgrading  - Reentrancy also allows downgrading from the write lock to a read lock, by
-                    // acquiring the write lock, then the read lock and then releasing the write lock. However, upgrading
-                    // from a read lock to the write lock is not possible.
-                    poolRWLock.readLock().lock();
-                    poolRWLock.writeLock().unlock();
+                // we must check again - something could have added the key between the point where we
+                // released the read lock and aquired the write lock.
+                connectionGroup = pool.get(key);
+                if (connectionGroup == null) {
+                    connectionGroup = new SshConnectionGroup(this, poolPolicy);
+                    pool.put(key, connectionGroup);
                 }
-            }
 
-            // reserveSessionOnConnection may block, so  be careful calling it - it's called while the
-            // readlock is held so that cleanup doesnt remove the connectionGroup while we are waiting
-            // for our session.  We don't want to hold a write lock here though because it could block
-            // while waiting for a session to become available and that would shut down the entire pool
-            // until the session is acquired.
-            session = connectionGroup.reserveSessionOnConnection(tenant, host, port, effectiveUserId,
-                    authnMethod, credential, channelConstructor, wait);
-            String msg = MsgUtils.getMsg("SSH_POOL_RESERVE_ELAPSED_TIME", System.currentTimeMillis() - startTime);
-            log.debug(msg);
+            }
         } finally {
-            poolRWLock.readLock().unlock();
+            poolRWLock.writeLock().unlock();
         }
+
+        // reserveSessionOnConnection may block, so  be careful calling it - it's called while the
+        // readlock is held so that cleanup doesnt remove the connectionGroup while we are waiting
+        // for our session.  We don't want to hold a write lock here though because it could block
+        // while waiting for a session to become available and that would shut down the entire pool
+        // until the session is acquired.
+        session = connectionGroup.reserveSessionOnConnection(tenant, host, port, effectiveUserId,
+                authnMethod, credential, channelConstructor, wait);
+        String msg = MsgUtils.getMsg("SSH_POOL_RESERVE_ELAPSED_TIME", System.currentTimeMillis() - startTime);
+        log.debug(msg);
 
         return session;
     }
