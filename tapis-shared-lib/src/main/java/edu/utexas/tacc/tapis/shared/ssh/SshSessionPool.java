@@ -43,17 +43,12 @@ public final class SshSessionPool {
     private AtomicInteger traceOnCleanupCounter = new AtomicInteger(0);
 
     public class AutoCloseSession<T extends SSHSession> implements AutoCloseable {
-        private final SshSessionPool sshSessionPool;
+        private final SshConnectionGroup sshConnectionGroup;
         private final SSHSession session;
 
-        AutoCloseSession(SshSessionPool sshSessionPool, SSHExecChannel execChannel) {
-            this.sshSessionPool = sshSessionPool;
+        AutoCloseSession(SshConnectionGroup sshConnectionGroup, T execChannel) {
+            this.sshConnectionGroup = sshConnectionGroup;
             this.session = execChannel;
-        }
-
-        AutoCloseSession(SshSessionPool sshSessionPool, SSHSftpClient sftpClient) {
-            this.sshSessionPool = sshSessionPool;
-            this.session = sftpClient;
         }
 
         public T getSession() {
@@ -65,12 +60,15 @@ public final class SshSessionPool {
         public void close() {
             if(session != null) {
                 if (session instanceof SSHExecChannel) {
-                    sshSessionPool.returnExecChannel((SSHExecChannel) session);
+                    sshConnectionGroup.releaseSession((SSHExecChannel) session);
                 } else if (session instanceof SSHSftpClient) {
-                    sshSessionPool.returnSftpClient((SSHSftpClient) session);
+                    sshConnectionGroup.releaseSession((SSHSftpClient) session);
                 }
+            } else {
+                String msg = MsgUtils.getMsg("SSH_POOL_NULL_PARAM", session.getClass().getCanonicalName());
+                log.warn(msg);
+                return;
             }
-
         }
 
     }
@@ -161,46 +159,13 @@ public final class SshSessionPool {
         return new SshSessionPoolStats(groupStatsList);
     }
 
-    public AutoCloseSession<SSHExecChannel> borrowAutoCloseableExecChannel(String tenant, String host,
-                Integer port, String effectiveUserId, AuthnEnum authnMethod,
-                Credential credential, Duration wait) throws TapisException {
-        SSHExecChannel execChannel = borrowExecChannel(tenant, host, port, effectiveUserId, authnMethod, credential, wait);
-        return new AutoCloseSession<SSHExecChannel>(this, execChannel);
-    }
-
-    public SSHExecChannel borrowExecChannel(String tenant, String host, Integer port, String effectiveUserId,
+    public AutoCloseSession<SSHExecChannel> borrowExecChannel(String tenant, String host, Integer port, String effectiveUserId,
                                             AuthnEnum authnMethod, Credential credential, Duration wait) throws TapisException {
         return reserveSessionOnConnection(tenant, host, port, effectiveUserId, authnMethod, credential,
                 SshConnectionContext.ExecChannelConstructor, wait);
     }
 
-    public void returnExecChannel(SSHExecChannel channel) {
-        if(channel == null) {
-            String msg = MsgUtils.getMsg("SSH_POOL_NULL_PARAM", "SSHExecChannel");
-            log.warn(msg);
-            return;
-        }
-
-        poolRWLock.readLock().lock();
-        try {
-            for (SshSessionPoolKey key : pool.keySet()) {
-                SshConnectionGroup connectionGroup = pool.get(key);
-                if (connectionGroup.findConnectionContext(channel) != null) {
-                    connectionGroup.releaseSession(channel);
-                }
-            }
-        } finally {
-            poolRWLock.readLock().unlock();
-        }
-    }
-
-    public AutoCloseSession<SSHSftpClient> borrowAutoCloseableSftpClient(String tenant, String host, Integer port,
-            String effectiveUserId, AuthnEnum authnMethod, Credential credential, Duration wait) throws TapisException {
-        SSHSftpClient sftpClient = borrowSftpClient(tenant, host, port, effectiveUserId, authnMethod, credential, wait);
-        return new AutoCloseSession<SSHSftpClient>(this, sftpClient);
-    }
-
-    public SSHSftpClient borrowSftpClient(String tenant, String host, Integer port, String effectiveUserId,
+    public AutoCloseSession<SSHSftpClient> borrowSftpClient(String tenant, String host, Integer port, String effectiveUserId,
                                              AuthnEnum authnMethod, Credential credential, Duration wait) throws TapisException {
         return reserveSessionOnConnection(tenant, host, port, effectiveUserId, authnMethod, credential,
                 SshConnectionContext.SftpClientConstructor, wait);
@@ -226,7 +191,7 @@ public final class SshSessionPool {
         }
     }
 
-    private <T extends SSHSession> T reserveSessionOnConnection(String tenant, String host, Integer port, String effectiveUserId,
+    private <T extends SSHSession> AutoCloseSession<T> reserveSessionOnConnection(String tenant, String host, Integer port, String effectiveUserId,
                                                                    AuthnEnum authnMethod, Credential credential,
                                                                    SshConnectionContext.SessionConstructor<T> channelConstructor,
                                                                    Duration wait) throws TapisException {
@@ -269,7 +234,7 @@ public final class SshSessionPool {
         String msg = MsgUtils.getMsg("SSH_POOL_RESERVE_ELAPSED_TIME", System.currentTimeMillis() - startTime);
         log.debug(msg);
 
-        return session;
+        return new AutoCloseSession<T>(connectionGroup, session);
     }
 
 
