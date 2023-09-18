@@ -22,7 +22,6 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public final class SshSessionPool {
@@ -31,6 +30,7 @@ public final class SshSessionPool {
 
     private final SshSessionPoolPolicy poolPolicy;
     ScheduledFuture<?> poolCleanupTaskFuture;
+    private static final long MAX_CLEANUP_LOCK_WAIT_MS = 5000;
 
     /**
      * This lock controls access to the pool.  There can be any number of readers, but only one
@@ -38,7 +38,7 @@ public final class SshSessionPool {
      * entry from the pool.  Everything else is read.  Modifying the values stored in the pool
      * is synchronized/protected by the SshConnectionGroup class.
      */
-    ReadWriteLock poolRWLock = new ReentrantReadWriteLock(true);
+    ReentrantReadWriteLock poolRWLock = new ReentrantReadWriteLock(true);
 
     private AtomicInteger traceOnCleanupCounter = new AtomicInteger(0);
 
@@ -255,13 +255,27 @@ public final class SshSessionPool {
             connectionGroup.cleanup();
         }
 
-        poolRWLock.writeLock().lock();
         try {
-            pool.entrySet().removeIf(entry -> {
-                return entry.getValue().isReadyForCleanup();
-            });
+            if (poolRWLock.writeLock().tryLock(MAX_CLEANUP_LOCK_WAIT_MS, TimeUnit.MILLISECONDS)) {
+                pool.entrySet().removeIf(entry -> {
+                    return entry.getValue().isReadyForCleanup();
+                });
+            }
+        } catch (InterruptedException ex) {
+            // We will just skip this part of the cleanup if we were interrupted while waiting for the lock.
+            // the finally block handles that case already.
         } finally {
-            poolRWLock.writeLock().unlock();
+            if(poolRWLock.isWriteLocked()) {
+                poolRWLock.writeLock().unlock();
+            } else {
+                //  If we didn't get the lock, we will just skip this part of the cleanup.  There's really no
+                //  negatives to skipping the clenaup periodically since the cleanup that really matters is already
+                //  done above, and when connections are attempted.  This cleanup step will just remove tenant/system/user
+                //  combinations from the pool when they have no connections to them.  The only consequence to this is
+                //  using a tiny bit more memory than we absolutely need to.
+                String msg = MsgUtils.getMsg("SSH_POOL_CLEANUP_SKIPPED");
+                log.warn(msg);
+            }
         }
 
         if(traceOnCleanupCounter.incrementAndGet() >= poolPolicy.getTraceDuringCleanupFrequency()) {
