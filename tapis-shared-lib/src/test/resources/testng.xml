@@ -8,8 +8,8 @@
         </run>
     </groups>
 	<test name="shared">
-		<packages>
-		   <package name="edu.utexas.tacc.tapis.shared.*" />
-        </packages>
+            <packages>
+                <package name="edu.utexas.tacc.tapis.shared.*" />
+            </packages>
 	</test>
 </suite>

@@ -15,8 +15,8 @@ import java.util.Properties;
 
 /**
  * To run this test:
- *
- *
+ *    Configure TestSshSessionPool.properties for running locally.
+ *    Test is marked skip_for_build due to needing ssh keys to run.
  */
 @Test(groups={"integration"})
 public class TestSshSessionPool {
@@ -39,9 +39,6 @@ public class TestSshSessionPool {
         userId_1 = properties.getProperty("TEST_POOL_USERID_1", "sshTestUser1");
         publicKey_1 = properties.getProperty("TEST_POOL_PUBLIC_KEY_1");
         privateKey_1 = properties.getProperty("TEST_POOL_PRIVATE_KEY_1");
-        if( ("YourPublicKeyGoesHere".equals(publicKey_1)) || ("YourPrivateKeyGoesHere").equals(privateKey_1)) {
-            Assert.fail("Set your ssh public/private key in the file called \"TestSshSessionPool.properties\".  Convert private key to single line like tapis uses, and don't quote the value");
-        }
         authnMethod_1 = AuthnEnum.valueOf(properties.getProperty("TEST_POOL_AUTHN_METHOD_1", "PKI_KEYS"));
         port_1 = Integer.valueOf(properties.getProperty("TEST_POOL_PORT_1", "-1"));
         credential_1 = new Credential();
@@ -57,6 +54,9 @@ public class TestSshSessionPool {
         Field poolInstanceField = SshSessionPool.class.getDeclaredField("instance");
         poolInstanceField.setAccessible(true);
         poolInstanceField.set(null, null);
+        if( ("YourPublicKeyGoesHere".equals(publicKey_1)) || ("YourPrivateKeyGoesHere").equals(privateKey_1)) {
+            Assert.fail("Set your ssh public/private key in the file called \"TestSshSessionPool.properties\".  Convert private key to single line like tapis uses, and don't quote the value");
+        }
     }
 
     @Test
