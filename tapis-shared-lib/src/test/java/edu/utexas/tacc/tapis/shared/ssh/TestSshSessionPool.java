@@ -39,6 +39,9 @@ public class TestSshSessionPool {
         userId_1 = properties.getProperty("TEST_POOL_USERID_1", "sshTestUser1");
         publicKey_1 = properties.getProperty("TEST_POOL_PUBLIC_KEY_1");
         privateKey_1 = properties.getProperty("TEST_POOL_PRIVATE_KEY_1");
+        if( ("YourPublicKeyGoesHere".equals(publicKey_1)) || ("YourPrivateKeyGoesHere").equals(privateKey_1)) {
+            Assert.fail("Set your ssh public/private key in the file called \"TestSshSessionPool.properties\".  Convert private key to single line like tapis uses, and don't quote the value");
+        }
         authnMethod_1 = AuthnEnum.valueOf(properties.getProperty("TEST_POOL_AUTHN_METHOD_1", "PKI_KEYS"));
         port_1 = Integer.valueOf(properties.getProperty("TEST_POOL_PORT_1", "-1"));
         credential_1 = new Credential();
@@ -66,22 +69,22 @@ public class TestSshSessionPool {
         Assert.assertTrue(SshSessionPool.getInstance().getConnectionStats().getConnectionCount() <= 0);
         Assert.assertEquals(SshSessionPool.getInstance().getInstance().getConnectionStats().getSessionCount(),0);
 
-        SshSessionPool.AutoCloseSession<SSHExecChannel> channel1 = SshSessionPool.getInstance().borrowExecChannel(tenant_1, host_1, port_1,
+        SshSessionPool.PooledSshSession<SSHExecChannel> channel1 = SshSessionPool.getInstance().borrowExecChannel(tenant_1, host_1, port_1,
                 userId_1, authnMethod_1, credential_1, Duration.ZERO);
         Assert.assertTrue(SshSessionPool.getInstance().getConnectionStats().getConnectionCount() <= 2);
         Assert.assertEquals(SshSessionPool.getInstance().getConnectionStats().getSessionCount(), 1);
 
-        SshSessionPool.AutoCloseSession<SSHExecChannel> channel2 = SshSessionPool.getInstance().borrowExecChannel(tenant_1, host_1, port_1,
+        SshSessionPool.PooledSshSession<SSHExecChannel> channel2 = SshSessionPool.getInstance().borrowExecChannel(tenant_1, host_1, port_1,
                 userId_1, authnMethod_1, credential_1, Duration.ZERO);
         Assert.assertTrue(SshSessionPool.getInstance().getConnectionStats().getConnectionCount() <= 2);
         Assert.assertEquals(SshSessionPool.getInstance().getConnectionStats().getSessionCount(), 2);
 
-        SshSessionPool.AutoCloseSession<SSHExecChannel> channel3 = SshSessionPool.getInstance().borrowExecChannel(tenant_1, host_1, port_1,
+        SshSessionPool.PooledSshSession<SSHExecChannel> channel3 = SshSessionPool.getInstance().borrowExecChannel(tenant_1, host_1, port_1,
                 userId_1, authnMethod_1, credential_1, Duration.ZERO);
         Assert.assertTrue(SshSessionPool.getInstance().getConnectionStats().getConnectionCount() <= 2);
         Assert.assertEquals(SshSessionPool.getInstance().getConnectionStats().getSessionCount(), 3);
 
-        SshSessionPool.AutoCloseSession<SSHExecChannel> channel4 = SshSessionPool.getInstance().borrowExecChannel(tenant_1, host_1, port_1,
+        SshSessionPool.PooledSshSession<SSHExecChannel> channel4 = SshSessionPool.getInstance().borrowExecChannel(tenant_1, host_1, port_1,
                 userId_1, authnMethod_1, credential_1, Duration.ZERO);
         Assert.assertTrue(SshSessionPool.getInstance().getConnectionStats().getConnectionCount() <= 2);
         Assert.assertEquals(SshSessionPool.getInstance().getConnectionStats().getSessionCount(), 4);
@@ -90,7 +93,7 @@ public class TestSshSessionPool {
         Assert.assertTrue(SshSessionPool.getInstance().getConnectionStats().getConnectionCount() <= 2);
         Assert.assertEquals(SshSessionPool.getInstance().getConnectionStats().getSessionCount(), 3);
 
-        SshSessionPool.AutoCloseSession<SSHExecChannel> channel5 = SshSessionPool.getInstance().borrowExecChannel(tenant_1, host_1, port_1,
+        SshSessionPool.PooledSshSession<SSHExecChannel> channel5 = SshSessionPool.getInstance().borrowExecChannel(tenant_1, host_1, port_1,
                 userId_1, authnMethod_1, credential_1, Duration.ZERO);
         Assert.assertTrue(SshSessionPool.getInstance().getConnectionStats().getConnectionCount() <= 2);
         Assert.assertEquals(SshSessionPool.getInstance().getConnectionStats().getSessionCount(), 4);
@@ -119,13 +122,13 @@ public class TestSshSessionPool {
                 .setMaxConnectionsPerKey(2)
                 .setMaxSessionsPerConnection(2);
         SshSessionPool.init(poolPolicy);
-        SshSessionPool.AutoCloseSession<SSHExecChannel> channel1 = SshSessionPool.getInstance().borrowExecChannel(tenant_1, host_1, port_1,
+        SshSessionPool.PooledSshSession<SSHExecChannel> channel1 = SshSessionPool.getInstance().borrowExecChannel(tenant_1, host_1, port_1,
                 userId_1, authnMethod_1, credential_1, Duration.ZERO);
-        SshSessionPool.AutoCloseSession<SSHExecChannel> channel2 = SshSessionPool.getInstance().borrowExecChannel(tenant_1, host_1, port_1,
+        SshSessionPool.PooledSshSession<SSHExecChannel> channel2 = SshSessionPool.getInstance().borrowExecChannel(tenant_1, host_1, port_1,
                 userId_1, authnMethod_1, credential_1, Duration.ZERO);
-        SshSessionPool.AutoCloseSession<SSHExecChannel> channel3 = SshSessionPool.getInstance().borrowExecChannel(tenant_1, host_1, port_1,
+        SshSessionPool.PooledSshSession<SSHExecChannel> channel3 = SshSessionPool.getInstance().borrowExecChannel(tenant_1, host_1, port_1,
                 userId_1, authnMethod_1, credential_1, Duration.ZERO);
-        SshSessionPool.AutoCloseSession<SSHExecChannel> channel4 = SshSessionPool.getInstance().borrowExecChannel(tenant_1, host_1, port_1,
+        SshSessionPool.PooledSshSession<SSHExecChannel> channel4 = SshSessionPool.getInstance().borrowExecChannel(tenant_1, host_1, port_1,
                 userId_1, authnMethod_1, credential_1, Duration.ZERO);
         Thread th = new Thread(new Runnable() {
             @Override
@@ -143,12 +146,12 @@ public class TestSshSessionPool {
         });
         th.start();
         try {
-            SshSessionPool.AutoCloseSession<SSHExecChannel> channel5 = SshSessionPool.getInstance().borrowExecChannel(tenant_1, host_1, port_1,
+            SshSessionPool.PooledSshSession<SSHExecChannel> channel5 = SshSessionPool.getInstance().borrowExecChannel(tenant_1, host_1, port_1,
                     userId_1, authnMethod_1, credential_1, Duration.ZERO);
             Assert.fail("Wait for session returned a session when it shouldn't have");
         } catch (Exception ex) {
         }
-        SshSessionPool.AutoCloseSession<SSHExecChannel> channel5 = SshSessionPool.getInstance().borrowExecChannel(tenant_1, host_1, port_1,
+        SshSessionPool.PooledSshSession<SSHExecChannel> channel5 = SshSessionPool.getInstance().borrowExecChannel(tenant_1, host_1, port_1,
                 userId_1, authnMethod_1, credential_1, Duration.ofSeconds(3));
         th.join();
 
@@ -164,7 +167,7 @@ public class TestSshSessionPool {
         Assert.assertTrue(SshSessionPool.getInstance().getConnectionStats().getConnectionCount() <= 0);
         Assert.assertEquals(SshSessionPool.getInstance().getConnectionStats().getSessionCount(),0);
 
-        try (SshSessionPool.AutoCloseSession<SSHExecChannel> channel1 = SshSessionPool.getInstance().borrowExecChannel(tenant_1, host_1, port_1,
+        try (SshSessionPool.PooledSshSession<SSHExecChannel> channel1 = SshSessionPool.getInstance().borrowExecChannel(tenant_1, host_1, port_1,
                 userId_1, authnMethod_1, credential_1, Duration.ZERO)) {
             Assert.assertTrue(SshSessionPool.getInstance().getConnectionStats().getConnectionCount() <= 2);
             Assert.assertEquals(SshSessionPool.getInstance().getConnectionStats().getSessionCount(), 1);
@@ -172,7 +175,7 @@ public class TestSshSessionPool {
         Assert.assertTrue(SshSessionPool.getInstance().getConnectionStats().getConnectionCount() <= 2);
         Assert.assertEquals(SshSessionPool.getInstance().getConnectionStats().getSessionCount(), 0);
 
-        try (SshSessionPool.AutoCloseSession<SSHSftpClient> channel1 = SshSessionPool.getInstance().borrowSftpClient(tenant_1, host_1, port_1,
+        try (SshSessionPool.PooledSshSession<SSHSftpClient> channel1 = SshSessionPool.getInstance().borrowSftpClient(tenant_1, host_1, port_1,
                 userId_1, authnMethod_1, credential_1, Duration.ZERO)) {
             Assert.assertTrue(SshSessionPool.getInstance().getConnectionStats().getConnectionCount() <= 2);
             Assert.assertEquals(SshSessionPool.getInstance().getConnectionStats().getSessionCount(), 1);
@@ -181,9 +184,9 @@ public class TestSshSessionPool {
         Assert.assertEquals(SshSessionPool.getInstance().getConnectionStats().getSessionCount(), 0);
 
 
-        try (SshSessionPool.AutoCloseSession<SSHExecChannel> channel1 = SshSessionPool.getInstance().borrowExecChannel(tenant_1, host_1, port_1,
+        try (SshSessionPool.PooledSshSession<SSHExecChannel> channel1 = SshSessionPool.getInstance().borrowExecChannel(tenant_1, host_1, port_1,
                 userId_1, authnMethod_1, credential_1, Duration.ZERO);
-             SshSessionPool.AutoCloseSession<SSHSftpClient> channel2 = SshSessionPool.getInstance().borrowSftpClient(tenant_1, host_1, port_1,
+             SshSessionPool.PooledSshSession<SSHSftpClient> channel2 = SshSessionPool.getInstance().borrowSftpClient(tenant_1, host_1, port_1,
                 userId_1, authnMethod_1, credential_1, Duration.ZERO)) {
             Assert.assertTrue(SshSessionPool.getInstance().getConnectionStats().getConnectionCount() <= 2);
             Assert.assertEquals(SshSessionPool.getInstance().getConnectionStats().getSessionCount(), 2);
@@ -205,7 +208,7 @@ public class TestSshSessionPool {
         Assert.assertTrue(SshSessionPool.getInstance().getConnectionStats().getConnectionCount() <= 0);
         Assert.assertEquals(SshSessionPool.getInstance().getConnectionStats().getSessionCount(),0);
 
-        try (SshSessionPool.AutoCloseSession<SSHExecChannel> channel1 = SshSessionPool.getInstance().borrowExecChannel(tenant_1, host_1, port_1,
+        try (SshSessionPool.PooledSshSession<SSHExecChannel> channel1 = SshSessionPool.getInstance().borrowExecChannel(tenant_1, host_1, port_1,
                 userId_1, authnMethod_1, credential_1, Duration.ZERO)) {
             Assert.assertTrue(SshSessionPool.getInstance().getConnectionStats().getConnectionCount() <= 2);
             Assert.assertEquals(SshSessionPool.getInstance().getConnectionStats().getSessionCount(), 1);
@@ -229,11 +232,11 @@ public class TestSshSessionPool {
 
         long startTime = System.currentTimeMillis();
 
-        SshSessionPool.AutoCloseSession<SSHExecChannel> longRunningChannel = SshSessionPool.getInstance().borrowExecChannel(tenant_1, host_1, port_1,
+        SshSessionPool.PooledSshSession<SSHExecChannel> longRunningChannel = SshSessionPool.getInstance().borrowExecChannel(tenant_1, host_1, port_1,
                 userId_1, authnMethod_1, credential_1, Duration.ZERO);
         boolean connectionExpired = false;
         for(int i = 0;i < 20;i++) {
-            try (SshSessionPool.AutoCloseSession<SSHExecChannel> channel1 = SshSessionPool.getInstance().borrowExecChannel(tenant_1, host_1, port_1,
+            try (SshSessionPool.PooledSshSession<SSHExecChannel> channel1 = SshSessionPool.getInstance().borrowExecChannel(tenant_1, host_1, port_1,
                     userId_1, authnMethod_1, credential_1, Duration.ZERO)) {
                 Assert.assertTrue(SshSessionPool.getInstance().getConnectionStats().getConnectionCount() <= 2);
                 Assert.assertEquals(SshSessionPool.getInstance().getConnectionStats().getSessionCount(), 2);

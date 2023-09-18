@@ -42,11 +42,11 @@ public final class SshSessionPool {
 
     private AtomicInteger traceOnCleanupCounter = new AtomicInteger(0);
 
-    public class AutoCloseSession<T extends SSHSession> implements AutoCloseable {
+    public class PooledSshSession<T extends SSHSession> implements AutoCloseable {
         private final SshConnectionGroup sshConnectionGroup;
         private final SSHSession session;
 
-        AutoCloseSession(SshConnectionGroup sshConnectionGroup, T execChannel) {
+        PooledSshSession(SshConnectionGroup sshConnectionGroup, T execChannel) {
             this.sshConnectionGroup = sshConnectionGroup;
             this.session = execChannel;
         }
@@ -159,52 +159,29 @@ public final class SshSessionPool {
         return new SshSessionPoolStats(groupStatsList);
     }
 
-    public AutoCloseSession<SSHExecChannel> borrowExecChannel(String tenant, String host, Integer port, String effectiveUserId,
-                                            AuthnEnum authnMethod, Credential credential, Duration wait) throws TapisException {
+    public PooledSshSession<SSHExecChannel> borrowExecChannel(String tenant, String host, Integer port, String effectiveUserId,
+                                                              AuthnEnum authnMethod, Credential credential, Duration wait) throws TapisException {
         return reserveSessionOnConnection(tenant, host, port, effectiveUserId, authnMethod, credential,
                 SshConnectionContext.ExecChannelConstructor, wait);
     }
 
-    public AutoCloseSession<SSHSftpClient> borrowSftpClient(String tenant, String host, Integer port, String effectiveUserId,
-                                             AuthnEnum authnMethod, Credential credential, Duration wait) throws TapisException {
+    public PooledSshSession<SSHSftpClient> borrowSftpClient(String tenant, String host, Integer port, String effectiveUserId,
+                                                            AuthnEnum authnMethod, Credential credential, Duration wait) throws TapisException {
         return reserveSessionOnConnection(tenant, host, port, effectiveUserId, authnMethod, credential,
                 SshConnectionContext.SftpClientConstructor, wait);
     }
 
-    public void returnSftpClient(SSHSftpClient sftpClient) {
-        if(sftpClient == null) {
-            String msg = MsgUtils.getMsg("SSH_POOL_NULL_PARAM", "SSHSftpClient");
-            log.warn(msg);
-            return;
-        }
-
-        poolRWLock.readLock().lock();
-        try {
-            for (SshSessionPoolKey key : pool.keySet()) {
-                SshConnectionGroup connectionGroup = pool.get(key);
-                if (connectionGroup.findConnectionContext(sftpClient) != null) {
-                    connectionGroup.releaseSession(sftpClient);
-                }
-            }
-        } finally {
-            poolRWLock.readLock().unlock();
-        }
-    }
-
-    private <T extends SSHSession> AutoCloseSession<T> reserveSessionOnConnection(String tenant, String host, Integer port, String effectiveUserId,
-                                                                   AuthnEnum authnMethod, Credential credential,
-                                                                   SshConnectionContext.SessionConstructor<T> channelConstructor,
-                                                                   Duration wait) throws TapisException {
+    private <T extends SSHSession> PooledSshSession<T> reserveSessionOnConnection(String tenant, String host, Integer port, String effectiveUserId,
+                                                                                  AuthnEnum authnMethod, Credential credential,
+                                                                                  SshConnectionContext.SessionConstructor<T> channelConstructor,
+                                                                                  Duration wait) throws TapisException {
         long startTime = System.currentTimeMillis();
         SshSessionPoolKey key = new SshSessionPoolKey(tenant, host, port, effectiveUserId, authnMethod, credential);
         SshConnectionGroup connectionGroup = null;
         T session = null;
 
-        //  We must aquire the write version of the lock if we need to add a key, but we only need the read
-        // version of the lock if we are waiting for the session on teh connection group.  This means we will
-        // start with the write version, and downgrade to read after we have modified the pool.
-        //
-        // Note this code was derived from examples in the javadoc for ReentrantReadWriteLock.
+        //  We must aquire the write version of the lock because we may need to add a key/value to the
+        //  pool if it's not already there.
         poolRWLock.writeLock().lock();
         try {
             connectionGroup = pool.get(key);
@@ -218,39 +195,28 @@ public final class SshSessionPool {
                     connectionGroup = new SshConnectionGroup(this, poolPolicy);
                     pool.put(key, connectionGroup);
                 }
-
             }
+            connectionGroup.touch();
         } finally {
             poolRWLock.writeLock().unlock();
         }
 
-        // reserveSessionOnConnection may block, so  be careful calling it - it's called while the
-        // readlock is held so that cleanup doesnt remove the connectionGroup while we are waiting
-        // for our session.  We don't want to hold a write lock here though because it could block
-        // while waiting for a session to become available and that would shut down the entire pool
-        // until the session is acquired.
+        // reserveSessionOnConnection may block, so  be careful calling it - no lock is held while
+        // we call it, so we need to be sure that cleanup doesnt remove the connectionGroup while
+        // we are waiting for our session.  For this reason, the group has a flag that says it's
+        // newly created (set to true on construction).  After any connection/session attempt is made,
+        // the group sets the newly created flag to false - meaning it can be removed if no connections
+        // exist.
+
+        // TODO:  MUST LOOK AT THIS - this won't handle the case that we are reusing a group that currently has no
+        // TODO:  connections on it.  I need to fix that.  I'm not sure how though.
+
         session = connectionGroup.reserveSessionOnConnection(tenant, host, port, effectiveUserId,
                 authnMethod, credential, channelConstructor, wait);
         String msg = MsgUtils.getMsg("SSH_POOL_RESERVE_ELAPSED_TIME", System.currentTimeMillis() - startTime);
         log.debug(msg);
 
-        return new AutoCloseSession<T>(connectionGroup, session);
-    }
-
-
-    private SshConnectionContext findSessionContext(List<SshConnectionContext> sshSessionContexts, Object channel) {
-        SshConnectionContext foundContext = null;
-
-        if(sshSessionContexts != null) {
-           for(SshConnectionContext context : sshSessionContexts) {
-               if(context.containsChannel(channel)) {
-                   foundContext = context;
-                   break;
-               }
-           }
-        }
-
-        return foundContext;
+        return new PooledSshSession<T>(connectionGroup, session);
     }
 
     @Override
@@ -292,7 +258,7 @@ public final class SshSessionPool {
         poolRWLock.writeLock().lock();
         try {
             pool.entrySet().removeIf(entry -> {
-                return entry.getValue().isEmpty();
+                return entry.getValue().isReadyForCleanup();
             });
         } finally {
             poolRWLock.writeLock().unlock();

@@ -24,13 +24,22 @@ import java.util.List;
 final class SshConnectionGroup {
     private static final Logger log = LoggerFactory.getLogger(SshConnectionGroup.class);
 
+    // report this group as "not ready for cleanup" for 30 mins after the last time
+    // we "touched" it.  We always touch it just prior to creating a new session/connection
+    // this prevents us from inadvertently cleaning up the connection group while we are
+    // waiting to make a connection if there are currently no connections.
+    private static final long LAST_TOUCHED_THRESHOLD = Duration.ofMinutes(30).toMillis();
     private List<SshConnectionContext> connectionContextList;
     private SshSessionPoolPolicy poolPolicy;
-    private boolean newlyCreated;
+    private long lastTouched;
     protected SshConnectionGroup(SshSessionPool pool, SshSessionPoolPolicy poolPolicy) {
         connectionContextList = new ArrayList<>();
         this.poolPolicy = poolPolicy;
-        newlyCreated = true;
+        lastTouched = System.currentTimeMillis();
+    }
+
+    public synchronized void touch() {
+        lastTouched = System.currentTimeMillis();
     }
 
     /**
@@ -154,8 +163,6 @@ final class SshConnectionGroup {
     }
 
     protected void cleanup() {
-        // if this group is newly created - i.e. it was created, but not connections have ever been
-        // requested on it, skip the cleanup.
         synchronized (connectionContextList) {
             List<SshConnectionContext> contextsToRemove = new ArrayList<>();
             for (SshConnectionContext connectionContext : connectionContextList) {
@@ -172,10 +179,13 @@ final class SshConnectionGroup {
         }
     }
 
-    protected boolean isEmpty() {
-        if(newlyCreated) {
+    protected boolean isReadyForCleanup() {
+        // if this group is recently touched, dont report it as empty.  This will keep us
+        // from cleaning it up while we are trying to create a connection on it.
+        if((System.currentTimeMillis() - lastTouched) < LAST_TOUCHED_THRESHOLD) {
             return false;
         }
+
         return connectionContextList.isEmpty();
     }
 
@@ -245,11 +255,6 @@ final class SshConnectionGroup {
 
                 }
             }
-
-            // don't need to synchronize, we absolutley want to make certain we set it to false regardless of
-            // it's current state or it wont get cleaned up.  It only gets set to true in the constructor so
-            // there's no worry of multi-threading issues.
-            newlyCreated = false;
         }
 
         log.debug(String.format("done: %d", System.currentTimeMillis() - startTime));
