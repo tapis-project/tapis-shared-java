@@ -207,10 +207,6 @@ public final class SshSessionPool {
         // newly created (set to true on construction).  After any connection/session attempt is made,
         // the group sets the newly created flag to false - meaning it can be removed if no connections
         // exist.
-
-        // TODO:  MUST LOOK AT THIS - this won't handle the case that we are reusing a group that currently has no
-        // TODO:  connections on it.  I need to fix that.  I'm not sure how though.
-
         session = connectionGroup.reserveSessionOnConnection(tenant, host, port, effectiveUserId,
                 authnMethod, credential, channelConstructor, wait);
         String msg = MsgUtils.getMsg("SSH_POOL_RESERVE_ELAPSED_TIME", System.currentTimeMillis() - startTime);
