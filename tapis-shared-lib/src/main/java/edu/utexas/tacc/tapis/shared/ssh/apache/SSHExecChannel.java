@@ -21,7 +21,7 @@ import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
  * 
  * @author rcardone
  */
-public class SSHExecChannel implements SSHSession
+public class SSHExecChannel implements SSHSession, AutoCloseable
 {
     /* ********************************************************************** */
     /*                               Constants                                */
@@ -166,7 +166,12 @@ public class SSHExecChannel implements SSHSession
         // Return the remote exit code or the default value.
         return exitCode;
     }
-    
+
+    @Override
+    public void close() {
+        _sshConnection.close();
+    }
+
     /* ---------------------------------------------------------------------- */
     /* getSSHConnection:                                                      */
     /* ---------------------------------------------------------------------- */
