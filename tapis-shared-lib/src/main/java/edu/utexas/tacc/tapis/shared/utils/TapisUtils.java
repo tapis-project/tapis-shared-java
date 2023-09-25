@@ -1022,4 +1022,21 @@ public class TapisUtils
 	  sb.append("\"");
 	  return sb.toString();
   }
+
+  /* ---------------------------------------------------------------------- */
+  /* conditionalQuote:                                                      */
+  /* ---------------------------------------------------------------------- */
+  /** Double quote a string only if it contains at least on space character
+   * and it isn't already quoted.
+   * 
+   * @param s string value to be possibly be double quoted
+   * @return the string as is or double quoted
+   */
+  public static String conditionalQuote(String s)
+  {
+  	if (StringUtils.isBlank(s)) return s;
+  	if (!(s.startsWith("\"") && s.endsWith("\"")) && s.contains(" ")) 
+  		return safelyDoubleQuoteString(s);
+  	  else return s;
+  }
 }
