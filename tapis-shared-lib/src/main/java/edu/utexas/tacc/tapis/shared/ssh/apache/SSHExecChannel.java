@@ -21,7 +21,7 @@ import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
  * 
  * @author rcardone
  */
-public class SSHExecChannel implements SSHSession, AutoCloseable
+public class SSHExecChannel implements SSHSession
 {
     /* ********************************************************************** */
     /*                               Constants                                */
@@ -105,17 +105,47 @@ public class SSHExecChannel implements SSHSession, AutoCloseable
      * @throws IOException 
      * @throws TapisException
      */
-    public int execute(String cmd, OutputStream outStream, OutputStream errStream) 
+    public int execute(String cmd, OutputStream outStream, OutputStream errStream) throws IOException, TapisException {
+        return execute(cmd, outStream, errStream, true);
+    }
+
+    /** Execute a remote command and return its standard out and standard err
+     * content in their respective streams.
+     *
+     * If an exception is thrown before the command can be issued, the
+     * sshConnection is closed.  After the command is issued, the exceptions
+     * pass through to the caller.
+     *
+     * @param cmd the command to execute on the remote host
+     * @param outStream the stream containing standard out of the remote command
+     * @param errStream the stream containing standard err of the remote command
+     * @param errStream the stream containing standard err of the remote command
+     * @param closeConnectionOnException if set to true, and an exception is thrown by this method,
+     *                                   we will close the underlying SSHConnection also.  This should
+     *                                   probably always be set to false except to support existing code that
+     *                                   relies on this behavior.  In the future, the connections should be
+     *                                   managed separately from the sessions since it's possible to have
+     *                                   multiple sessions per connection.
+     * @return the remote command's exit code
+     * @throws IOException
+     * @throws TapisException
+     */
+    public int execute(String cmd, OutputStream outStream, OutputStream errStream, boolean closeConnectionOnException)
      throws IOException, TapisException
     {
         // Check call-specific input.
         if (outStream == null) {
-            _sshConnection.close();
+            if(closeConnectionOnException) {
+                _sshConnection.close();
+            }
+
             String msg = MsgUtils.getMsg("TAPIS_NULL_PARAMETER", "execute", "outStream");
             throw new IOException(msg);
         }
         if (errStream == null) {
-            _sshConnection.close();
+            if(closeConnectionOnException) {
+                _sshConnection.close();
+            }
             String msg = MsgUtils.getMsg("TAPIS_NULL_PARAMETER", "execute", "errStream");
             throw new IOException(msg);
         }
@@ -127,7 +157,9 @@ public class SSHExecChannel implements SSHSession, AutoCloseable
         int exitCode = -1;  // default value when no remote code returned 
         var session  = _sshConnection.getSession();
         if (session == null) {
-            _sshConnection.close(); // probably not strictly necessary
+            if(closeConnectionOnException) {
+                _sshConnection.close(); // probably not strictly necessary
+            }
             String msg =  MsgUtils.getMsg("TAPIS_SSH_NO_SESSION");
             throw new TapisException(msg);
         }
@@ -136,7 +168,9 @@ public class SSHExecChannel implements SSHSession, AutoCloseable
         ChannelExec channel;
         try {channel = session.createExecChannel(cmd);}
             catch (Exception e) {
-                _sshConnection.close();
+                if(closeConnectionOnException) {
+                    _sshConnection.close();
+                }
                 String msg =  MsgUtils.getMsg("TAPIS_SSH_CHANNEL_CREATE_ERROR", 
                                _sshConnection.getHost(), _sshConnection.getUsername(), e.getMessage());
                 throw new TapisException(msg);
@@ -165,11 +199,6 @@ public class SSHExecChannel implements SSHSession, AutoCloseable
             
         // Return the remote exit code or the default value.
         return exitCode;
-    }
-
-    @Override
-    public void close() {
-        _sshConnection.close();
     }
 
     /* ---------------------------------------------------------------------- */

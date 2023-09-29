@@ -81,14 +81,6 @@ final class SshConnectionGroup {
         synchronized(connectionContextList) {
             SshConnectionContext connectionContext = findConnectionContext(session);
             if (connectionContext != null) {
-                try {
-                    session.close();
-                } catch (RuntimeException ex) {
-                    // nothing we can really do about this, so just log it.
-                    String msg = MsgUtils.getMsg("SSH_POOL_UNABLE_TO_CLOSE_SESSION", "SSHSftpClient");
-                    log.warn(msg);
-                }
-
                 if(connectionContext.releaseSession(session)) {
                     log.trace("Session released, notifying");
                 } else {
