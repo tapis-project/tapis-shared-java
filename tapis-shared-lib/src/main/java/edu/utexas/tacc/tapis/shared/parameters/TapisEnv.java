@@ -230,6 +230,9 @@ public class TapisEnv
       // 20 and 80, with a default value of 50.
       TAPIS_SK_VAULT_TOKEN_RENEWAL_THRESHOLD("tapis.sk.vault.token.renewal.threshold"),
       
+      // ------------------- Jobs Parameters ----------------------------
+      TAPIS_JOBS_RUN_DB_MIGRATION("tapis.jobs.run.db.migration"),
+      
 	  // ------------------- Env Only Parameters -----------------------
       // ENV-VARIABLE-ONLY: The flag to log security information such as JWT headers.  
       // Boolean value, the default is false.
