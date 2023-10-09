@@ -231,6 +231,10 @@ public class TapisEnv
       TAPIS_SK_VAULT_TOKEN_RENEWAL_THRESHOLD("tapis.sk.vault.token.renewal.threshold"),
       
       // ------------------- Jobs Parameters ----------------------------
+      // This is an optional environment variable to allow the jobs DB migration
+      // that involves calls to Apps service
+      // This value of the variable by default is false. 
+      // The DB migration is effective for version < 1.3.1.
       TAPIS_JOBS_RUN_DB_MIGRATION("tapis.jobs.run.db.migration"),
       
 	  // ------------------- Env Only Parameters -----------------------
