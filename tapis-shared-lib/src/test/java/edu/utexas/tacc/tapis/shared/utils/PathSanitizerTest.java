@@ -18,7 +18,7 @@ public class PathSanitizerTest {
         String dirPath = "/home/bud/mydir/myfile";
         boolean out = PathSanitizer.hasDangerousChars(dirPath);
         Assert.assertEquals(out, false);
-       
+        
         dirPath = "home/bud/mydir/myfile1.txt";
         out = PathSanitizer.hasDangerousChars(dirPath);
         Assert.assertEquals(out, false);
@@ -40,6 +40,10 @@ public class PathSanitizerTest {
         Assert.assertEquals(out, true);
         
         dirPath = "&><|;`";
+        out = PathSanitizer.hasDangerousChars(dirPath);
+        Assert.assertEquals(out, true);
+        
+        dirPath = "temporary; whoami > whoami.txt";
         out = PathSanitizer.hasDangerousChars(dirPath);
         Assert.assertEquals(out, true);
 	}
