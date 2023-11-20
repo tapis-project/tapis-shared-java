@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>edu.utexas.tacc.tapis</groupId>
   <artifactId>tapis-shared-java</artifactId>
-  <version>2.0.131</version>
+  <version>2.0.132</version>
   <packaging>pom</packaging>
   <name>Tapis shared</name>
   <description>TAPIS shared Java code</description>
@@ -218,7 +218,7 @@
     <apache-sshd.version>2.10.0</apache-sshd.version>
     <mockito-core.version>3.0.0</mockito-core.version>
     <javax.websocket-api.version>1.1</javax.websocket-api.version>
-    <build.timestamp>2023-10-31T21:25:54Z</build.timestamp>
+    <build.timestamp>2023-11-20T19:06:55Z</build.timestamp>
     <statefulj.version>3.0</statefulj.version>
     <java-source.version>1.17</java-source.version>
     <reactor-rabbitmq.version>1.5.2</reactor-rabbitmq.version>
@@ -392,7 +392,7 @@
       </testResource>
     </testResources>
     <directory>target</directory>
-    <finalName>tapis-shared-java-2.0.131</finalName>
+    <finalName>tapis-shared-java-2.0.132</finalName>
     <plugins>
       <plugin>
         <groupId>com.amashchenko.maven.plugin</groupId>
