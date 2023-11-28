@@ -40,8 +40,9 @@ import edu.utexas.tacc.tapis.sharedapi.security.TapisSecurityContext;
 import edu.utexas.tacc.tapis.sharedapi.utils.TapisRestUtils;
 import edu.utexas.tacc.tapis.tenants.client.gen.model.Site;
 import edu.utexas.tacc.tapis.tenants.client.gen.model.Tenant;
-import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.Header;
 import io.jsonwebtoken.Jwt;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.SignatureException;
@@ -279,12 +280,16 @@ public class JWTValidateRequestFilter
             requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
             return;
         }
-            
+        
         // ------------------------ Verify JWT ---------------------------------
         // Do we need to verify the JWT?
         boolean skipJWTVerify = TapisEnv.getBoolean(EnvVar.TAPIS_ENVONLY_SKIP_JWT_VERIFY);
         if (!skipJWTVerify) {
-            try {verifyJwt(encodedJWT, jwtTenant, true);}
+            try {
+            	// Make sure the signature algorithm is not weak or "none".
+            	prohibitNoAlg(claims, unverifiedJwt);
+            	verifyJwt(encodedJWT, jwtTenant, true);
+            }
             catch (Exception e) {
                 Status status = Status.UNAUTHORIZED;
                 String msg = e.getMessage();
@@ -535,6 +540,52 @@ public class JWTValidateRequestFilter
             }
         return jwt;
     }
+
+    /* ---------------------------------------------------------------------- */
+    /* prohibitNoAlg:                                                         */
+    /* ---------------------------------------------------------------------- */
+    /** This method must be called before once before verifyJwt to avoid allowing
+     * attacker to constructing JWT that avoid robust signature verification by 
+     * specifying weak or no algorithms.
+     * 
+     * @param claims the JWT's claims
+     * @param unverifiedJwt the unverified JWT with header
+     * @throws TapisSecurityException if the "none" algorithm is specified
+     */
+    @SuppressWarnings("rawtypes")
+    private void prohibitNoAlg(Claims claims, Jwt unverifiedJwt)
+     throws TapisSecurityException
+    {
+        // Get the header.
+        Header<?> header = null;
+        try {header = unverifiedJwt.getHeader();}   
+        catch (Exception e) {
+            String msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_GET_HEADER", buildClaimsMsg(claims));
+            _log.error(msg, e);
+            throw new TapisSecurityException(msg);
+        }
+        if (header == null) {
+            String msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_NO_HEADER", buildClaimsMsg(claims));
+            _log.error(msg);
+            throw new TapisSecurityException(msg); 
+        }
+        
+        // Get the algorithm
+        String alg = null;
+        try {alg = (String) header.get("alg");}
+        catch (Exception e) {
+            String msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_INVALID_ALG_FORMAT", buildClaimsMsg(claims));
+            _log.error(msg, e);
+            throw new TapisSecurityException(msg);
+        }
+        
+    	// Prohibit no algorithms.
+    	if (StringUtils.isBlank(alg) || alg.equalsIgnoreCase("none")) {
+            String msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_INVALID_ALG", alg, buildClaimsMsg(claims)); 
+            _log.error(msg);
+            throw new TapisSecurityException(msg);
+    	}
+    }
     
     /* ---------------------------------------------------------------------- */
     /* verifyJwt:                                                             */
@@ -567,7 +618,9 @@ public class JWTValidateRequestFilter
             catch (SignatureException e) {
                 // Signature validation could have failed because we used
                 // a stale public key for this tenant.  Let's see if refreshing
-                // the tenant information is possible and helpful.
+                // the tenant information is possible and helpful.  No need to 
+            	// recheck the algorithm since the jwt doesn't change on the 
+            	// recursive call.
                 if (allowRefresh && refreshTenants()) 
                     verifyJwt(encodedJwt, tenant, false); // prevent infinite recursion
                   else {
@@ -990,8 +1043,8 @@ public class JWTValidateRequestFilter
         if (c == null) return DEFAULT_CLAIMS_MSG;
         return String.format("iss: %s sub: %s tapis/tenant_id: %s tapis/username: %s tapis/account_type: %s",
                    c.getIssuer(), c.getSubject(),
-                   c.get("tapis/tenant_id", String.class),
-                   c.get("tapis/username", String.class),
-                   c.get("tapis/account_type", String.class));
+                   c.get(CLAIM_TENANT),
+                   c.get(CLAIM_USERNAME),
+                   c.get(CLAIM_ACCOUNT_TYPE));
     }
 }
