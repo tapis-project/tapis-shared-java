@@ -3,6 +3,8 @@ package edu.utexas.tacc.tapis.shared.utils;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
+
 
 @Test(groups= {"unit"})
 public class PathSanitizerTest {
@@ -107,4 +109,48 @@ public class PathSanitizerTest {
         Assert.assertEquals(out,true);
 	}
 	
+	/* ---------------------------------------------------------------------------- */
+    /* strictDangerousCharCheckTest                                                 */
+    /* ---------------------------------------------------------------------------- */
+	@Test(enabled = true)
+	public void detectControlCharsTest()
+	{
+		// The first 32 ASCII characters are control characters.
+		// -> We expect exceptions to be thrown.
+		for (int i = 0; i < 32; i++) {
+			var s = Character.toString(i);
+			try {PathSanitizer.detectControlChars(s);}
+				catch (TapisException e) {continue;}
+			Assert.assertTrue(false, "1. FAILING CHARACTER CODE: " + i);
+		}
+		
+		// The rest of the ASCII characters are not control characters,
+		// but 127 (DELETE) is not printable and has had various uses.
+		// -> We expect NO exceptions to be thrown.
+		for (int i = 32; i < 127; i++) {
+			var s = Character.toString(i);
+			try {PathSanitizer.detectControlChars(s);}
+				catch (TapisException e) {Assert.assertTrue(false, "2. FAILING CHARACTER CODE: " + i);}
+		}
+		
+		// The last ascii character (127, DEL) is not printable and will 
+		// be returned as a control character along with the first extended
+		// ascii characters up to 159 inclusive.
+		// -> We expect exceptions to be thrown.
+		for (int i = 127; i < 160; i++) {
+			var s = Character.toString(i);
+			try {PathSanitizer.detectControlChars(s);}
+				catch (TapisException e) {continue;}
+			Assert.assertTrue(false, "3. FAILING CHARACTER CODE: " + i);
+		}
+		
+		// The rest of the extended ASCII characters are not control characters
+		// and are printable.
+		// -> We expect NO exceptions to be thrown.
+		for (int i = 160; i < 256; i++) {
+			var s = Character.toString(i);
+			try {PathSanitizer.detectControlChars(s);}
+				catch (TapisException e) {Assert.assertTrue(false, "1. FAILING CHARACTER CODE: " + i);}
+		}
+	}
 }
