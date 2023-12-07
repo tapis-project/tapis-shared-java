@@ -1,6 +1,7 @@
 package edu.utexas.tacc.tapis.shared.utils;
 
 import java.util.HexFormat;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -24,7 +25,7 @@ public class PathSanitizer
 	private final static Pattern safePathPattern = Pattern.compile("[^ &><|;`]+");
 	
 	/* ---------------------------------------------------------------------- */
-	/* detectControlChars:                                                   */
+	/* detectControlChars:                                                    */
 	/* ---------------------------------------------------------------------- */
 	/** Throw an exception when encountering a all control character in the 
 	 * input string.  Exceptions are also thrown when an invalid codepoint is 
@@ -36,7 +37,7 @@ public class PathSanitizer
 	public static void detectControlChars(String s) throws TapisException
 	{
 		// Maybe there's nothing to do.
-		if (s == null) return;
+		if (s == null || s.isEmpty()) return;
 		
 		// Index is visible in catch blocks.
 		int i = 0;
@@ -57,6 +58,73 @@ public class PathSanitizer
 			var msg = MsgUtils.getMsg("TAPIS_INVALID_INPUT_CHARACTER", "xxxx", "unknown", i, s);
 			throw new TapisException(msg);
 		}
+	}
+
+	/* ---------------------------------------------------------------------- */
+	/* replaceControlChars:                                                   */
+	/* ---------------------------------------------------------------------- */
+	/** Replace each control character with the replacement character.  If the
+	 * character at any position isn't a valid codepoint, then that position 
+	 * will also be replaced.  To handle invalid codepoints and the exceptions
+	 * they cause, we make a recursive call to this method for the segment of
+	 * the input string starting one character after the offending index.
+	 * 
+	 * @param s the input string to be validated
+	 * @param replacement the character to replace control characters
+	 */
+	public static String replaceControlChars(String s, char replacement)
+	{
+		// Maybe there's nothing to do.
+		if (s == null || s.isEmpty()) return s;
+		
+		// Usually we won't need this string.
+		StringBuilder builder = null;
+		
+		// Index is visible in catch blocks.
+		int i = 0;
+		try {
+			// Check for control characters, including \t, \n, \x0B, \f, \r.
+			for (; i < s.length(); i++) {
+				var codepoint = Character.codePointAt(s, i);  // possible exception here
+				if (Character.isISOControl(codepoint)) {
+					if (builder == null) builder = new StringBuilder(s);
+					builder.setCharAt(i, replacement);
+				}
+			}
+		} 
+		catch (Exception e) {
+			// Work with the latest updates if any have occurred.
+			String scur;
+			if (builder != null) scur = builder.toString();
+			  else scur = s; 
+			
+			// Get the string up to the current character that caused the exception
+			// and append the replacement character, which will be in the ith position.
+			String s1;
+			if (i > 0) s1 = scur.substring(0, i);
+			  else s1 = "";
+			
+			// Replace the character at the position that caused the exception.
+			s1 += replacement;
+			
+			// Make the recursive call to process the remaining part of the string.
+			// We increment the index to skip over the character that caused the 
+			// current exception.  If we are already at the last index of the string,
+			// there's nothing more to check.
+			//
+			// Since we advance the index on each recursive call and the string is of 
+			// finite length, the recursion is guaranteed to terminate.
+			String s2;
+			if (i < s.length() - 1) s2 = replaceControlChars(s.substring(i+1), replacement);
+			  else s2 = "";
+			
+			// Put the two pieces together.
+			return s1 + s2;
+		}
+		
+		// Return either the unchanged original string or a new modified string.
+		if (builder == null) return s;
+		  else return builder.toString();
 	}
 
 	/* ---------------------------------------------------------------------- */
