@@ -167,7 +167,7 @@ public class PathSanitizer
 	/* hasDangerousChars:                                                     */
 	/* ---------------------------------------------------------------------- */
 	/** This method returns true if there are dangerous characters or patterns
-	 * in the input string.  Invalid characters are treated as dangerous.
+	 * in the input string.  Control and invalid characters are treated as dangerous.
 	 *
 	 * This function is intended to be used to prevent users from inserting commands and 
 	 * escapes into any string that makes its way to the command line. Checks for presence of 
@@ -182,7 +182,11 @@ public class PathSanitizer
 	 * @param cmdChars string to appear on command line
 	 * @return true if presence of command line dangerous characters, false otherwise 
 	 */
-	public static boolean hasDangerousChars(String cmdChars) {
+	public static boolean hasDangerousChars(String cmdChars) 
+	{
+		// Don't blow up.
+		if (StringUtils.isBlank(cmdChars)) return false;
+		
 	    // Check for control characters, including \t, \n, \x0B, \f, \r.
 		try {
 			for (int i = 0; i < cmdChars.length(); i++) {
