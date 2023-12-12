@@ -190,6 +190,23 @@ public class TapisRunCommand
     }
 
     /* ---------------------------------------------------------------------------- */
+    /* getOutAsTrimmedString:                                                       */
+    /* ---------------------------------------------------------------------------- */
+    /** Return the output stream contents as a string that has been trimmed. Never return null.
+     * If this method is called before the execute method sends a command to the remote host,
+     * and empty string is returned.
+     * Otherwise, the value returned is a string of zero or more length created using
+     * the default character set from the output stream contents.
+     *
+     * @return the output stream content as a trimmed string
+     */
+    public String getOutAsTrimmedString()
+    {
+        if (_out == null) return "";
+        return new String(_out.toByteArray()).strip();
+    }
+
+    /* ---------------------------------------------------------------------------- */
     /* getErrAsString:                                                              */
     /* ---------------------------------------------------------------------------- */
     /** Return the error stream contents as a string.  If this method is called before
