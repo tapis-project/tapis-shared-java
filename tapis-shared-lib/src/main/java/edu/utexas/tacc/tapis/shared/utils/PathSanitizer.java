@@ -27,9 +27,9 @@ public class PathSanitizer
 	/* ---------------------------------------------------------------------- */
 	/* detectControlChars:                                                    */
 	/* ---------------------------------------------------------------------- */
-	/** Throw an exception when encountering a all control character in the 
-	 * input string.  Exceptions are also thrown when an invalid codepoint is 
-	 * encountered.
+	/** Throw an exception when encountering a control character in the input
+	 * string. Control characters include tab, new line and carriage return.
+	 * Exceptions are also thrown when an invalid codepoint is encountered.
 	 * 
 	 * @param s the input string to be validated
 	 * @exception when a control character or invalid character is encountered
@@ -55,7 +55,7 @@ public class PathSanitizer
 		} 
 		catch (TapisException e) {throw e;}
 		catch (Exception e) {
-			var msg = MsgUtils.getMsg("TAPIS_INVALID_INPUT_CHARACTER", "xxxx", "unknown", i, s);
+			var msg = MsgUtils.getMsg("TAPIS_INVALID_INPUT_CHARACTER", "????", "unknown", i, s);
 			throw new TapisException(msg);
 		}
 	}
@@ -199,7 +199,7 @@ public class PathSanitizer
 	    // from appearing on the command line.
 	    Matcher m = allowedPattern.matcher(cmdChars);
 	    
-	    // If only allowed characters found, return false.
+	    // Return false if only allowed characters were found.
 	    return !m.matches();
 	}  
 
