@@ -1,7 +1,6 @@
 package edu.utexas.tacc.tapis.shared.utils;
 
 import java.util.HexFormat;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -20,9 +19,7 @@ public class PathSanitizer
     // contain any of the chars: &, >, <, |, ;, `
 	private final static Pattern allowedPattern = Pattern.compile("[^&><|;`]+");
 	
-	// Regex pattern that returns true if the string being checked DOES NOT
-	// contain any of the chars: &, >, <, |, ;, `, <space>
-	private final static Pattern safePathPattern = Pattern.compile("[^ &><|;`]+");
+	// ** See TapisUtils.conditionalQuote() for similar processing.
 	
 	/* ---------------------------------------------------------------------- */
 	/* detectControlChars:                                                    */
@@ -127,42 +124,6 @@ public class PathSanitizer
 		  else return builder.toString();
 	}
 
-	/* ---------------------------------------------------------------------- */
-	/* sanitizeForCmdLine:                                                    */
-	/* ---------------------------------------------------------------------- */
-	/** Conditionally double quote the input string for safe use on the command
-	 * line.  This method will conditionally double quote the string if it does
-	 * not match the safePathPattern.  
-	 * 
-	 * It is assumed that the string contains no control characters (see 
-	 * detectControlChars()).  This method checks for the presence of chars: 
-	 * 
-	 * 					&, >, <, |, ;, `, <space>
-	 *
-	 * If the string is already double quoted it will not be changed.  If the
-	 * string is not already double quoted and it contains unsafe command line
-	 * characters, it will be double quoted.  If it contains no unsafe characters
-	 * the input string will be returned unchanged.
-	 * 
-	 * @param s an input string to appear on the command line 
-	 * @return a command line safe version of the string  
-	 */
-	public static String sanitizeForCmdLine(String s)
-	{
-		// Maybe there's nothing to do.
-		if (StringUtils.isBlank(s)) return s;
-		
-		// Don't double quote a string that's already double quoted.
-		if (s.startsWith("\"") && s.endsWith("\"")) return s;
-		
-	    // Check for characters that we want to prohibit
-	    // from appearing on the command line unquoted.
-	    Matcher m = safePathPattern.matcher(s);
-	    if (!m.matches()) s = TapisUtils.safelyDoubleQuoteString(s);
-		
-		return s;
-	}
-	
 	/* ---------------------------------------------------------------------- */
 	/* hasDangerousChars:                                                     */
 	/* ---------------------------------------------------------------------- */

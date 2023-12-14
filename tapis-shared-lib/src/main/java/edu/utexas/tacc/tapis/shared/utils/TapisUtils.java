@@ -29,6 +29,8 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -43,7 +45,6 @@ import edu.utexas.tacc.tapis.shared.exceptions.recoverable.TapisRecoverableExcep
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
 import edu.utexas.tacc.tapis.shared.security.ServiceClients;
 import edu.utexas.tacc.tapis.shared.threadlocal.TapisThreadLocal;
-import edu.utexas.tacc.tapis.shared.uri.TapisUrl;
 
 public class TapisUtils
 {
@@ -76,7 +77,11 @@ public class TapisUtils
 
   // Used to generate 3 bytes of randomness that fit into 2^24 - 1.
   private static final int CEILING = 0x1000000;
-
+  
+  // Regex pattern that returns true if the string being checked DOES NOT
+  // contain any of the chars: &, >, <, |, ;, `, <space>
+  private final static Pattern safePathPattern = Pattern.compile("[^ &><|;`]+");
+	
   // Formatter for converting an Instant into a string for SQL
   private static final DateTimeFormatter UTC_OUT_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.nnnnnn");
   // Formatters for converting string to Instant for patterns:
@@ -1026,17 +1031,36 @@ public class TapisUtils
   /* ---------------------------------------------------------------------- */
   /* conditionalQuote:                                                      */
   /* ---------------------------------------------------------------------- */
-  /** Double quote a string only if it contains at least on space character
-   * and it isn't already quoted.
-   * 
-   * @param s string value to be possibly be double quoted
-   * @return the string as is or double quoted
-   */
+	/** Conditionally double quote the input string for safe use on the command
+	 * line.  This method will conditionally double quote the string if it does
+	 * not match the safePathPattern.  
+	 * 
+	 * It is assumed that the string contains no control characters (see 
+	 * detectControlChars()).  This method checks for the presence of chars: 
+	 * 
+	 * 					&, >, <, |, ;, `, <space>
+	 *
+	 * If the string is already double quoted it will not be changed.  If the
+	 * string is not already double quoted and it contains unsafe command line
+	 * characters, it will be double quoted.  If it contains no unsafe characters
+	 * the input string will be returned unchanged.
+	 * 
+	 * @param s an input string to appear on the command line 
+	 * @return a command line safe version of the string  
+	 */
   public static String conditionalQuote(String s)
   {
-  	if (StringUtils.isBlank(s)) return s;
-  	if (!(s.startsWith("\"") && s.endsWith("\"")) && s.contains(" ")) 
-  		return safelyDoubleQuoteString(s);
-  	  else return s;
+	  // Maybe there's nothing to do.
+	  if (StringUtils.isBlank(s)) return s;
+		
+	  // Don't double quote a string that's already double quoted.
+	  if (s.startsWith("\"") && s.endsWith("\"")) return s;
+		
+	  // Check for characters that we want to prohibit
+	  // from appearing on the command line unquoted.
+	  Matcher m = safePathPattern.matcher(s);
+	  if (!m.matches()) s = TapisUtils.safelyDoubleQuoteString(s);
+		
+	  return s;
   }
 }
