@@ -82,6 +82,17 @@ public class TapisUtils
   // contain any of the chars: &, >, <, |, ;, `, <space>
   private final static Pattern safePathPattern = Pattern.compile("[^ &><|;`]+");
 	
+  // Split on unicode whitespace.
+  // From https://stackoverflow.com/questions/225337/how-to-split-a-string-with-any-whitespace-chars-as-delimiters  
+  //
+  // The (?U) inline embedded flag option is the equivalent 
+  // of using Pattern.UNICODE_CHARACTER_CLASS that enables \s shorthand 
+  // character class to match any characters from the whitespace Unicode category.
+  private static final Pattern _spaceSplitter = Pattern.compile("(?U)\\s+");
+  
+  // Reusable empty array.
+  private static final String[] EMPTY_STRING_ARRAY = new String[0];
+  
   // Formatter for converting an Instant into a string for SQL
   private static final DateTimeFormatter UTC_OUT_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.nnnnnn");
   // Formatters for converting string to Instant for patterns:
@@ -1063,4 +1074,24 @@ public class TapisUtils
 		
 	  return s;
   }
+
+	/* ---------------------------------------------------------------------------- */
+	/* splitIntoKeyValue:                                                           */
+	/* ---------------------------------------------------------------------------- */
+	/** Split a string into a key (the first word) and value (the remainder). It's
+	 * assumed all control characters have been removed from the string.  Leading and
+	 * trailing whitespace is stripped off before splitting.
+	 * 
+	 * @param s the string to be split
+	 * @return a string array of length 0, 1 or 2
+	 */
+	public static String[] splitIntoKeyValue(String s)
+	{
+		// Don't blow up.
+		if (StringUtils.isBlank(s)) return EMPTY_STRING_ARRAY;
+		
+		// The array returned will have 1 element if it contains no embedded whitespace
+		// or 2 elements if there is at least one whitespace character within it.
+		return _spaceSplitter.split(s.strip(), 2);
+	}
 }
