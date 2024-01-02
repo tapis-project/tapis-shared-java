@@ -136,12 +136,12 @@ public class PathSanitizer
      * 
      * NOTE: Spaces are not treated as dangerous.
      * 
-     * NOTE: If needed improvements to this method would include (1) returning the 
+     * NOTE: Possible improvements to this method could include (1) returning the 
      *       offending character and its position, and (2) allowing an option to 
      *       also treat spaces as dangerous. 
 	 *
 	 * @param cmdChars string to appear on command line
-	 * @return true if presence of command line dangerous characters, false otherwise 
+	 * @return true if command line dangerous characters were detected, false otherwise 
 	 */
 	public static boolean hasDangerousChars(String cmdChars) 
 	{

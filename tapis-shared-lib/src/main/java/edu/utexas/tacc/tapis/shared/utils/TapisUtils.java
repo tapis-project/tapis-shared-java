@@ -1044,10 +1044,13 @@ public class TapisUtils
   /* ---------------------------------------------------------------------- */
 	/** Conditionally double quote the input string for safe use on the command
 	 * line.  This method will conditionally double quote the string if it does
-	 * not match the safePathPattern.  
+	 * not match the safePathPattern.  No leading, trailing or internal whitespace
+	 * is removed or changed.  
 	 * 
-	 * It is assumed that the string contains no control characters (see 
-	 * detectControlChars()).  This method checks for the presence of chars: 
+	 * IT IS ASSUMED THAT THE STRING CONTAINS NO CONTROL CHARACTERS (see 
+	 * PathSanitizer.detectControlChars() and PathSanitizer.replaceControlChars()).
+	 *   
+	 * This method checks for the presence of these characters only: 
 	 * 
 	 * 					&, >, <, |, ;, `, <space>
 	 *
