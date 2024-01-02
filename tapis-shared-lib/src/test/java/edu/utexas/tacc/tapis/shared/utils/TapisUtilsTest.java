@@ -1,6 +1,7 @@
 package edu.utexas.tacc.tapis.shared.utils;
 
 import java.io.FileNotFoundException;
+import java.util.regex.Pattern;
 
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -18,6 +19,9 @@ public class TapisUtilsTest
 {
 	// Control some of the output.
 	private static final boolean QUIET = true;
+	
+	// Copy of same regex defined in TapisUtils.
+	private static final Pattern _spaceSplitter = Pattern.compile("(?U)\\s+");
 	
     /* **************************************************************************** */
     /*                                    Tests                                     */
@@ -322,5 +326,158 @@ public class TapisUtilsTest
 	   t = TapisUtils.safelyDoubleQuoteString(s);
 	   if (!QUIET) System.out.println(s + " -> " + t);
 	   Assert.assertEquals(t, null);
+   }
+   
+   /* ---------------------------------------------------------------------------- */
+   /* spaceSplitterTest:                                                           */
+   /* ---------------------------------------------------------------------------- */
+   @Test(enabled=true)
+   public void spaceSplitterTest()
+   {
+	   String s = "key value";
+	   String[] tokens = _spaceSplitter.split(s.strip(), 2);
+	   Assert.assertEquals(tokens.length, 2, "Invalid split of '" + s + "'");
+	   Assert.assertEquals(tokens[0], "key");
+	   Assert.assertEquals(tokens[1], "value");
+	   
+	   s = "key";
+	   tokens = _spaceSplitter.split(s.strip(), 2);
+	   Assert.assertEquals(tokens.length, 1, "Invalid split of '" + s + "'");
+	   Assert.assertEquals(tokens[0], "key");
+
+	   s = " \rkey  ";
+	   tokens = _spaceSplitter.split(s.strip(), 2);
+	   Assert.assertEquals(tokens.length, 1, "Invalid split of '" + s + "'");
+	   Assert.assertEquals(tokens[0], "key");
+
+	   s = " key v1\tv2 v3 ";
+	   tokens = _spaceSplitter.split(s.strip(), 2);
+	   Assert.assertEquals(tokens.length, 2, "Invalid split of '" + s + "'");
+	   Assert.assertEquals(tokens[0], "key");
+	   Assert.assertEquals(tokens[1], "v1\tv2 v3");
+
+	   s = " key\tv1\tv2 v3 ";
+	   tokens = _spaceSplitter.split(s.strip(), 2);
+	   Assert.assertEquals(tokens.length, 2, "Invalid split of '" + s + "'");
+	   Assert.assertEquals(tokens[0], "key");
+	   Assert.assertEquals(tokens[1], "v1\tv2 v3");
+
+	   s = "\nkey\nv1\nv2 v3\n ";
+	   tokens = _spaceSplitter.split(s.strip(), 2);
+	   Assert.assertEquals(tokens.length, 2, "Invalid split of '" + s + "'");
+	   Assert.assertEquals(tokens[0], "key");
+	   Assert.assertEquals(tokens[1], "v1\nv2 v3");
+   }
+   
+   /* ---------------------------------------------------------------------------- */
+   /* conditionalQuoteTest:                                                        */
+   /* ---------------------------------------------------------------------------- */
+   @Test(enabled=true)
+   public void conditionalQuoteTest()
+   {
+	   // ------------------- Basic tests -----------------------
+	   // -------------------------------------------------------
+	   String s = "singleValue";
+	   String q = TapisUtils.conditionalQuote(s);
+	   Assert.assertEquals(q, s);
+	   
+	   s = " paddedSingleValue1";
+	   q = TapisUtils.conditionalQuote(s);
+	   Assert.assertEquals(q.length(), s.length()+2);
+	   Assert.assertEquals(q.substring(1, q.length()-1), s);
+	   Assert.assertEquals(q.charAt(0), '"');
+	   Assert.assertEquals(q.charAt(q.length()-1), '"');
+
+	   s = "paddedSingleValue2 ";
+	   q = TapisUtils.conditionalQuote(s);
+	   Assert.assertEquals(q.length(), s.length()+2);
+	   Assert.assertEquals(q.substring(1, q.length()-1), s);
+	   Assert.assertEquals(q.charAt(0), '"');
+	   Assert.assertEquals(q.charAt(q.length()-1), '"');
+
+	   s = "double Value";
+	   q = TapisUtils.conditionalQuote(s);
+	   Assert.assertEquals(q.length(), s.length()+2);
+	   Assert.assertEquals(q.substring(1, q.length()-1), s);
+	   Assert.assertEquals(q.charAt(0), '"');
+	   Assert.assertEquals(q.charAt(q.length()-1), '"');
+
+	   s = "triple1 v1\tv2";
+	   q = TapisUtils.conditionalQuote(s);
+	   Assert.assertEquals(q.length(), s.length()+2);
+	   Assert.assertEquals(q.substring(1, q.length()-1), s);
+	   Assert.assertEquals(q.charAt(0), '"');
+	   Assert.assertEquals(q.charAt(q.length()-1), '"');
+
+	   s = "\ntriple2 v1\tv2 ";
+	   q = TapisUtils.conditionalQuote(s);
+	   Assert.assertEquals(q.length(), s.length()+2);
+	   Assert.assertEquals(q.substring(1, q.length()-1), s);
+	   Assert.assertEquals(q.charAt(0), '"');
+	   Assert.assertEquals(q.charAt(q.length()-1), '"');
+
+	   s = "\ntriple3 v1\tv2";
+	   q = TapisUtils.conditionalQuote(s);
+	   Assert.assertEquals(q.length(), s.length()+2);
+	   Assert.assertEquals(q.substring(1, q.length()-1), s);
+	   Assert.assertEquals(q.charAt(0), '"');
+	   Assert.assertEquals(q.charAt(q.length()-1), '"');
+
+	   // Control characters are NOT detected because they
+	   // are assume to already have been removed.
+	   s = "\ntriple4\tv1\rv2";
+	   q = TapisUtils.conditionalQuote(s);
+	   Assert.assertEquals(q, s);
+	   
+	   // ------------- Already double quoted tests -------------
+	   // -------------------------------------------------------
+	   s = "\"singleValue\"";
+	   q = TapisUtils.conditionalQuote(s);
+	   Assert.assertEquals(q, s);
+	   
+	   s = "\"double Value\"";
+	   q = TapisUtils.conditionalQuote(s);
+	   Assert.assertEquals(q, s);
+
+	   s = "\"triple1 v1\tv2\"";
+	   q = TapisUtils.conditionalQuote(s);
+	   Assert.assertEquals(q, s);
+
+	   s = "\"\ntriple2 v1\tv2 \"";
+	   q = TapisUtils.conditionalQuote(s);
+	   Assert.assertEquals(q, s);
+
+	   s = "\"\ntriple3 v1\tv2\"";
+	   q = TapisUtils.conditionalQuote(s);
+	   Assert.assertEquals(q, s);
+
+	   s = "\"\ntriple4\tv1\rv2\"";
+	   q = TapisUtils.conditionalQuote(s);
+	   
+	   s = "\"\ntriple4\tv1\rv2\"";
+	   q = TapisUtils.conditionalQuote(s);
+	   Assert.assertEquals(q, s);
+   
+	   // --------------- Internal quote tests ------------------
+	   // -------------------------------------------------------
+	   // Result: s=double" Value
+	   //         q="double\" Value"
+	   // Quoted length equals 2 for enclosing quotes 
+	   // plus N equal to the number of internal quotes.
+	   s = "double\" Value";
+	   q = TapisUtils.conditionalQuote(s);
+//	   System.out.println("s="+s);
+//	   System.out.println("q="+q);
+	   Assert.assertEquals(q.length(), s.length()+2+1);
+
+	   // This one doesn't get double quoted.
+	   s = "double\"Value";
+	   q = TapisUtils.conditionalQuote(s);
+	   Assert.assertEquals(q, s);
+
+	   // 3 internal quotes
+	   s = "double\"\" V\"alue";
+	   q = TapisUtils.conditionalQuote(s);
+	   Assert.assertEquals(q.length(), s.length()+2+3);
    }
 }

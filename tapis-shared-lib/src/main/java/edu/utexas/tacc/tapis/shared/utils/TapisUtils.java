@@ -29,6 +29,8 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -43,7 +45,6 @@ import edu.utexas.tacc.tapis.shared.exceptions.recoverable.TapisRecoverableExcep
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
 import edu.utexas.tacc.tapis.shared.security.ServiceClients;
 import edu.utexas.tacc.tapis.shared.threadlocal.TapisThreadLocal;
-import edu.utexas.tacc.tapis.shared.uri.TapisUrl;
 
 public class TapisUtils
 {
@@ -76,7 +77,22 @@ public class TapisUtils
 
   // Used to generate 3 bytes of randomness that fit into 2^24 - 1.
   private static final int CEILING = 0x1000000;
-
+  
+  // Regex pattern that returns true if the string being checked DOES NOT
+  // contain any of the chars: &, >, <, |, ;, `, <space>
+  private final static Pattern safePathPattern = Pattern.compile("[^ &><|;`]+");
+	
+  // Split on unicode whitespace.
+  // From https://stackoverflow.com/questions/225337/how-to-split-a-string-with-any-whitespace-chars-as-delimiters  
+  //
+  // The (?U) inline embedded flag option is the equivalent 
+  // of using Pattern.UNICODE_CHARACTER_CLASS that enables \s shorthand 
+  // character class to match any characters from the whitespace Unicode category.
+  private static final Pattern _spaceSplitter = Pattern.compile("(?U)\\s+");
+  
+  // Reusable empty array.
+  private static final String[] EMPTY_STRING_ARRAY = new String[0];
+  
   // Formatter for converting an Instant into a string for SQL
   private static final DateTimeFormatter UTC_OUT_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.nnnnnn");
   // Formatters for converting string to Instant for patterns:
@@ -1026,17 +1042,59 @@ public class TapisUtils
   /* ---------------------------------------------------------------------- */
   /* conditionalQuote:                                                      */
   /* ---------------------------------------------------------------------- */
-  /** Double quote a string only if it contains at least on space character
-   * and it isn't already quoted.
-   * 
-   * @param s string value to be possibly be double quoted
-   * @return the string as is or double quoted
-   */
+	/** Conditionally double quote the input string for safe use on the command
+	 * line.  This method will conditionally double quote the string if it does
+	 * not match the safePathPattern.  No leading, trailing or internal whitespace
+	 * is removed or changed.  
+	 * 
+	 * IT IS ASSUMED THAT THE STRING CONTAINS NO CONTROL CHARACTERS (see 
+	 * PathSanitizer.detectControlChars() and PathSanitizer.replaceControlChars()).
+	 *   
+	 * This method checks for the presence of these characters only: 
+	 * 
+	 * 					&, >, <, |, ;, `, <space>
+	 *
+	 * If the string is already double quoted it will not be changed.  If the
+	 * string is not already double quoted and it contains unsafe command line
+	 * characters, it will be double quoted.  If it contains no unsafe characters
+	 * the input string will be returned unchanged.
+	 * 
+	 * @param s an input string to appear on the command line 
+	 * @return a command line safe version of the string  
+	 */
   public static String conditionalQuote(String s)
   {
-  	if (StringUtils.isBlank(s)) return s;
-  	if (!(s.startsWith("\"") && s.endsWith("\"")) && s.contains(" ")) 
-  		return safelyDoubleQuoteString(s);
-  	  else return s;
+	  // Maybe there's nothing to do.
+	  if (StringUtils.isBlank(s)) return s;
+		
+	  // Don't double quote a string that's already double quoted.
+	  if (s.startsWith("\"") && s.endsWith("\"")) return s;
+		
+	  // Check for characters that we want to prohibit
+	  // from appearing on the command line unquoted.
+	  Matcher m = safePathPattern.matcher(s);
+	  if (!m.matches()) s = TapisUtils.safelyDoubleQuoteString(s);
+		
+	  return s;
   }
+
+	/* ---------------------------------------------------------------------------- */
+	/* splitIntoKeyValue:                                                           */
+	/* ---------------------------------------------------------------------------- */
+	/** Split a string into a key (the first word) and value (the remainder). It's
+	 * assumed all control characters have been removed from the string.  Leading and
+	 * trailing whitespace is stripped off before splitting.
+	 * 
+	 * @param s the string to be split
+	 * @return a string array of length 0, 1 or 2
+	 */
+	public static String[] splitIntoKeyValue(String s)
+	{
+		// Don't blow up.
+		if (StringUtils.isBlank(s)) return EMPTY_STRING_ARRAY;
+		
+		// The array returned will have 1 element if it contains no embedded whitespace
+		// or 2 elements if there is at least one whitespace character within it.
+		return _spaceSplitter.split(s.strip(), 2);
+	}
 }
