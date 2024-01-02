@@ -150,7 +150,7 @@ public class PathSanitizerTest {
 		for (int i = 160; i < 256; i++) {
 			var s = Character.toString(i);
 			try {PathSanitizer.detectControlChars(s);}
-				catch (TapisException e) {Assert.assertTrue(false, "1. FAILING CHARACTER CODE: " + i);}
+				catch (TapisException e) {Assert.assertTrue(false, "4. FAILING CHARACTER CODE: " + i);}
 		}
 	}
 }
