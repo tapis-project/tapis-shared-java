@@ -153,4 +153,57 @@ public class PathSanitizerTest {
 				catch (TapisException e) {Assert.assertTrue(false, "4. FAILING CHARACTER CODE: " + i);}
 		}
 	}
+	
+	/* ---------------------------------------------------------------------------- */
+    /* replaceControlCharsTest                                                      */
+    /* ---------------------------------------------------------------------------- */
+	@Test(enabled = true)
+	public void replaceControlCharsTest()
+	{
+		// Control characters replaced.
+		String s = "\ta\rb\nc\u000Bd";
+		String r = PathSanitizer.replaceControlChars(s, '?');
+//		System.out.println("r=" + r);
+		Assert.assertEquals(r, "?a?b?c?d");
+		
+		s = "\u0628" + "\u064e" + "\u064a" + "\u0652" + "\u067a" + "\u064f";
+		r = PathSanitizer.replaceControlChars(s, '?');
+//		System.out.println("r=" + r);
+		Assert.assertEquals(r, "بَيْٺُ");
+		Assert.assertEquals(r, s);  // no replacement
+		
+		// Control character replaced.
+		s = "\uc200\u0000\uc200";
+		r = PathSanitizer.replaceControlChars(s, '?');
+//		System.out.println("r=" + r);
+		Assert.assertEquals(r, "숀?숀");
+		
+		s = "🥦_Salade verte";
+		r = PathSanitizer.replaceControlChars(s, '?');
+//		System.out.println("r=" + r);
+		Assert.assertEquals(r, "🥦_Salade verte");
+		Assert.assertEquals(r, s);  // no replacement
+		
+		s = "🥦_Salade verte".substring(0, 2);
+		r = PathSanitizer.replaceControlChars(s, '?');
+//		System.out.println("r=" + r);
+		Assert.assertEquals(r, "🥦");
+		Assert.assertEquals(r, s);  // no replacement
+		
+		// Not a complete, printable UTF character,
+		// but it's not replaced because it's not a 
+		// control character.
+		s = "🥦_Salade verte".substring(0, 1);
+		r = PathSanitizer.replaceControlChars(s, '?');
+//		System.out.println("r=" + r);
+		Assert.assertEquals(r, "\ud83e");
+		Assert.assertEquals(r, s);  // no replacement
+		
+		// Unprintable characters that don't trip replacement.
+		s = "\u5f77\u2b04\u2366\u3ca2\u2c29\u9929\udfe3\uf1f1\udc61\u12b8\u26b1\ud9d8\u8d71"; 
+		r = PathSanitizer.replaceControlChars(s, '?');
+//		System.out.println("r=" + r);
+		Assert.assertEquals(r, s);  // no replacement
+	}
+	
 }
