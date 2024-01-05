@@ -480,4 +480,39 @@ public class TapisUtilsTest
 	   q = TapisUtils.conditionalQuote(s);
 	   Assert.assertEquals(q.length(), s.length()+2+3);
    }
+   
+   /* ---------------------------------------------------------------------------- */
+   /* weaklyValidateUriTest:                                                       */
+   /* ---------------------------------------------------------------------------- */
+   @Test(enabled=true)
+   public void weaklyValidateUriTest()
+   {
+   	// --- Positive tests
+   	String s = "tapis://piggy/dir1/dir2";
+   	Assert.assertTrue(TapisUtils.weaklyValidateUri(s));
+   	
+   	s = "tapis://piggy/dir1/dir2 x y";
+   	Assert.assertTrue(TapisUtils.weaklyValidateUri(s));
+   	
+   	s = "tap+is://piggy/dir1/dir2 x y";
+   	Assert.assertTrue(TapisUtils.weaklyValidateUri(s));
+   	
+   	s = "tap.is://piggy/dir1/dir2 x y";
+   	Assert.assertTrue(TapisUtils.weaklyValidateUri(s));
+   	
+   	s = "tap-is://piggy/dir1/dir2 x y 9";
+   	Assert.assertTrue(TapisUtils.weaklyValidateUri(s));
+   	
+   	s = "https://piggy";
+   	Assert.assertTrue(TapisUtils.weaklyValidateUri(s));
+   	
+   	// --- Negative tests
+   	s = "https://piggy\t";
+   	Assert.assertFalse(TapisUtils.weaklyValidateUri(s));
+   	
+   	s = "https://piggy\n 9";
+   	Assert.assertFalse(TapisUtils.weaklyValidateUri(s));
+   	
+   	s = ".https://piggy";
+   	Assert.assertFalse(TapisUtils.weaklyValidateUri(s));   }
 }

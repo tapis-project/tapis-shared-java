@@ -90,6 +90,12 @@ public class TapisUtils
   // character class to match any characters from the whitespace Unicode category.
   private static final Pattern _spaceSplitter = Pattern.compile("(?U)\\s+");
   
+  // This regex provides some basic validation of a uri acceptable to Tapis.  
+  // The string must start with an alphabetic character followed by zero or more
+  // alphanumeric or {+ . -} characters.  This forms the uri scheme and is always
+  // followed by "://".  The uri must end in one or more non-control characters.  
+  private static final Pattern _weakUriValidator = Pattern.compile("^[a-zA-Z][a-zA-Z0-9+.-]*://[^\\p{Cntrl}]+");
+  
   // Reusable empty array.
   private static final String[] EMPTY_STRING_ARRAY = new String[0];
   
@@ -1096,5 +1102,26 @@ public class TapisUtils
 		// The array returned will have 1 element if it contains no embedded whitespace
 		// or 2 elements if there is at least one whitespace character within it.
 		return _spaceSplitter.split(s.strip(), 2);
+	}
+	
+	/* ---------------------------------------------------------------------------- */
+	/* weaklyValidateUri:                                                           */
+	/* ---------------------------------------------------------------------------- */
+	/** This method validates the basic structure of a uri string to be: 
+	 * 
+	 * 		scheme://{something}
+	 * 
+	 * where the {something} will not contain control characters.
+	 * 
+	 * @param s the uri string
+	 * @return true if valid, false otherwise
+	 */
+	public static boolean weaklyValidateUri(String s)
+	{
+		// Garbage in.
+		if (s == null) return false;
+		
+		// Return whether the string qualifies as a weakly validated uri.
+		return _weakUriValidator.matcher(s).matches();
 	}
 }
