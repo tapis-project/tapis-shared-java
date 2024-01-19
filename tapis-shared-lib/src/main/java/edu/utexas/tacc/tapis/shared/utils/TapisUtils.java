@@ -1105,6 +1105,26 @@ public class TapisUtils
 	}
 	
 	/* ---------------------------------------------------------------------------- */
+	/* splitIntoWords:                                                              */
+	/* ---------------------------------------------------------------------------- */
+	/** Split a string into whitespace delimited words. It's assumed all control 
+	 * characters have been removed from the string.  Leading and trailing whitespace 
+	 * is stripped off before splitting.
+	 * 
+	 * @param s the string to be split
+	 * @return a string array of length 0 or more
+	 */
+	public static String[] splitIntoWords(String s)
+	{
+		// Don't blow up.
+		if (StringUtils.isBlank(s)) return EMPTY_STRING_ARRAY;
+		
+		// The array returned will have 1 element if it contains no embedded whitespace
+		// or more if there are multiple sequences of whitespace.
+		return _spaceSplitter.split(s.strip(), 0);
+	}
+	
+	/* ---------------------------------------------------------------------------- */
 	/* weaklyValidateUri:                                                           */
 	/* ---------------------------------------------------------------------------- */
 	/** This method validates the basic structure of a uri string to be: 
