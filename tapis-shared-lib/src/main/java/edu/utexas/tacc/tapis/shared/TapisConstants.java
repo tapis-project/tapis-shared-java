@@ -45,6 +45,9 @@ public class TapisConstants
 	// Convenience definition.
 	public static final String EMPTY_JSON = "{}";
 	
+    // Value used into distinguish between unassigned and empty/null values. 
+    public static final String TAPIS_NOT_SET = "!tapis_not_set";
+	
     // Class name prefix for java network exceptions.
     public static final String CONNECTION_EXCEPTION_PREFIX = "java.net.";
     
