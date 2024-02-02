@@ -138,7 +138,9 @@ public class FilesListSubtree
                 _log.debug(MsgUtils.getMsg("FILES_LIST_SUBTREE", _systemId, path, 
                                            limit, offset, recurse, _sharedAppCtx));
                 
-            // Make the remote call to the Files service.
+            // Make the remote call to the Files service.  The FileInfo object contain
+            // a path that is relative to the system's rootDir, no leading slash.  The
+            // url returned is the tapis url to the file/directory.
             List<FileInfo> list = 
                 _filesClient.listFiles(_systemId, path, limit, offset+numRetrieved, recurse, nullImpersonationId, _sharedAppCtx);
             
