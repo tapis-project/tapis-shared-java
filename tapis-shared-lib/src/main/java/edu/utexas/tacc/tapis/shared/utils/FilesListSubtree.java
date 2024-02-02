@@ -109,7 +109,7 @@ public class FilesListSubtree
     
 
     /* ---------------------------------------------------------------------- */
-    /* isSharedAppCtx:                                                        */
+    /* getSharedAppCtx:                                                       */
     /* ---------------------------------------------------------------------- */
     public String getSharedAppCtx() {return _sharedAppCtx;}
 
@@ -127,7 +127,9 @@ public class FilesListSubtree
     private void listPath(String path, int limit, int offset, boolean recurse) 
      throws TapisClientException
     {
-        String nullImpersonationId = null;
+    	// Disallow impersonation.
+        final String nullImpersonationId = null;
+        
         // Get the list for the current path.
         int numRetrieved = 0;
         while (true) {
