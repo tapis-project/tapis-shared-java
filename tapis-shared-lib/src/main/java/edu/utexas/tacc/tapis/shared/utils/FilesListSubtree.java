@@ -109,7 +109,7 @@ public class FilesListSubtree
     
 
     /* ---------------------------------------------------------------------- */
-    /* isSharedAppCtx:                                                        */
+    /* getSharedAppCtx:                                                       */
     /* ---------------------------------------------------------------------- */
     public String getSharedAppCtx() {return _sharedAppCtx;}
 
@@ -127,7 +127,9 @@ public class FilesListSubtree
     private void listPath(String path, int limit, int offset, boolean recurse) 
      throws TapisClientException
     {
-        String nullImpersonationId = null;
+    	// Disallow impersonation.
+        final String nullImpersonationId = null;
+        
         // Get the list for the current path.
         int numRetrieved = 0;
         while (true) {
@@ -136,7 +138,9 @@ public class FilesListSubtree
                 _log.debug(MsgUtils.getMsg("FILES_LIST_SUBTREE", _systemId, path, 
                                            limit, offset, recurse, _sharedAppCtx));
                 
-            // Make the remote call to the Files service.
+            // Make the remote call to the Files service.  The FileInfo object contain
+            // a path that is relative to the system's rootDir, no leading slash.  The
+            // url returned is the tapis url to the file/directory.
             List<FileInfo> list = 
                 _filesClient.listFiles(_systemId, path, limit, offset+numRetrieved, recurse, nullImpersonationId, _sharedAppCtx);
             
