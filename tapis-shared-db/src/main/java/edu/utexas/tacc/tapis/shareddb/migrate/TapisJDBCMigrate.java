@@ -506,8 +506,9 @@ public class TapisJDBCMigrate
       // the files in these two directories are combined since they have the 
       // same path name when their roots are removed.  Flyway processes the 
       // java and sql files in the one resultant directory at runtime.
-      var migrateResult = flyway.migrate();
-      int count = migrateResult.migrationsExecuted;
+      int count = flyway.migrate();
+      //var migrateResult = flyway.migrate();
+      //int count = migrateResult.migrationsExecuted;
          
       // Report number of migration files executed.
       if (count > 0)
