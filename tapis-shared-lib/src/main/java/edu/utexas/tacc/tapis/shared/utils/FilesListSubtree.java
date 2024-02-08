@@ -127,6 +127,16 @@ public class FilesListSubtree
     private void listPath(String path, int limit, int offset, boolean recurse) 
      throws TapisClientException
     {
+    	final String regex = null;
+    	listPath(path, limit, offset, recurse, regex);
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* listPath:                                                              */
+    /* ---------------------------------------------------------------------- */
+    private void listPath(String path, int limit, int offset, boolean recurse, String regex) 
+     throws TapisClientException
+    {
     	// Disallow impersonation.
         final String nullImpersonationId = null;
         
@@ -142,7 +152,8 @@ public class FilesListSubtree
             // a path that is relative to the system's rootDir, no leading slash.  The
             // url returned is the tapis url to the file/directory.
             List<FileInfo> list = 
-                _filesClient.listFiles(_systemId, path, limit, offset+numRetrieved, recurse, nullImpersonationId, _sharedAppCtx);
+                _filesClient.listFiles(_systemId, path, regex, limit, offset+numRetrieved, 
+                		               recurse, nullImpersonationId, _sharedAppCtx);
             
             // Process result list.
             for (var item : list) {
