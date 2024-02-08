@@ -20,6 +20,4 @@ public class RabbitMQConnection {
         }
         return INSTANCE;
     }
-
-
 }
