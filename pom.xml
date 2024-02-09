@@ -89,7 +89,6 @@
         <module>tapis-shared-lib</module>
         <module>tapis-shared-queue</module>
         <module>tapis-shared-searchlib</module>
-        <module>tapis-shared-notifications</module>
     </modules>
     <build>
         <plugins>
