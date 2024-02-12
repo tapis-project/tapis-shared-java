@@ -1,7 +1,5 @@
 package edu.utexas.tacc.tapis.search.parser;
 
-import java.util.Locale;
-
 /*
  * Class representing nodes in the AST
  */

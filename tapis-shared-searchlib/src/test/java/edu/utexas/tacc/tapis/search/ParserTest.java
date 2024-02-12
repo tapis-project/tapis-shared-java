@@ -24,33 +24,46 @@ public class ParserTest
         // Test a simple conjunction.
         String filter = "name = '" + "Bud" + "' AND tenant_id = '" + "iplantc.org" + "'";
         var ast = TapisSelectorParser.parse(filter);
-        //  System.out.println(ast);
+//        System.out.println("\n1");
+//        System.out.println(ast);
         
         // Test more complex expressions.
         filter = "int1 > 66 AND int2 <> 5 AND (name LIKE 'Jo%n' OR range BETWEEN 200 AND 300)";
         ast = TapisSelectorParser.parse(filter);
+//        System.out.println("\n2");
+//        System.out.println(ast);
         
         // Test datetime ranges.  Dates can only be handled using epoch time.
         long millis = System.currentTimeMillis();
         filter = "date BETWEEN " + (millis - 10000) + " AND " + (millis - 1000);
         ast = TapisSelectorParser.parse(filter);
+//        System.out.println("\n3");
+//        System.out.println(ast);
 
         // Test NOT LIKE filter.
         filter = "name NOT LIKE 'Bi__y'";
         ast = TapisSelectorParser.parse(filter);
+//        System.out.println("\n4");
+//        System.out.println(ast);
         
         // Test escape characters.
         // Note that any character can be used to escape _ and % in LIKE clauses.
-        filter = "name LIKE 'George\\_%' ESCAPE '\\'";
+        filter = "name LIKE 'George#_%' ESCAPE '#'";
         ast = TapisSelectorParser.parse(filter);
+//        System.out.println("\n5");
+//        System.out.println(ast);
         
         // Test IN.
         filter = "country IN ('UK', 'US')";
         ast = TapisSelectorParser.parse(filter);
+//        System.out.println("\n6");
+//        System.out.println(ast);
         
         // Test NULL
         filter = "missing is NULL";
         ast = TapisSelectorParser.parse(filter);
+//        System.out.println("\n7");
+//        System.out.println(ast);
     }
 
     /* ---------------------------------------------------------------------- */
