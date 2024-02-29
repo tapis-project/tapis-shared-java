@@ -137,7 +137,12 @@ public final class SshSessionPool {
         instance = this;
 
         poolCleanupTaskFuture = poolMaintaanenceExecutor.scheduleAtFixedRate(() -> {
-            cleanup();
+            try {
+                cleanup();
+            } catch (Throwable th) {
+                String msg = MsgUtils.getMsg("SSH_POOL_CLEANUP_EXCEPTION");
+                log.warn(msg, th);
+            }
         }, poolPolicy.getCleanupInterval().toMillis(), poolPolicy.getCleanupInterval().toMillis(), TimeUnit.MILLISECONDS);
     }
 
