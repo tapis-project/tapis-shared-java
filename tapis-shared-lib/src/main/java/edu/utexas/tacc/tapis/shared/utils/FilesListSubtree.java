@@ -89,6 +89,12 @@ public class FilesListSubtree
     /* ---------------------------------------------------------------------- */
     /* list:                                                                  */
     /* ---------------------------------------------------------------------- */
+    /** Return a list of all files in a directory subtree by iteratively calling
+     * listpath().
+     * 
+     * @return the list of FileInfo objects returned by the Files service
+     * @throws TapisClientException
+     */
     public List<FileInfo> list() throws TapisClientException
     {
         // ------------------------- Walk the Tree -----------------------
