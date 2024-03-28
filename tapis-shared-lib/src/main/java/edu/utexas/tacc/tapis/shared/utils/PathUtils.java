@@ -35,27 +35,32 @@ public class PathUtils
   /* ********************************************************************** */
   // Local logger.
   public static final Logger log = LoggerFactory.getLogger(PathUtils.class);
+  private static final String trimSlashesRegex = "^/+|/+$";
 
   /**
    * Construct a normalized path intended to be relative to a system's rootDir based on a path provided by a user.
-   * The apache commons method FilenameUtils.normalize() is expected to protect against escaping via ../..
    * In this case normalized means:
-   *   - double and single dot path steps are removed
-   *   - multiple slashes are merged into a single slash
-   *   - a trailing slash will be removed
+   *   - leading and trailing slashes are removed
+   *   - redundant double and single dot path steps are resolved
+   *   - multiple slashes within the path are collapsed into single slashes
+   *   - path traversal escape is prevented by removing a leading "../" if present.
    *   - if provided path is null or empty or resolving double dot steps results in no parent path
    *       then the relativePath becomes the empty string resulting in the relativePath being the same as
    *       the system's rootDir.
-   * @param path path provided by user
+   * @param pathStr path provided by user
    * @return Path - normalized path
    */
-  public static Path getRelativePath(String path)
+  public static Path getRelativePath(String pathStr)
   {
-    Path emptyRelativePath = Paths.get("");
-    if (StringUtils.isBlank(path) || "/".equals(path)) return emptyRelativePath;
-    String relativePathStr = FilenameUtils.normalizeNoEndSeparator(path);
-    if (StringUtils.isBlank(relativePathStr) || "/".equals(relativePathStr)) return emptyRelativePath;
-    return Paths.get(relativePathStr);
+    Path emptyRelativePath = Path.of("");
+    if (StringUtils.isBlank(pathStr) || "/".equals(pathStr)) return emptyRelativePath;
+    // Remove any leading or trailing slashes
+    String relativePathStr = pathStr.replaceAll(trimSlashesRegex, "");
+    // Create a normalized path using the Java class Path.
+    // This collapses multiple slashes to single slashes and resolves redundant elements such as . and ..
+    Path normalizedPath = Path.of(relativePathStr).normalize();
+    normalizedPath = Path.of(StringUtils.stripStart(normalizedPath.toString(), "../"));
+    return normalizedPath;
   }
 
   /**
@@ -72,7 +77,7 @@ public class PathUtils
     // First get normalized relative path
     Path relativePath = getRelativePath(path);
     // Return constructed absolute path
-    return Paths.get(rdir, relativePath.toString());
+    return Path.of(rdir, relativePath.toString());
   }
 
   /**
