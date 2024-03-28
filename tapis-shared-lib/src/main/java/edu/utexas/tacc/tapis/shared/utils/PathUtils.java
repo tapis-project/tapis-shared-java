@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.regex.Pattern;
 
 import static edu.utexas.tacc.tapis.shared.uri.TapisUrl.TAPIS_PROTOCOL_PREFIX;
 
@@ -35,7 +36,9 @@ public class PathUtils
   /* ********************************************************************** */
   // Local logger.
   public static final Logger log = LoggerFactory.getLogger(PathUtils.class);
-  private static final String trimSlashesRegex = "^/+|/+$";
+  // Pattern used to strip off leading and trailing slashes from a string.
+  // The regex says: match 0 or more slashes at start of string or 0 or more slashes at end of string.
+  private static final Pattern trimSlashesPattern = Pattern.compile("^/+|/+$");
 
   /**
    * Construct a normalized path intended to be relative to a system's rootDir based on a path provided by a user.
@@ -52,10 +55,9 @@ public class PathUtils
    */
   public static Path getRelativePath(String pathStr)
   {
-    Path emptyRelativePath = Path.of("");
-    if (StringUtils.isBlank(pathStr) || "/".equals(pathStr)) return emptyRelativePath;
+    if (StringUtils.isBlank(pathStr) || "/".equals(pathStr)) return Path.of("");
     // Remove any leading or trailing slashes
-    String relativePathStr = pathStr.replaceAll(trimSlashesRegex, "");
+    String relativePathStr =  trimSlashesPattern.matcher(pathStr).replaceAll("");
     // Create a normalized path using the Java class Path.
     // This collapses multiple slashes to single slashes and resolves redundant elements such as . and ..
     Path normalizedPath = Path.of(relativePathStr).normalize();
