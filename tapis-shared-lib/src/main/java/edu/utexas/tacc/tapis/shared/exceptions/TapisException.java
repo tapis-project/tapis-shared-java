@@ -10,6 +10,8 @@ public class TapisException
 	// with subclasses that don't implement these two constructors.  See 
 	// JobUtils.tapisify() for an example of how to implement non-conforming
 	// exceptions that still can be tapisified.
+	//
+	// *** See TapisUtils.tapisify() for reflective constructor calls *** 
 	public TapisException(String message) {super(message);}
-	public TapisException(String message, Throwable cause) {super(message, cause);}
+	public TapisException(String message, Throwable cause) {super(message, cause);} 
 }

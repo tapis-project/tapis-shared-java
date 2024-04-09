@@ -41,6 +41,8 @@ import org.slf4j.LoggerFactory;
 
 import edu.utexas.tacc.tapis.security.client.SKClient;
 import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
+import edu.utexas.tacc.tapis.shared.exceptions.TapisImplException;
+import edu.utexas.tacc.tapis.shared.exceptions.TapisNotFoundException;
 import edu.utexas.tacc.tapis.shared.exceptions.recoverable.TapisRecoverableException;
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
 import edu.utexas.tacc.tapis.shared.security.ServiceClients;
@@ -732,6 +734,14 @@ public class TapisUtils
           // using findInChain(), so there's no loss when burying them inside
           // another exception.
           tapisException = new TapisException(msg, e);
+      }
+      // -------- Don't wrap certain TapisException subclasses
+      else if (e instanceof TapisNotFoundException || e instanceof TapisImplException) {
+    	  // These exceptions do not have the standard 2 parameter constructor
+    	  // signature required below for reflective invocation, so we return
+    	  // them as is after logging a warning.
+    	  _log.warn(msg); // Don't lose outer message.
+    	  tapisException = (TapisException) e;
       }
       // -------- Wrapper for TapisException
       else if (e instanceof TapisException) 
