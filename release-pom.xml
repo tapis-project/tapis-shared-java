@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>edu.utexas.tacc.tapis</groupId>
   <artifactId>tapis-shared-java</artifactId>
-  <version>2.0.167</version>
+  <version>2.0.168</version>
   <packaging>pom</packaging>
   <name>Tapis shared</name>
   <description>TAPIS shared Java code</description>
@@ -144,11 +144,11 @@
   <distributionManagement>
     <repository>
       <id>nexus-releases</id>
-      <url>http://c006.rodeo.tacc.utexas.edu:30044/repository/maven-releases</url>
+      <url>http://maven03.tacc.utexas.edu:8081/repository/maven-releases</url>
     </repository>
     <snapshotRepository>
       <id>nexus-snapshots</id>
-      <url>http://c006.rodeo.tacc.utexas.edu:30044/repository/maven-snapshots</url>
+      <url>http://maven03.tacc.utexas.edu:8081/repository/maven-snapshots</url>
     </snapshotRepository>
   </distributionManagement>
   <properties>
@@ -167,7 +167,7 @@
     <google-findbugs.version>3.0.2</google-findbugs.version>
     <maven-war-plugin.version>3.4.0</maven-war-plugin.version>
     <exec-maven-plugin.version>3.1.1</exec-maven-plugin.version>
-    <tapis-shared-java.version>[2.0.154,3.0)</tapis-shared-java.version>
+    <tapis-shared-java.version>[2.0.168,3.0)</tapis-shared-java.version>
     <p6spy.version>3.9.1</p6spy.version>
     <maven-dependency-plugin.version>3.6.1</maven-dependency-plugin.version>
     <openapi-generator-maven-plugin.version>5.4.0</openapi-generator-maven-plugin.version>
@@ -210,12 +210,12 @@
     <jetbrains.annotations.version>20.1.0</jetbrains.annotations.version>
     <commons-codec.version>1.16.0</commons-codec.version>
     <hk2.version>2.6.1</hk2.version>
-    <tapis-client-java.version>[2.0.115,3.0)</tapis-client-java.version>
+    <tapis-client-java.version>[2.0.124,3.0)</tapis-client-java.version>
     <javax.xml.bind.jaxb-core.version>2.3.0.1</javax.xml.bind.jaxb-core.version>
     <maven-shade-plugin.version>3.5.1</maven-shade-plugin.version>
     <apache-sshd.version>2.11.0</apache-sshd.version>
     <javax.websocket-api.version>1.1</javax.websocket-api.version>
-    <build.timestamp>2024-03-28T16:42:47Z</build.timestamp>
+    <build.timestamp>2024-04-10T15:07:05Z</build.timestamp>
     <statefulj.version>3.0</statefulj.version>
     <java-source.version>1.17</java-source.version>
     <swagger-maven-plugin.version>2.1.13</swagger-maven-plugin.version>
@@ -303,12 +303,12 @@
       </snapshots>
       <id>tapis-local-snapshots</id>
       <name>Local repo for snapshots</name>
-      <url>http://c006.rodeo.tacc.utexas.edu:30044/repository/maven-snapshots</url>
+      <url>http://maven03.tacc.utexas.edu:8081/repository/maven-snapshots</url>
     </repository>
     <repository>
       <id>tapis-local-releases</id>
       <name>Local repo for releases</name>
-      <url>http://c006.rodeo.tacc.utexas.edu:30044/repository/maven-releases</url>
+      <url>http://maven03.tacc.utexas.edu:8081/repository/maven-releases</url>
     </repository>
     <repository>
       <releases>
@@ -352,7 +352,7 @@
   </pluginRepositories>
   <build>
     <sourceDirectory>src/main/java</sourceDirectory>
-    <scriptSourceDirectory>/var/jenkins/workspace/TapisJava/2_Release/Shared/release-shared-java-local-nexus/src/main/scripts</scriptSourceDirectory>
+    <scriptSourceDirectory>/var/jenkins/workspace/TapisJava/2_Release/Shared/Z-WIP/release-shared-java-nexus-maven03/src/main/scripts</scriptSourceDirectory>
     <testSourceDirectory>src/test/java</testSourceDirectory>
     <outputDirectory>target/classes</outputDirectory>
     <testOutputDirectory>target/test-classes</testOutputDirectory>
@@ -388,7 +388,7 @@
       </testResource>
     </testResources>
     <directory>target</directory>
-    <finalName>tapis-shared-java-2.0.167</finalName>
+    <finalName>tapis-shared-java-2.0.168</finalName>
     <plugins>
       <plugin>
         <groupId>com.amashchenko.maven.plugin</groupId>
