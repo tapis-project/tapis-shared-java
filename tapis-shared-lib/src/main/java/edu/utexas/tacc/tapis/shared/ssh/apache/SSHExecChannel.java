@@ -165,37 +165,38 @@ public class SSHExecChannel implements SSHSession
         }
         
         // Create the channel.
-        ChannelExec channel;
-        try {channel = session.createExecChannel(cmd);}
-            catch (Exception e) {
-                if(closeConnectionOnException) {
-                    _sshConnection.close();
-                }
-                String msg =  MsgUtils.getMsg("TAPIS_SSH_CHANNEL_CREATE_ERROR", 
-                               _sshConnection.getHost(), _sshConnection.getUsername(), e.getMessage());
-                throw new TapisException(msg);
+        ChannelExec channel = null;
+        try {
+            channel = session.createExecChannel(cmd);
+            channel.setOut(outStream);
+            channel.setErr(errStream);
+        } catch (Exception e) {
+            if(channel != null) {
+                channel.close();
             }
-        channel.setOut(outStream);
-        channel.setErr(errStream);
-        
+            if (closeConnectionOnException) {
+                _sshConnection.close();
+            }
+            String msg = MsgUtils.getMsg("TAPIS_SSH_CHANNEL_CREATE_ERROR",
+                    _sshConnection.getHost(), _sshConnection.getUsername(), e.getMessage());
+            throw new TapisException(msg);
+        }
+
         // Issue the command and let execution exception flow to caller.
-        try {    
+        try {
             // Open the channel.
             channel.open().verify(_sshConnection.getTimeouts().getOpenChannelMillis());
-            
-            // Send the command and close its stream.
-            try (OutputStream pipedIn = channel.getInvertedIn()) {
-                pipedIn.write(cmd.getBytes());
-                pipedIn.flush();
-            }
-            
+
             // Wait for the channel to close.
             channel.waitFor(_closedSet, _sshConnection.getTimeouts().getExecutionMillis());
             Integer status = channel.getExitStatus();
             if (status != null) exitCode = status;
-        } 
-        finally { try {channel.close(true);} catch (Exception e){} } // double down by closing immediately,
-                                                                     // ignoring any secondary exceptions.
+        } finally {
+            try {
+                channel.close(true);
+            } catch (Exception e) {
+            }
+        } // double down by closing immediately, ignoring any secondary exceptions.
             
         // Return the remote exit code or the default value.
         return exitCode;

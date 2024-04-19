@@ -1,5 +1,6 @@
 package edu.utexas.tacc.tapis.shared.ssh.apache;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -24,6 +25,8 @@ import org.apache.sshd.sftp.client.impl.DefaultSftpClientFactory;
 
 import edu.utexas.tacc.tapis.shared.exceptions.runtime.TapisRuntimeException;
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** This class delegates all real work to the default Apache SftpClient class.
  * Apache sftp does not support the familiar get and put sftp commands.  Use
@@ -39,8 +42,10 @@ import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
  * @author rcardone
  */
 public class SSHSftpClient
- implements AutoCloseable, SSHSession
+ implements AutoCloseable, Closeable, SSHSession
 {
+    Logger log = LoggerFactory.getLogger(SSHSftpClient.class);
+
     // Fields.
     private final SSHConnection     _sshConnection;
     private final DefaultSftpClient _sftpClient;
@@ -85,7 +90,47 @@ public class SSHSftpClient
     }
 
     public void close() throws IOException {
+        // request close on sftpClient.  This will gracefully shutdown the connection, but it takes
+        // time.
         _sftpClient.close();
+
+        // wait 100 ms for close (max 10 times ... after that just give up).  I think this will be
+        // way more than enough, but we could do some tuning if necessary in the future.  The main thing
+        // is that we need to wait a bit, but we don't want o wait forever.
+        for(int i=0;i<10;i++) {
+            if(!_sftpClient.getClientChannel().isClosed()) {
+                try {
+                    log.trace(String.format("Waiting for sftpClient to close %d", i));
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            } else {
+                // already clsoed, so break out of loop
+                break;
+            }
+        }
+
+        // this is jjust some logging that could come in handy for debugging purposes
+        if(_sftpClient.isClosing()) {
+            // there's really nothing we can do here but it would be interesting to
+            // know when it happens.
+            log.trace("SftpClient is in the \"isClosing\" state");
+        }
+
+        // this is jjust some logging that could come in handy for debugging purposes
+        if(!_sftpClient.getClientChannel().isClosed()) {
+            // there's really nothing we can do here but it would be interesting to
+            // know when it happens.
+            log.error("SftpClient is NOT in the \"isClosed\" state");
+        }
+
+        // this is jjust some logging that could come in handy for debugging purposes
+        if(_sftpClient.isOpen()) {
+            // there's really nothing we can do here but it would be interesting to
+            // know when it happens.
+            log.error("SftpClient is in the \"isOpen\" state");
+        }
     }
     
     public String getName() {
