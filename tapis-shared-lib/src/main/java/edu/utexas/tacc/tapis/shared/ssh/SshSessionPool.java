@@ -214,8 +214,17 @@ public final class SshSessionPool {
         // exist.
         session = connectionGroup.reserveSessionOnConnection(tenant, host, port, effectiveUserId,
                 authnMethod, credential, channelConstructor, wait);
-        String msg = MsgUtils.getMsg("SSH_POOL_RESERVE_ELAPSED_TIME", System.currentTimeMillis() - startTime);
-        log.debug(msg);
+        long elapsedTime = System.currentTimeMillis() - startTime;
+
+        // log the elapsed time here for getting a connection.  If it's more than a minute, make it a
+        // warning.  It shouldn't be anywhere near that.  Under very heavy load, there could be longer
+        // waiths though due to the sessions in the pool being exhausted.
+        String msg = MsgUtils.getMsg("SSH_POOL_RESERVE_ELAPSED_TIME", elapsedTime);
+        if(elapsedTime > 60000) {
+            log.warn(msg);
+        } else {
+            log.debug(msg);
+        }
 
         return new PooledSshSession<T>(connectionGroup, session);
     }
@@ -251,7 +260,7 @@ public final class SshSessionPool {
     }
 
     private void cleanup() {
-        log.debug("SshSessionPool cleanup counter: " + traceOnCleanupCounter.get());
+        log.info("SshSessionPool cleanup counter: " + traceOnCleanupCounter.get());
         for (SshSessionPoolKey key : pool.keySet()) {
             SshConnectionGroup connectionGroup = pool.get(key);
             connectionGroup.cleanup();
@@ -282,9 +291,9 @@ public final class SshSessionPool {
 
         if(traceOnCleanupCounter.incrementAndGet() >= poolPolicy.getTraceDuringCleanupFrequency()) {
             traceOnCleanupCounter.set(0);
-            log.debug("====================================================");
-            log.debug(instance.toString());
-            log.debug("====================================================");
+            log.info("====================================================");
+            log.info(instance.toString());
+            log.info("====================================================");
         }
     }
 
