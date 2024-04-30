@@ -1,7 +1,10 @@
 package edu.utexas.tacc.tapis.shared.ssh;
 
+import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
 import edu.utexas.tacc.tapis.shared.ssh.apache.SSHConnection;
 import edu.utexas.tacc.tapis.shared.ssh.apache.SSHSession;
+import edu.utexas.tacc.tapis.shared.ssh.apache.SSHSftpClient;
+import edu.utexas.tacc.tapis.shared.ssh.apache.SshConnectionListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,6 +22,8 @@ class SshSessionHolder <T extends SSHSession> {
     private final SshConnectionContext.SessionConstructor<T> sessionConstructor;
     private final long threadId;
     private T session = null;
+
+    private SshConnectionListener connectionListener;
 
     public SshSessionHolder(SshConnectionContext sshConnectionContext, SSHConnection sshConnection, SshConnectionContext.SessionConstructor<T> sessionConstructor) {
         this.sshConnectionContext = sshConnectionContext;
@@ -48,5 +53,25 @@ class SshSessionHolder <T extends SSHSession> {
         if(session != null) {
             this.sshConnectionContext.expireConnection();
         }
+    }
+
+    public void setConnectionListener(SshConnectionListener connectionListener) {
+        this.connectionListener = connectionListener;
+    }
+
+    public boolean release() {
+        if (session instanceof SSHSftpClient sftpSession) {
+            try {
+                sftpSession.close();
+            } catch (Exception ex) {
+                // nothing we can really do about this, so just log it.
+                String msg = MsgUtils.getMsg("SSH_POOL_UNABLE_TO_CLOSE_SESSION", "SSHSftpClient");
+                log.warn(msg);
+            }
+        }
+
+        boolean released = this.sshConnectionContext.releaseSessionHolder(this);
+        this.connectionListener.onRelease(released);
+        return released;
     }
 }

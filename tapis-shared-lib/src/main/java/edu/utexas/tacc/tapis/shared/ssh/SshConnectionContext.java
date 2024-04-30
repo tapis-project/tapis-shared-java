@@ -92,59 +92,15 @@ final class SshConnectionContext {
         return false;
     }
 
-    protected boolean hasAvailableSessions() {
+    // not synchronized.  There's really no reason to synchronize this method, but if the caller is going
+    // to make deciesions based on the result (such as reserveSessions) it probably should do this in a
+    // synchronized block
+    private boolean hasAvailableSessions() {
         if(isExpired()) {
             return false;
         }
 
-        // count all session holders here - even the ones that don't have a session yet.
-        synchronized (sessionHolders) {
-            return sessionHolders.size() < maxSessions;
-        }
-    }
-
-    /**
-     * Returns true if the session is contained in this ConnectionContext
-     * @param session session to search for.
-     * @return true if it's in the context, or false if not.
-     * @param <T>
-     */
-    protected <T extends SSHSession> boolean containsSession(T session) {
-        return findSessionHolder(session) != null;
-    }
-
-    /**
-     * Returns true if the session holder is contained in this ConnectionContext
-     * @param searchSessionHolder sessionHolder to search for.
-     * @return true if the sessionHolder is contained in the context, or false if not.
-     */
-    protected boolean containsSessionHolder(SshSessionHolder searchSessionHolder) {
-        synchronized(sessionHolders) {
-            for (SshSessionHolder sessionHolder : sessionHolders) {
-                if (sessionHolder == searchSessionHolder) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Find a SessionHolder that holds the given session.
-     * @param session SSHSession to located
-     * @return SshSessionHolder if found, or null if not found.
-     */
-    private SshSessionHolder findSessionHolder(SSHSession session) {
-        synchronized(sessionHolders) {
-            for (SshSessionHolder sessionHolder : sessionHolders) {
-                SSHSession containedSession = sessionHolder.getSession();
-                if ((containedSession != null) && (containedSession == session)) {
-                    return sessionHolder;
-                }
-            }
-        }
-
-        return null;
+        return sessionHolders.size() < maxSessions;
     }
 
     protected <T extends SSHSession> SshSessionHolder<T> reserveSession(SessionConstructor<T> sessionConstructor) throws TapisException {
@@ -192,13 +148,6 @@ final class SshConnectionContext {
         }
         this.idleSinceTime = System.currentTimeMillis();
         return result;
-    }
-
-    protected <T extends SSHSession> boolean releaseSession(T session) {
-        synchronized(sessionHolders) {
-            SshSessionHolder<T> sessionHolder = findSessionHolder(session);
-            return releaseSessionHolder(sessionHolder);
-        }
     }
 
     protected long getIdleTime() {

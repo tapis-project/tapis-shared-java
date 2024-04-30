@@ -4,9 +4,8 @@ import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
 import edu.utexas.tacc.tapis.shared.exceptions.recoverable.TapisRecoverableException;
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
 import edu.utexas.tacc.tapis.shared.ssh.apache.SSHConnection;
-import edu.utexas.tacc.tapis.shared.ssh.apache.SSHExecChannel;
 import edu.utexas.tacc.tapis.shared.ssh.apache.SSHSession;
-import edu.utexas.tacc.tapis.shared.ssh.apache.SSHSftpClient;
+import edu.utexas.tacc.tapis.shared.ssh.apache.SshConnectionListener;
 import edu.utexas.tacc.tapis.systems.client.gen.model.AuthnEnum;
 import edu.utexas.tacc.tapis.systems.client.gen.model.Credential;
 import org.apache.commons.lang3.StringUtils;
@@ -71,115 +70,6 @@ final class SshConnectionGroup {
                 sessionCount, sessionsOnExpiredConnections, sessionsOnActiveConnections);
     }
 
-    /**
-     * Releases an ssh sessionHolder (used to free up failed sessions)
-     *
-     * @param sessionHolder sessionHolder to be released
-     * @return true if it could be release, false if not.
-     */
-    protected <T extends SSHSession> boolean releaseSessionHolder(SshSessionHolder<T> sessionHolder) {
-        synchronized(connectionContextList) {
-            SshConnectionContext connectionContext = findConnectionContext(sessionHolder);
-            if (connectionContext != null) {
-                if(connectionContext.releaseSessionHolder(sessionHolder)) {
-                    log.trace("Session released, notifying");
-                } else {
-                    // we will still notify in this case.  worst case is that a thread will wake and relaize it's
-                    // not able to get a session, and go back to waiting.  No harm done.
-                    log.trace("Unable to release session, notifying");
-                }
-
-                connectionContextList.notify();
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Releases an ssh session (in this case SSHExecChannel).
-     *
-     * @param session session to be released
-     * @return true if it could be release, false if not.
-     */
-    protected boolean releaseSession(SSHExecChannel session) {
-        synchronized(connectionContextList) {
-            SshConnectionContext connectionContext = findConnectionContext(session);
-            if (connectionContext != null) {
-                if(connectionContext.releaseSession(session)) {
-                    log.trace("Session released, notifying");
-                } else {
-                    // we will still notify in this case.  worst case is that a thread will wake and relaize it's
-                    // not able to get a session, and go back to waiting.  No harm done.
-                    log.trace("Unable to release session, notifying");
-                }
-
-                connectionContextList.notify();
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Releases an ssh session (in this case SSHSftpClient).
-     *
-     * @param session session to be released
-     * @return true if it could be release, false if not.
-     */
-    protected boolean releaseSession(SSHSftpClient session) {
-        synchronized(connectionContextList) {
-            SshConnectionContext connectionContext = findConnectionContext(session);
-            if (connectionContext != null) {
-                try {
-                    session.close();
-                } catch (Exception ex) {
-                    // nothing we can really do about this, so just log it.
-                    String msg = MsgUtils.getMsg("SSH_POOL_UNABLE_TO_CLOSE_SESSION", "SSHSftpClient");
-                    log.warn(msg);
-                }
-                if(connectionContext.releaseSession(session)) {
-                    log.trace("Session released, notifying");
-                } else {
-                    // we will still notify in this case.  worst case is that a thread will wake and relaize it's
-                    // not able to get a session, and go back to waiting.  No harm done.
-                    log.trace("Unable to release session, notifying");
-                }
-
-                connectionContextList.notify();
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    protected SshConnectionContext findConnectionContext(SshSessionHolder sessionHolder) {
-        // the callers already synchronize on connectionContextList, so we don't need to do that here.
-        synchronized (connectionContextList) {
-            for (SshConnectionContext connectionContext : connectionContextList) {
-                if (connectionContext.containsSessionHolder(sessionHolder)) {
-                    return connectionContext;
-                }
-            }
-        }
-        return null;
-    }
-
-    protected <T extends SSHSession> SshConnectionContext findConnectionContext(T session) {
-        // the callers already synchronize on connectionContextList, so we don't need to do that here.
-        synchronized (connectionContextList) {
-            for (SshConnectionContext connectionContext : connectionContextList) {
-                if (connectionContext.containsSession(session)) {
-                    return connectionContext;
-                }
-            }
-        }
-        return null;
-    }
-
     protected void cleanup() {
         synchronized (connectionContextList) {
             List<SshConnectionContext> contextsToRemove = new ArrayList<>();
@@ -221,7 +111,7 @@ final class SshConnectionGroup {
      * @param <T>
      * @throws TapisException
      */
-    protected  <T extends SSHSession> T reserveSessionOnConnection(String tenant, String host, Integer port, String effectiveUserId,
+    protected  <T extends SSHSession> SshSessionHolder<T> reserveSessionOnConnection(String tenant, String host, Integer port, String effectiveUserId,
                                              AuthnEnum authnMethod, Credential credential,
                                              SshConnectionContext.SessionConstructor<T> sessionConstructor,
                                              Duration wait) throws TapisException {
@@ -236,8 +126,8 @@ final class SshConnectionGroup {
         // of the connections will be cleaned up, and then new ones can be created.  If that becomes a problem,
         // we may have to come up with a better way to handle expired connections.
         SshSessionHolder<T> sessionHolder = null;
-        while (sessionHolder == null) {
-            synchronized (connectionContextList) {
+        synchronized (connectionContextList) {
+            while (sessionHolder == null) {
                 // clear out any expired connections
                 log.trace(String.format("Wait for lock time: %d", System.currentTimeMillis() - phaseStartTime));
 
@@ -255,14 +145,6 @@ final class SshConnectionGroup {
                 log.trace(String.format("Session search time: %d", System.currentTimeMillis() - phaseStartTime));
                 phaseStartTime = System.currentTimeMillis();
                 if (sessionHolder == null) {
-                    if (hasAvailableSessions()) {
-                        // in this case, there are session slots available to reserve, but we didn't get a session
-                        // for some reason.  This means we must notify again so that some other thread can try it.
-                        // notify gives up the montitor though, so in this case we must continue the while loop.
-                        connectionContextList.notify();
-                        log.warn("Reserved slot for session but unable to create the session");
-                        continue;
-                    }
                     long waitTime = abortTime - System.currentTimeMillis();
                     if (waitTime > 0) {
                         try {
@@ -293,9 +175,6 @@ final class SshConnectionGroup {
         log.trace(String.format("Reserved session holder time: %d", System.currentTimeMillis() - phaseStartTime));
         phaseStartTime = System.currentTimeMillis();
 
-        // We have a session holder, but we need to make an actual session now.
-        T session = null;
-
         // I'm leaving the comment below to remind myself of this stuff if it should happen again.  I believe it
         // is fixed.  The fix is in the SftpClient.close() method.  We are now requesting a close, and confirming
         // that it happens before moving on.
@@ -303,35 +182,30 @@ final class SshConnectionGroup {
         // (old_comment) a message that says - error: no more sessions.  We are already managing our sessions, so
         // (old_comment) this really shouldn't be the case, but maybe the server hasn't caught up with it's cleanup.
         // (old_comment) Perhaps due to the server being under load.  We will retry a few  times before really giving up.
-        int tries = 0;
-        while(session == null) {
-            try {
-                tries ++;
-                session = sessionHolder.createSession();
-                if (session == null) {
-                    log.error("SshSession was null");
-                    Thread.sleep(100);
-                } else {
-                    log.trace(String.format("Session established time: %d", System.currentTimeMillis() - phaseStartTime));
-                    phaseStartTime = System.currentTimeMillis();
-                    break;
+        try {
+            sessionHolder.setConnectionListener(new SshConnectionListener() {
+                @Override
+                public void onRelease(boolean succeeded) {
+                    synchronized (connectionContextList) {
+                        connectionContextList.notify();
+                    }
                 }
-            } catch (Exception ex) {
-                if(tries >= 9) {
-                    String msg = MsgUtils.getMsg("SSH_POOL_UNABLE_TO_CREATE_CHANNEL");
-                    throw new TapisException(msg, ex);
-                }
-
-                // if we are unable to create new sessions on this connection, we will expire it
-                if (sessionHolder != null) {
-                    sessionHolder.expireConnection();
-                    releaseSessionHolder(sessionHolder);
-                }
+            });
+            T session = sessionHolder.createSession();
+            if (session != null) {
+                log.trace(String.format("Session established time: %d", System.currentTimeMillis() - phaseStartTime));
+            }
+        } catch (Exception ex) {
+            // if we are unable to create new sessions on this connection, we will expire it
+            if (sessionHolder != null) {
+                sessionHolder.expireConnection();
+                sessionHolder.release();
             }
         }
+
         log.trace(String.format("Total elapsed time: %d", System.currentTimeMillis() - startTime));
 
-        return session;
+        return sessionHolder;
     }
 
     private <T extends SSHSession> SshSessionHolder<T> getSessionMinimizingConnections(String tenant, String host, Integer port,
@@ -339,11 +213,9 @@ final class SshConnectionGroup {
             SshConnectionContext.SessionConstructor<T> sessionConstructor) throws TapisException {
         SshSessionHolder<T> sessionHolder = null;
         for (SshConnectionContext sshConnectionContext : connectionContextList) {
-            if (sshConnectionContext.hasAvailableSessions()) {
-                sessionHolder = sshConnectionContext.reserveSession(sessionConstructor);
-                if (sessionHolder != null) {
-                    break;
-                }
+            sessionHolder = sshConnectionContext.reserveSession(sessionConstructor);
+            if (sessionHolder != null) {
+                break;
             }
         }
 
@@ -396,9 +268,7 @@ final class SshConnectionGroup {
                 }).get();
             }
 
-            if ((contextToUse != null) && (contextToUse.hasAvailableSessions())) {
-                sessionHolder = contextToUse.reserveSession(sessionConstructor);
-            }
+            sessionHolder = contextToUse.reserveSession(sessionConstructor);
         }
 
         return sessionHolder;
@@ -460,17 +330,6 @@ final class SshConnectionGroup {
         // Non-null if we get here.
         return conn;
     }
-    private boolean hasAvailableSessions() {
-        synchronized (connectionContextList) {
-            for(SshConnectionContext connectionContext : connectionContextList) {
-                if(connectionContext.hasAvailableSessions()) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
 
     // this method can provide a way to help find deadlocks, however it can have false
     // positives also.  The specific case we are looking for is when the same thread
@@ -502,4 +361,5 @@ final class SshConnectionGroup {
 
         return builder.toString();
     }
+
 }

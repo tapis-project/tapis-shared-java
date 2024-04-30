@@ -44,31 +44,21 @@ public final class SshSessionPool {
 
     public class PooledSshSession<T extends SSHSession> implements AutoCloseable {
         private final SshConnectionGroup sshConnectionGroup;
-        private final SSHSession session;
+        private final SshSessionHolder<T> sessionHolder;
 
-        PooledSshSession(SshConnectionGroup sshConnectionGroup, T execChannel) {
+        PooledSshSession(SshConnectionGroup sshConnectionGroup, SshSessionHolder<T> sessionHolder) {
             this.sshConnectionGroup = sshConnectionGroup;
-            this.session = execChannel;
+            this.sessionHolder = sessionHolder;
         }
 
         public T getSession() {
-           return (T) session;
+           return (T) sessionHolder.getSession();
         }
 
 
         @Override
         public void close() {
-            if(session != null) {
-                if (session instanceof SSHExecChannel) {
-                    sshConnectionGroup.releaseSession((SSHExecChannel) session);
-                } else if (session instanceof SSHSftpClient) {
-                    sshConnectionGroup.releaseSession((SSHSftpClient) session);
-                }
-            } else {
-                String msg = MsgUtils.getMsg("SSH_POOL_NULL_PARAM", session.getClass().getCanonicalName());
-                log.warn(msg);
-                return;
-            }
+            sessionHolder.release();
         }
 
     }
@@ -183,7 +173,7 @@ public final class SshSessionPool {
         long startTime = System.currentTimeMillis();
         SshSessionPoolKey key = new SshSessionPoolKey(tenant, host, port, effectiveUserId, authnMethod, credential);
         SshConnectionGroup connectionGroup = null;
-        T session = null;
+        SshSessionHolder<T> sessionHolder = null;
 
         //  We must aquire the write version of the lock because we may need to add a key/value to the
         //  pool if it's not already there.
@@ -212,7 +202,7 @@ public final class SshSessionPool {
         // newly created (set to true on construction).  After any connection/session attempt is made,
         // the group sets the newly created flag to false - meaning it can be removed if no connections
         // exist.
-        session = connectionGroup.reserveSessionOnConnection(tenant, host, port, effectiveUserId,
+        sessionHolder = connectionGroup.reserveSessionOnConnection(tenant, host, port, effectiveUserId,
                 authnMethod, credential, channelConstructor, wait);
         long elapsedTime = System.currentTimeMillis() - startTime;
 
@@ -226,7 +216,7 @@ public final class SshSessionPool {
             log.debug(msg);
         }
 
-        return new PooledSshSession<T>(connectionGroup, session);
+        return new PooledSshSession<T>(connectionGroup, sessionHolder);
     }
 
     @Override
