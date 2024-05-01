@@ -191,16 +191,16 @@ final class SshConnectionGroup {
                     }
                 }
             });
-            T session = sessionHolder.createSession();
-            if (session != null) {
-                log.trace(String.format("Session established time: %d", System.currentTimeMillis() - phaseStartTime));
-            }
+            sessionHolder.createSession();
+            log.trace(String.format("Session established time: %d", System.currentTimeMillis() - phaseStartTime));
         } catch (Exception ex) {
             // if we are unable to create new sessions on this connection, we will expire it
             if (sessionHolder != null) {
                 sessionHolder.expireConnection();
                 sessionHolder.release();
             }
+            String msg = MsgUtils.getMsg("SSH_POOL_UNABLE_TO_ESTABLISH_SESSION", tenant, host, port, effectiveUserId, authnMethod);
+            throw new TapisException(msg, ex);
         }
 
         log.trace(String.format("Total elapsed time: %d", System.currentTimeMillis() - startTime));
