@@ -53,6 +53,13 @@ public class PathUtilsTest
 	// Test resolving of . and ..
     Assert.assertTrue(REL_PATH1.equals(PathUtils.getRelativePath("../a/b/c/.")));
     Assert.assertTrue(REL_PATH1.equals(PathUtils.getRelativePath("///////a//////b/c/d/e/../..//../test//.././c/.///")));
+    // Test for leading dot ... (ex .Trash)
+
+    Assert.assertEquals(Path.of(".Trash"), PathUtils.getRelativePath(".Trash"));
+    Assert.assertEquals(Path.of(".Trash"), PathUtils.getRelativePath("./.Trash"));
+    Assert.assertEquals(Path.of("foo/.Trash"), PathUtils.getRelativePath("./foo/.Trash"));
+    Assert.assertEquals(Path.of(".Trash"), PathUtils.getRelativePath("//.Trash"));
+    Assert.assertEquals(Path.of(".Trash"), PathUtils.getRelativePath("././/././////.Trash"));
   }
 
 	/* ---------------------------------------------------------------------------- */
