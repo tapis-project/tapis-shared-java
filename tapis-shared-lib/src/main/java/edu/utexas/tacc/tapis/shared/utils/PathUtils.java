@@ -28,6 +28,9 @@ import static edu.utexas.tacc.tapis.shared.uri.TapisUrl.TAPIS_PROTOCOL_PREFIX;
  */
 public class PathUtils
 {
+  private static final Pattern removeLeadingDotSlashesPattern = Pattern.compile("^(\\.*/)+");
+  private static final Pattern removeOnlyDotsPattern = Pattern.compile("^\\.+$");
+
   // Private constructor to make it non-instantiable
   private PathUtils() { throw new AssertionError(); }
 
@@ -61,7 +64,21 @@ public class PathUtils
     // Create a normalized path using the Java class Path.
     // This collapses multiple slashes to single slashes and resolves redundant elements such as . and ..
     Path normalizedPath = Path.of(relativePathStr).normalize();
-    normalizedPath = Path.of(StringUtils.stripStart(normalizedPath.toString(), "../"));
+
+    // Here we need to get rid of any leading ./ or ../.  We'll take care of all sorts of crazy stuff too
+    // like ./../..././foo will become foo, etc.  We will remove the leading slash too so it will be a
+    // real relative path.  There are two steps.  First remove any leading combinations of dots and slashes
+    // the preceed the first slash.  Here is an explanation of the regex:
+    // Regex:  ^ = starts with
+    //         \\.*/ - the stuff inside parens.  match 0 or more dots followed by a slash
+    //         ( ... )+ - grouping - match 1 or more of these.
+    normalizedPath = Path.of(removeLeadingDotSlashesPattern.matcher(normalizedPath.toString()).replaceFirst(""));
+
+    // The previous expression only rmoves things before a slash.  So, something like ".Trash" or ".." would
+    // remain. We want leading dots to be retained, but not if that's all we have - .Trash is ok, but .. is not.
+    // This takes care of that part.
+    // RegEx - if the string contains all dots, just replace them with nothing.
+    normalizedPath = Path.of(removeOnlyDotsPattern.matcher(normalizedPath.toString()).replaceFirst(""));
     return normalizedPath;
   }
 
