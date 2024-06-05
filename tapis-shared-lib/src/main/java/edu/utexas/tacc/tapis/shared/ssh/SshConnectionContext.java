@@ -142,7 +142,7 @@ final class SshConnectionContext {
         return null;
     }
 
-    protected SshSessionHolder<SSHExecChannel> reserveSshSession() throws TapisException {
+    protected synchronized SshSessionHolder<SSHExecChannel> reserveSshSession() throws TapisException {
         if (hasAvailableSessions()) {
             SshSessionHolder<SSHExecChannel> sessionHolder = null;
             if (sessionHolder == null) {
@@ -216,8 +216,14 @@ final class SshConnectionContext {
         log.debug(msg);
     }
 
-    protected void close() {
+    protected synchronized void close() {
         // Close the SshConnection associated with this context.
+        log.trace("Cleanup parked sessions");
+        Iterator<SshSessionHolder<SSHSftpClient>> parkedSessionIterator = parkedSftpSessionHolders.iterator();
+        while(parkedSessionIterator.hasNext()) {
+            parkedSessionIterator.next();
+            parkedSessionIterator.remove();
+        }
         log.trace("Closing SSH connection");
         sshConnection.close();
     }
@@ -235,11 +241,22 @@ final class SshConnectionContext {
     }
 
     protected synchronized void cleanup() {
-        Iterator<SshSessionHolder<SSHSftpClient>> sessionHolderIterator = parkedSftpSessionHolders.iterator();
-        while (sessionHolderIterator.hasNext()) {
-            SshSessionHolder<SSHSftpClient> sessionHolder = sessionHolderIterator.next();
+        Iterator<SshSessionHolder<SSHSftpClient>> activeSessionHolderIterator = parkedSftpSessionHolders.iterator();
+        while (activeSessionHolderIterator.hasNext()) {
+            SshSessionHolder<SSHSftpClient> sessionHolder = activeSessionHolderIterator.next();
+            var session = sessionHolder.getSession();
+            if(session == null) {
+                activeSessionHolderIterator.remove();
+            } else if(!session.isOpen()) {
+                // this will ensure the session gets actually closed
+                IOUtils.closeQuietly(session);
+            }
+        }
+        Iterator<SshSessionHolder<SSHSftpClient>> parkedSessionHolderIterator = parkedSftpSessionHolders.iterator();
+        while (parkedSessionHolderIterator.hasNext()) {
+            SshSessionHolder<SSHSftpClient> sessionHolder = parkedSessionHolderIterator.next();
             if(sessionIsExpired(sessionHolder)) {
-                sessionHolderIterator.remove();
+                parkedSessionHolderIterator.remove();
                 IOUtils.closeQuietly(sessionHolder);
             }
         }
@@ -256,8 +273,11 @@ final class SshConnectionContext {
         builder.append(", ");
         builder.append(isExpired() ? "EXPIRED" : "ACTIVE");
         builder.append(", ");
-        builder.append("Active Sessions: ");
-        builder.append(getSessionCount());
+        builder.append("Active SSH Sessions: ");
+        builder.append(activeSshSessionHolders.size());
+        builder.append(", ");
+        builder.append("Active Sftp Sessions: ");
+        builder.append(activeSftpSessionHolders.size());
         builder.append(", ");
         builder.append("Parked Sessions: ");
         builder.append(parkedSftpSessionHolders.size());
