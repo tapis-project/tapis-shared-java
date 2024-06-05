@@ -5,20 +5,6 @@ import java.time.Duration;
 public final class SshSessionPoolPolicy {
 
     /**
-     * Connection Creation Strategy:
-     * - MINIMIZE_CONNECTIONS - will use the first existing connection it finds that does not have the maximum number
-     *                          of sessions already.
-     *                          i.e. - use up all sessions on one connection before moving on to another one.
-     * - MINIMIZE_SESSIONS - will first look for an existing connection with 0 sessions.  If found a new session
-     *                       is created on that connection.  If not found, and the max number of connections has not
-     *                       been reached, a new connection will be opened, and used for the session.  If we are at
-     *                       the maximum number of connections, we will use the connection with the least number of
-     *                       session on it (assuming it's below the max number of sessions).
-     *                       i.e.  balance the number of sessions between connections (up to max allowed connections).
-     */
-    private SessionCreationStrategy DEFAULT_SESSION_CREATION_STRATEGY = SessionCreationStrategy.MINIMIZE_CONNECTIONS;
-
-    /**
      * The number of connections per key.  A Key represents a unique combination of host/port/credentials.  We will never
      * exceed this number of connections for any combination of host/port/credential.
      *
@@ -43,6 +29,7 @@ public final class SshSessionPoolPolicy {
      * connections open longer, and shorter duration means we close them more frequently.
      */
     private Duration DEFAULT_MAX_CONNECTION_LIFETIME = Duration.ofHours(1);
+    private Duration DEFAULT_MAX_SESSION_LIFETIME = Duration.ofMinutes(1);
 
     /**
      * The maximum time that a connection can be idle - i.e. have no open session on it - before we will remove it
@@ -65,10 +52,6 @@ public final class SshSessionPoolPolicy {
      */
     private Duration DEFAULT_CLEANUP_INTERVAL = Duration.ofSeconds(30);
     private int DEFAULT_TRACE_DURING_CLEANUP_FREQUENCY = 20;
-    public enum SessionCreationStrategy {
-        MINIMIZE_SESSIONS,
-        MINIMIZE_CONNECTIONS
-    }
     private Duration cleanupInterval;
     private int maxConnectionsPerKey;
     private int maxSessionsPerConnection;
@@ -77,7 +60,7 @@ public final class SshSessionPoolPolicy {
     private int traceDuringCleanupFrequency;
     private Duration maxConnectionDuration;
     private Duration maxConnectionIdleTime;
-    private SessionCreationStrategy sessionCreationStrategy;
+    private Duration maxSessionLifetime;
 
     protected SshSessionPoolPolicy() {
         cleanupInterval = DEFAULT_CLEANUP_INTERVAL;
@@ -85,8 +68,8 @@ public final class SshSessionPoolPolicy {
         maxSessionsPerConnection = DEFAULT_MAX_SESSIONS_PER_CONNECTIONS;
         maxConnectionDuration = DEFAULT_MAX_CONNECTION_LIFETIME;
         maxConnectionIdleTime = DEFAULT_MAX_CONNECTION_IDLE_TIME;
-        sessionCreationStrategy = DEFAULT_SESSION_CREATION_STRATEGY;
         traceDuringCleanupFrequency = DEFAULT_TRACE_DURING_CLEANUP_FREQUENCY;
+        maxSessionLifetime = DEFAULT_MAX_SESSION_LIFETIME;
     }
 
     public int getMaxConnectionsPerKey() {
@@ -103,6 +86,15 @@ public final class SshSessionPoolPolicy {
 
     public int getMaxSessionsPerConnection() {
         return maxSessionsPerConnection;
+    }
+
+    public Duration getMaxSessionLifetime() {
+        return maxSessionLifetime;
+    }
+
+    public SshSessionPoolPolicy setMaxSessionLifetime(Duration maxSessionLifetime) {
+        this.maxSessionLifetime = maxSessionLifetime;
+        return this;
     }
 
     /**
@@ -148,28 +140,6 @@ public final class SshSessionPoolPolicy {
         return this;
     }
 
-    public SessionCreationStrategy getSessionCreationStrategy() {
-        return sessionCreationStrategy;
-    }
-
-    /**
-     * Sets the creation strategy:
-     *
-     * MINIMIZE_CONNECCTIONS will open the maximum number of sessions on all open connections before trying
-     * to open a new connections.
-     *
-     * MINIMIZE_SESSIONS will first look for a connection with no session, and if found it will use that.  If
-     * there are no connections with 0 sessions, it will create a new connection and open a session on that
-     * (only if we have connections left that can be created).  If that doesnt result in a session it will
-     * look for the connection with the minimum number of sessions and create a session on that.
-     *
-     * Expired connections will never be used to create new sessions regardless of creation strategy
-     */
-    public SshSessionPoolPolicy setSessionCreationStrategy(SessionCreationStrategy sessionCreationStrategy) {
-        this.sessionCreationStrategy = sessionCreationStrategy;
-        return this;
-    }
-
     public static SshSessionPoolPolicy defaultPolicy() {
         return new SshSessionPoolPolicy();
     }
@@ -195,14 +165,15 @@ public final class SshSessionPoolPolicy {
         builder.append("Max Connection Lifetime: ");
         builder.append(maxConnectionDuration);
         builder.append(System.lineSeparator());
+        builder.append("Max Session Lifetime: ");
+        builder.append(maxSessionLifetime);
+        builder.append(System.lineSeparator());
         builder.append("Max Connection Idle Time: ");
         builder.append(maxConnectionIdleTime);
         builder.append(System.lineSeparator());
         builder.append("Cleanup Interval: ");
         builder.append(cleanupInterval);
         builder.append(System.lineSeparator());
-        builder.append("Session CreationStrategy: ");
-        builder.append(sessionCreationStrategy);
         builder.append(System.lineSeparator());
         builder.append("Trace During Cleanup Frequency: ");
         builder.append(traceDuringCleanupFrequency);

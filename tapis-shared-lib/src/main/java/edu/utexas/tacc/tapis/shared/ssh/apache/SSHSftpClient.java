@@ -75,8 +75,10 @@ public class SSHSftpClient
             String msg =  MsgUtils.getMsg("TAPIS_SSH_NO_SESSION");
             throw new TapisRuntimeException(msg);
         }
+        long begin = System.currentTimeMillis();
         _sftpClient = (DefaultSftpClient)
             DefaultSftpClientFactory.INSTANCE.createSftpClient(session);
+        log.error("***-*** Session took this long --------------------------> " + (System.currentTimeMillis() - begin));
     }
     
     public SSHConnection getConnection() {return _sshConnection;}

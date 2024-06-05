@@ -157,18 +157,18 @@ public final class SshSessionPool {
     public PooledSshSession<SSHExecChannel> borrowExecChannel(String tenant, String host, Integer port, String effectiveUserId,
                                                               AuthnEnum authnMethod, Credential credential, Duration wait) throws TapisException {
         return reserveSessionOnConnection(tenant, host, port, effectiveUserId, authnMethod, credential,
-                SshConnectionContext.ExecChannelConstructor, wait);
+                SSHExecChannel.class, wait);
     }
 
     public PooledSshSession<SSHSftpClient> borrowSftpClient(String tenant, String host, Integer port, String effectiveUserId,
                                                             AuthnEnum authnMethod, Credential credential, Duration wait) throws TapisException {
         return reserveSessionOnConnection(tenant, host, port, effectiveUserId, authnMethod, credential,
-                SshConnectionContext.SftpClientConstructor, wait);
+                SSHSftpClient.class, wait);
     }
 
     private <T extends SSHSession> PooledSshSession<T> reserveSessionOnConnection(String tenant, String host, Integer port, String effectiveUserId,
                                                                                   AuthnEnum authnMethod, Credential credential,
-                                                                                  SshConnectionContext.SessionConstructor<T> channelConstructor,
+                                                                                  Class<T> clazz,
                                                                                   Duration wait) throws TapisException {
         long startTime = System.currentTimeMillis();
         SshSessionPoolKey key = new SshSessionPoolKey(tenant, host, port, effectiveUserId, authnMethod, credential);
@@ -187,7 +187,7 @@ public final class SshSessionPool {
                 // released the read lock and aquired the write lock.
                 connectionGroup = pool.get(key);
                 if (connectionGroup == null) {
-                    connectionGroup = new SshConnectionGroup(this, poolPolicy);
+                    connectionGroup = new SshConnectionGroup(poolPolicy);
                     pool.put(key, connectionGroup);
                 }
             }
@@ -203,7 +203,7 @@ public final class SshSessionPool {
         // the group sets the newly created flag to false - meaning it can be removed if no connections
         // exist.
         sessionHolder = connectionGroup.reserveSessionOnConnection(tenant, host, port, effectiveUserId,
-                authnMethod, credential, channelConstructor, wait);
+                authnMethod, credential, clazz, wait);
         long elapsedTime = System.currentTimeMillis() - startTime;
 
         // log the elapsed time here for getting a connection.  If it's more than a minute, make it a

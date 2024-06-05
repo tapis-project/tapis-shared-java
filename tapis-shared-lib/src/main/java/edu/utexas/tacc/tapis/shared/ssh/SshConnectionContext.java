@@ -11,8 +11,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.time.Duration;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 
 /**
@@ -35,9 +35,12 @@ final class SshConnectionContext {
     // if there are no sessions (the elapsed time in milliseconds since the last session was closed).
     private long idleSinceTime;
     //  SessionHolder is a class that reserves a spot for a session.  The session will get connected later.
-    private final Set<SshSessionHolder> sessionHolders;
+    private final Set<SshSessionHolder<SSHExecChannel>> activeSshSessionHolders;
+    private final Set<SshSessionHolder<SSHSftpClient>> activeSftpSessionHolders;
+    private final Set<SshSessionHolder<SSHSftpClient>> parkedSftpSessionHolders;
     private final long lifetimeMs;
     private final long maxIdleTimeMs;
+    private final long maxSessionLifetime;
 
     /**
      * ExecChannelConstructor can be used to construct an SSHExecChannel when calling reserveSession
@@ -49,23 +52,27 @@ final class SshConnectionContext {
      */
     protected static SessionConstructor<SSHSftpClient> SftpClientConstructor = SshConnectionContext::constructSftpClient;
 
-    protected SshConnectionContext(SSHConnection sshConnection, int maxSessions, Duration connectionDuration,
-                                Duration maxConnectionIdleTime) {
+    protected SshConnectionContext(SSHConnection sshConnection, SshSessionPoolPolicy poolPolicy) {
         this.sshConnection = sshConnection;
-        this.maxSessions = maxSessions;
+        this.maxSessions = poolPolicy.getMaxSessionsPerConnection();
         this.creationTime = System.currentTimeMillis();
-        this.lifetimeMs = connectionDuration.toMillis();
-        this.maxIdleTimeMs = maxConnectionIdleTime.toMillis();
+        this.lifetimeMs = poolPolicy.getMaxConnectionDuration().toMillis();
+        this.maxIdleTimeMs = poolPolicy.getMaxConnectionIdleTime().toMillis();
+        this.maxSessionLifetime = poolPolicy.getMaxSessionLifetime().toMillis();
         this.idleSinceTime = System.currentTimeMillis();
         this.expired = false;
-        sessionHolders = new HashSet<>();
+        activeSshSessionHolders = new HashSet<>();
+        activeSftpSessionHolders = new HashSet<>();
+        parkedSftpSessionHolders = new HashSet<>();
+
+
+
+
     }
 
-    protected int getSessionCount() {
+    protected synchronized int getSessionCount() {
         // include all session holders in the count - even the ones with sessions that are not yet created.
-        synchronized (sessionHolders) {
-            return sessionHolders.size();
-        }
+        return (activeSshSessionHolders.size() + activeSftpSessionHolders.size());
     }
 
 
@@ -100,24 +107,56 @@ final class SshConnectionContext {
             return false;
         }
 
-        return sessionHolders.size() < maxSessions;
+        return (activeSshSessionHolders.size() + activeSftpSessionHolders.size()) < maxSessions;
     }
 
-    protected <T extends SSHSession> SshSessionHolder<T> reserveSession(SessionConstructor<T> sessionConstructor) throws TapisException {
-        synchronized(sessionHolders) {
-            if (hasAvailableSessions()) {
-                SshSessionHolder<T> sessionHolder = null;
+    protected synchronized SshSessionHolder<SSHSftpClient> reserveSftpSession() throws TapisException {
+        if (hasAvailableSessions()) {
+            SshSessionHolder<SSHSftpClient> sessionHolder = null;
+            Iterator<SshSessionHolder<SSHSftpClient>> parkedSessionHolderIterator = parkedSftpSessionHolders.iterator();
+            while (parkedSessionHolderIterator.hasNext()) {
+                SshSessionHolder<SSHSftpClient> parkedSftpSessionHolder = parkedSessionHolderIterator.next();
+                parkedSessionHolderIterator.remove();
+                if ((!sessionIsExpired(parkedSftpSessionHolder)) && (parkedSftpSessionHolder.getSession().isOpen())) {
+                    sessionHolder = parkedSftpSessionHolder;
+                    break;
+                } else {
+                    IOUtils.closeQuietly(sessionHolder);
+                }
+            }
+
+            if (sessionHolder == null) {
                 try {
-                    sessionHolder = new SshSessionHolder<T>(this, this.sshConnection, sessionConstructor);
+                    sessionHolder = new SshSessionHolder<SSHSftpClient>(this, this.sshConnection, SshConnectionContext.SftpClientConstructor);
                 } catch (Exception ex) {
                     // if we are unable to create new sessions on this connection, we will expire it
                     this.expireConnection();
                     String msg = MsgUtils.getMsg("SSH_POOL_UNABLE_TO_CREATE_CHANNEL");
                     throw new TapisException(msg, ex);
                 }
-                sessionHolders.add(sessionHolder);
-                return sessionHolder;
             }
+            activeSftpSessionHolders.add(sessionHolder);
+            return sessionHolder;
+        }
+
+        return null;
+    }
+
+    protected SshSessionHolder<SSHExecChannel> reserveSshSession() throws TapisException {
+        if (hasAvailableSessions()) {
+            SshSessionHolder<SSHExecChannel> sessionHolder = null;
+            if (sessionHolder == null) {
+                try {
+                    sessionHolder = new SshSessionHolder<SSHExecChannel>(this, this.sshConnection, SshConnectionContext.ExecChannelConstructor);
+                } catch (Exception ex) {
+                    // if we are unable to create new sessions on this connection, we will expire it
+                    this.expireConnection();
+                    String msg = MsgUtils.getMsg("SSH_POOL_UNABLE_TO_CREATE_CHANNEL");
+                    throw new TapisException(msg, ex);
+                }
+            }
+            activeSshSessionHolders.add(sessionHolder);
+            return sessionHolder;
         }
 
         return null;
@@ -130,18 +169,21 @@ final class SshConnectionContext {
      * @param sessionHolder SessionHolder to release.
      * @return true for success, or false for failure.
      */
-    protected boolean releaseSessionHolder(SshSessionHolder sessionHolder) {
+    protected synchronized boolean releaseSessionHolder(SshSessionHolder sessionHolder) {
         boolean result = false;
-        if(sessionHolder != null) {
-            synchronized(sessionHolders) {
-                SSHSession session = sessionHolder.getSession();
-                if (session instanceof SSHSftpClient client) {
-                    if (client.isOpen()) {
-                        log.warn("Found open SftpClient session.");
-                        IOUtils.closeQuietly(client);
+        if (sessionHolder != null) {
+            SSHSession session = sessionHolder.getSession();
+            if (session instanceof SSHSftpClient client) {
+                if (client.isOpen()) {
+                    result = activeSftpSessionHolders.remove(sessionHolder);
+                    if(sessionIsExpired(sessionHolder)) {
+                        IOUtils.closeQuietly(sessionHolder);
+                    } else {
+                        parkedSftpSessionHolders.add(sessionHolder);
                     }
                 }
-                result = sessionHolders.remove(sessionHolder);
+            } else {
+                result = activeSshSessionHolders.remove(sessionHolder);
             }
         } else {
             log.error("WARN SessionHolder Null!!!");
@@ -150,13 +192,17 @@ final class SshConnectionContext {
         return result;
     }
 
-    protected long getIdleTime() {
+    protected synchronized long getIdleTime() {
         // if there is at least one session, just return 0 meaning it's not idle
-        synchronized(sessionHolders) {
-            for (SshSessionHolder sessionHolder : sessionHolders) {
-                if (sessionHolder.getSession() != null) {
-                    return 0;
-                }
+        for (SshSessionHolder<SSHSftpClient> sessionHolder : activeSftpSessionHolders) {
+            if (sessionHolder.getSession() != null) {
+                return 0;
+            }
+        }
+
+        for (SshSessionHolder<SSHExecChannel> sessionHolder : activeSshSessionHolders) {
+            if (sessionHolder.getSession() != null) {
+                return 0;
             }
         }
 
@@ -184,16 +230,19 @@ final class SshConnectionContext {
         return sshConnection.getSftpClient();
     }
 
-    protected boolean hasSessionsForThreadId(long threadId) {
-        synchronized(sessionHolders) {
-            for (SshSessionHolder sessionHolder : sessionHolders) {
-                if ((sessionHolder != null) && (threadId == sessionHolder.getThreadId())) {
-                    return true;
-                }
+    private <T extends SSHSession> boolean sessionIsExpired(SshSessionHolder<T> sessionHolder) {
+        return sessionHolder.getSessionDuration() > maxSessionLifetime;
+    }
+
+    protected synchronized void cleanup() {
+        Iterator<SshSessionHolder<SSHSftpClient>> sessionHolderIterator = parkedSftpSessionHolders.iterator();
+        while (sessionHolderIterator.hasNext()) {
+            SshSessionHolder<SSHSftpClient> sessionHolder = sessionHolderIterator.next();
+            if(sessionIsExpired(sessionHolder)) {
+                sessionHolderIterator.remove();
+                IOUtils.closeQuietly(sessionHolder);
             }
         }
-
-        return false;
     }
 
     @Override
@@ -207,9 +256,11 @@ final class SshConnectionContext {
         builder.append(", ");
         builder.append(isExpired() ? "EXPIRED" : "ACTIVE");
         builder.append(", ");
-        builder.append("Sessions: ");
+        builder.append("Active Sessions: ");
         builder.append(getSessionCount());
         builder.append(", ");
+        builder.append("Parked Sessions: ");
+        builder.append(parkedSftpSessionHolders.size());
         return builder.toString();
     }
 }

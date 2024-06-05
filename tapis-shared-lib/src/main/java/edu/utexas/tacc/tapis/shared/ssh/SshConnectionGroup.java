@@ -4,12 +4,12 @@ import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
 import edu.utexas.tacc.tapis.shared.exceptions.recoverable.TapisRecoverableException;
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
 import edu.utexas.tacc.tapis.shared.ssh.apache.SSHConnection;
+import edu.utexas.tacc.tapis.shared.ssh.apache.SSHExecChannel;
 import edu.utexas.tacc.tapis.shared.ssh.apache.SSHSession;
-import edu.utexas.tacc.tapis.shared.ssh.apache.SshConnectionListener;
+import edu.utexas.tacc.tapis.shared.ssh.apache.SSHSftpClient;
 import edu.utexas.tacc.tapis.systems.client.gen.model.AuthnEnum;
 import edu.utexas.tacc.tapis.systems.client.gen.model.Credential;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.math.NumberUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,7 +31,7 @@ final class SshConnectionGroup {
     private List<SshConnectionContext> connectionContextList;
     private SshSessionPoolPolicy poolPolicy;
     private long lastTouched;
-    protected SshConnectionGroup(SshSessionPool pool, SshSessionPoolPolicy poolPolicy) {
+    protected SshConnectionGroup(SshSessionPoolPolicy poolPolicy) {
         connectionContextList = new ArrayList<>();
         this.poolPolicy = poolPolicy;
         lastTouched = System.currentTimeMillis();
@@ -74,6 +74,7 @@ final class SshConnectionGroup {
         synchronized (connectionContextList) {
             List<SshConnectionContext> contextsToRemove = new ArrayList<>();
             for (SshConnectionContext connectionContext : connectionContextList) {
+                connectionContext.cleanup();
                 // if the connection is expired, and there are no sessions left on it, close the connection,
                 // and add it to the list of connections to remove from the group.
                 if ((connectionContext.isExpired()) && (connectionContext.getSessionCount() == 0)) {
@@ -113,13 +114,13 @@ final class SshConnectionGroup {
      */
     protected  <T extends SSHSession> SshSessionHolder<T> reserveSessionOnConnection(String tenant, String host, Integer port, String effectiveUserId,
                                              AuthnEnum authnMethod, Credential credential,
-                                             SshConnectionContext.SessionConstructor<T> sessionConstructor,
+                                             Class<T> clazz,
                                              Duration wait) throws TapisException {
         long startTime = System.currentTimeMillis();
         long phaseStartTime = startTime;
         long abortTime = System.currentTimeMillis() + wait.toMillis();
 
-        checkForPotentialDeadlocksAndLog();
+//        checkForPotentialDeadlocksAndLog();
 
         // NOTE:  It's not impossible that you could have a situation where all connections are expired,
         // but they still have active sessions.  Hopefully sessions will be relatively short lived, and one
@@ -135,28 +136,14 @@ final class SshConnectionGroup {
                 log.trace(String.format("Cleanup time: %d", System.currentTimeMillis() - phaseStartTime));
                 phaseStartTime = System.currentTimeMillis();
 
-                switch (poolPolicy.getSessionCreationStrategy()) {
-                    case MINIMIZE_SESSIONS -> sessionHolder = getSessionMinimizingSessions(tenant, host, port, effectiveUserId,
-                            authnMethod, credential, sessionConstructor);
-                    case MINIMIZE_CONNECTIONS -> sessionHolder = getSessionMinimizingConnections(tenant, host, port, effectiveUserId,
-                            authnMethod, credential, sessionConstructor);
-                }
+                sessionHolder = getSession(tenant, host, port, effectiveUserId,
+                            authnMethod, credential, clazz);
 
                 log.trace(String.format("Session search time: %d", System.currentTimeMillis() - phaseStartTime));
                 phaseStartTime = System.currentTimeMillis();
                 if (sessionHolder == null) {
                     long waitTime = abortTime - System.currentTimeMillis();
-                    if (waitTime > 0) {
-                        try {
-                            log.trace("Waiting for a session");
-                            connectionContextList.wait(waitTime);
-                        } catch (InterruptedException ex) {
-                            String msg = MsgUtils.getMsg("SSH_POOL_RESERVE_TIMEOUT_INTERRUPTED",
-                                    tenant, host, port, effectiveUserId, authnMethod, wait);
-                            log.warn(msg);
-                            break;
-                        }
-                    } else {
+                    if (waitTime <= 0) {
                         log.trace("Wait complete - session was " + (sessionHolder == null ? "NOT" : "") + " found");
                         break;
                     }
@@ -183,14 +170,8 @@ final class SshConnectionGroup {
         // (old_comment) this really shouldn't be the case, but maybe the server hasn't caught up with it's cleanup.
         // (old_comment) Perhaps due to the server being under load.  We will retry a few  times before really giving up.
         try {
-            sessionHolder.setConnectionListener(new SshConnectionListener() {
-                @Override
-                public void onRelease(boolean succeeded) {
-                    synchronized (connectionContextList) {
-                        connectionContextList.notify();
-                    }
-                }
-            });
+            log.trace(String.format("ready to get Session time: %d", System.currentTimeMillis() - phaseStartTime));
+            phaseStartTime = System.currentTimeMillis();
             sessionHolder.createSession();
             log.trace(String.format("Session established time: %d", System.currentTimeMillis() - phaseStartTime));
         } catch (Exception ex) {
@@ -208,12 +189,12 @@ final class SshConnectionGroup {
         return sessionHolder;
     }
 
-    private <T extends SSHSession> SshSessionHolder<T> getSessionMinimizingConnections(String tenant, String host, Integer port,
+    private <T extends SSHSession> SshSessionHolder<T> getSession(String tenant, String host, Integer port,
             String effectiveUserId, AuthnEnum authnMethod, Credential credential,
-            SshConnectionContext.SessionConstructor<T> sessionConstructor) throws TapisException {
+            Class<T> clazz) throws TapisException {
         SshSessionHolder<T> sessionHolder = null;
         for (SshConnectionContext sshConnectionContext : connectionContextList) {
-            sessionHolder = sshConnectionContext.reserveSession(sessionConstructor);
+            sessionHolder = reserveSession(sshConnectionContext, clazz);
             if (sessionHolder != null) {
                 break;
             }
@@ -221,57 +202,23 @@ final class SshConnectionGroup {
 
         if ((sessionHolder == null) && (connectionContextList.size() < poolPolicy.getMaxConnectionsPerKey())) {
             SSHConnection sshConnection = createNewConnection(tenant, host, port, effectiveUserId, authnMethod, credential);
-            SshConnectionContext sshConnectionContext = new SshConnectionContext(sshConnection,
-                    poolPolicy.getMaxSessionsPerConnection(), poolPolicy.getMaxConnectionDuration(),
-                    poolPolicy.getMaxConnectionIdleTime());
+            SshConnectionContext sshConnectionContext = new SshConnectionContext(sshConnection, poolPolicy);
             connectionContextList.add(sshConnectionContext);
-            sessionHolder = sshConnectionContext.reserveSession(sessionConstructor);
+            sessionHolder = reserveSession(sshConnectionContext, clazz);
         }
 
         return sessionHolder;
     }
 
-    private <T extends SSHSession> SshSessionHolder<T> getSessionMinimizingSessions(String tenant,
-            String host, Integer port, String effectiveUserId, AuthnEnum authnMethod, Credential credential,
-            SshConnectionContext.SessionConstructor<T> sessionConstructor) throws TapisException {
-        SshSessionHolder<T> sessionHolder = null;
-
-        // first try and find a conneciton that has no sessions
-        SshConnectionContext contextToUse = connectionContextList.stream().filter(context -> {
-            return context.getSessionCount() == 0;
-        }).findFirst().orElse(null);
-        if(contextToUse != null) {
-            sessionHolder = contextToUse.reserveSession(sessionConstructor);
+    private <T extends SSHSession> SshSessionHolder<T> reserveSession(SshConnectionContext connectionContext, Class<T> clazz) throws TapisException {
+        if(clazz == SSHSftpClient.class) {
+            return (SshSessionHolder<T>) connectionContext.reserveSftpSession();
+        } else if (clazz == SSHExecChannel.class) {
+            return (SshSessionHolder<T>) connectionContext.reserveSshSession();
+        } else {
+            // TODO: Fix this - needs real exception
+            throw new RuntimeException("Unknown SSH Session type");
         }
-
-        // If there are no connections with zero sessions, create a new connection if possible, and make
-        // a session on that.
-        if(sessionHolder == null) {
-            SshConnectionContext sshConnectionContext = null;
-            if ((connectionContextList.size() < poolPolicy.getMaxConnectionsPerKey())) {
-                SSHConnection sshConnection = createNewConnection(tenant, host, port, effectiveUserId, authnMethod, credential);
-                sshConnectionContext = new SshConnectionContext(sshConnection,
-                        poolPolicy.getMaxSessionsPerConnection(), poolPolicy.getMaxConnectionDuration(),
-                        poolPolicy.getMaxConnectionIdleTime());
-                connectionContextList.add(sshConnectionContext);
-                sessionHolder = sshConnectionContext.reserveSession(sessionConstructor);
-            }
-        }
-
-        // if we still dont have a session, just find the connection with the minimum number of sessions, and
-        // create the session there (if it can have one).
-        if(sessionHolder == null) {
-            synchronized (connectionContextList) {
-                // look for the connection with the minimum number of sessions;
-                contextToUse = connectionContextList.stream().min((contextOne, contextTwo) -> {
-                    return NumberUtils.compare(contextOne.getSessionCount(), contextTwo.getSessionCount());
-                }).get();
-            }
-
-            sessionHolder = contextToUse.reserveSession(sessionConstructor);
-        }
-
-        return sessionHolder;
     }
 
     protected SSHConnection createNewConnection(String tenant, String host, Integer port, String effectiveUserId,
@@ -329,23 +276,6 @@ final class SshConnectionGroup {
 
         // Non-null if we get here.
         return conn;
-    }
-
-    // this method can provide a way to help find deadlocks, however it can have false
-    // positives also.  The specific case we are looking for is when the same thread
-    // asks for two sessions on the same pool key.  In heavy load it's a potential
-    // deadlock situation.  If many threads do this, and they are all waiting for the second
-    // session, no one can give up the first one (until the second pool wait times out).  This
-    // is unlikely to deadlock, but possible - we should log the situation and avoid if possible.
-    private void checkForPotentialDeadlocksAndLog() {
-        synchronized (connectionContextList) {
-            for (SshConnectionContext connectionContext : connectionContextList) {
-                if (connectionContext.hasSessionsForThreadId(Thread.currentThread().getId())) {
-                    log.warn("POTENTIAL DEADLOCK:  This thread already has a connection");
-                    break;
-                }
-            }
-        }
     }
 
     @Override
