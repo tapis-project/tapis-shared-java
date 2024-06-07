@@ -1,12 +1,13 @@
 package edu.utexas.tacc.tapis.shared.ssh;
 
-import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
 import edu.utexas.tacc.tapis.shared.ssh.apache.SSHConnection;
 import edu.utexas.tacc.tapis.shared.ssh.apache.SSHSession;
 import edu.utexas.tacc.tapis.shared.ssh.apache.SSHSftpClient;
-import edu.utexas.tacc.tapis.shared.ssh.apache.SshConnectionListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.Closeable;
+import java.io.IOException;
 
 /**
  * The name of this class is "SshSessionHolder" because it holds the class called SSHSession.  It's used to
@@ -15,25 +16,18 @@ import org.slf4j.LoggerFactory;
  * be done outside of any synchronized block of code.
  * @param <T>
  */
-class SshSessionHolder <T extends SSHSession> {
+class SshSessionHolder <T extends SSHSession> implements Closeable {
     private static Logger log = LoggerFactory.getLogger(SshSessionHolder.class);
     private final SshConnectionContext sshConnectionContext;
     private final SSHConnection sshConnection;
     private final SshConnectionContext.SessionConstructor<T> sessionConstructor;
-    private final long threadId;
     private T session = null;
-
-    private SshConnectionListener connectionListener;
+    private Long connectionTime = null;
 
     public SshSessionHolder(SshConnectionContext sshConnectionContext, SSHConnection sshConnection, SshConnectionContext.SessionConstructor<T> sessionConstructor) {
         this.sshConnectionContext = sshConnectionContext;
         this.sshConnection = sshConnection;
         this.sessionConstructor = sessionConstructor;
-        this.threadId = Thread.currentThread().getId();
-    }
-
-    public boolean containsSession() {
-        return session != null;
     }
 
     public T getSession() {
@@ -41,12 +35,25 @@ class SshSessionHolder <T extends SSHSession> {
     }
 
     public T createSession() throws Exception {
-        session = this.sessionConstructor.constructSession(this.sshConnection);
+        if(session == null) {
+            session = this.sessionConstructor.constructSession(this.sshConnection);
+            connectionTime = Long.valueOf(System.currentTimeMillis());
+        }
         return session;
     }
 
-    public long getThreadId() {
-        return threadId;
+    public void close() throws IOException {
+        if(session instanceof SSHSftpClient sftpClient) {
+            sftpClient.close();
+        }
+    }
+
+    protected long getSessionDuration() {
+        if(connectionTime == null) {
+            return 0;
+        }
+
+        return System.currentTimeMillis() - connectionTime.longValue();
     }
 
     public void expireConnection() {
@@ -55,23 +62,8 @@ class SshSessionHolder <T extends SSHSession> {
         }
     }
 
-    public void setConnectionListener(SshConnectionListener connectionListener) {
-        this.connectionListener = connectionListener;
-    }
-
     public boolean release() {
-        if (session instanceof SSHSftpClient sftpSession) {
-            try {
-                sftpSession.close();
-            } catch (Exception ex) {
-                // nothing we can really do about this, so just log it.
-                String msg = MsgUtils.getMsg("SSH_POOL_UNABLE_TO_CLOSE_SESSION", "SSHSftpClient");
-                log.warn(msg);
-            }
-        }
-
         boolean released = this.sshConnectionContext.releaseSessionHolder(this);
-        this.connectionListener.onRelease(released);
         return released;
     }
 }
