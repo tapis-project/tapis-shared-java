@@ -186,7 +186,8 @@ final class SshConnectionContext {
                 result = activeSshSessionHolders.remove(sessionHolder);
             }
         } else {
-            log.error("WARN SessionHolder Null!!!");
+            String msg = MsgUtils.getMsg("SSH_POOL_NULL_VARIABLE", "sessionHolder");
+            log.error(msg);
         }
         this.idleSinceTime = System.currentTimeMillis();
         return result;
@@ -218,13 +219,18 @@ final class SshConnectionContext {
 
     protected synchronized void close() {
         // Close the SshConnection associated with this context.
-        log.trace("Cleanup parked sessions");
+
+
+
+        String msg = MsgUtils.getMsg("SSH_POOL_TRACE_CLEANUP_PARKED");
+        log.trace(msg);
         Iterator<SshSessionHolder<SSHSftpClient>> parkedSessionIterator = parkedSftpSessionHolders.iterator();
         while(parkedSessionIterator.hasNext()) {
             parkedSessionIterator.next();
             parkedSessionIterator.remove();
         }
-        log.trace("Closing SSH connection");
+        msg = MsgUtils.getMsg("SSH_POOL_TRACE_CLOSE_CONNECTION");
+        log.trace(msg);
         sshConnection.close();
     }
 

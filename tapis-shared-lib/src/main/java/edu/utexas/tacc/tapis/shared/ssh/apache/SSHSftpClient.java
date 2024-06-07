@@ -78,7 +78,7 @@ public class SSHSftpClient
         long begin = System.currentTimeMillis();
         _sftpClient = (DefaultSftpClient)
             DefaultSftpClientFactory.INSTANCE.createSftpClient(session);
-        log.error("***-*** Session took this long --------------------------> " + (System.currentTimeMillis() - begin));
+        log.trace(MsgUtils.getMsg("SSH_SFTP_TRACE_SESSION_TIME", System.currentTimeMillis() - begin));
     }
     
     public SSHConnection getConnection() {return _sshConnection;}
@@ -102,7 +102,7 @@ public class SSHSftpClient
         for(int i=0;i<10;i++) {
             if(!_sftpClient.getClientChannel().isClosed()) {
                 try {
-                    log.trace(String.format("Waiting for sftpClient to close %d", i));
+                    log.trace(String.format(MsgUtils.getMsg("SSH_SFTP_TRACE_CLOSE_WAIT", i)));
                     Thread.sleep(100);
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
@@ -117,21 +117,21 @@ public class SSHSftpClient
         if(_sftpClient.isClosing()) {
             // there's really nothing we can do here but it would be interesting to
             // know when it happens.
-            log.trace("SftpClient is in the \"isClosing\" state");
+            log.error(MsgUtils.getMsg("SSH_SFTP_TRACE_STATE", "isClosing"));
         }
 
         // this is jjust some logging that could come in handy for debugging purposes
         if(!_sftpClient.getClientChannel().isClosed()) {
             // there's really nothing we can do here but it would be interesting to
             // know when it happens.
-            log.error("SftpClient is NOT in the \"isClosed\" state");
+            log.info(MsgUtils.getMsg("SSH_SFTP_TRACE_STATE", "isClosed"));
         }
 
         // this is jjust some logging that could come in handy for debugging purposes
         if(_sftpClient.isOpen()) {
             // there's really nothing we can do here but it would be interesting to
             // know when it happens.
-            log.error("SftpClient is in the \"isOpen\" state");
+            log.error(MsgUtils.getMsg("SSH_SFTP_TRACE_STATE", "isOpen"));
         }
     }
     

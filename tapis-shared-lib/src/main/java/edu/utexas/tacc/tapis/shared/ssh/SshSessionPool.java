@@ -250,7 +250,7 @@ public final class SshSessionPool {
     }
 
     private void cleanup() {
-        log.info("SshSessionPool cleanup counter: " + traceOnCleanupCounter.get());
+        log.info(MsgUtils.getMsg("SSH_POOL_CLEANUP_COUNTER", traceOnCleanupCounter.get()));
         for (SshSessionPoolKey key : pool.keySet()) {
             SshConnectionGroup connectionGroup = pool.get(key);
             connectionGroup.cleanup();

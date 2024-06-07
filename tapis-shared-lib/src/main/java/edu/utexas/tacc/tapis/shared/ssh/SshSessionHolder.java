@@ -3,7 +3,6 @@ package edu.utexas.tacc.tapis.shared.ssh;
 import edu.utexas.tacc.tapis.shared.ssh.apache.SSHConnection;
 import edu.utexas.tacc.tapis.shared.ssh.apache.SSHSession;
 import edu.utexas.tacc.tapis.shared.ssh.apache.SSHSftpClient;
-import org.apache.sshd.sftp.client.SftpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
