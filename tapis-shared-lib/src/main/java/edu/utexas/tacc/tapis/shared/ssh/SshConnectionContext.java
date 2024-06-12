@@ -57,7 +57,7 @@ final class SshConnectionContext {
         this.sshConnection = sshConnection;
         this.maxSessions = poolPolicy.getMaxSessionsPerConnection();
         // half of sessions will be for sftp, the other half for ssh
-        this.maxSftpSessions = (int)(maxSessions / 2);
+        this.maxSftpSessions = (int)(maxSessions * .7);
         this.creationTime = System.currentTimeMillis();
         this.lifetimeMs = poolPolicy.getMaxConnectionDuration().toMillis();
         this.maxIdleTimeMs = poolPolicy.getMaxConnectionIdleTime().toMillis();

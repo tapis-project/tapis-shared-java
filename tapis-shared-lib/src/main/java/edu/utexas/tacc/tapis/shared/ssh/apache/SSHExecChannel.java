@@ -236,10 +236,10 @@ public class SSHExecChannel implements SSHSession
                     // this should not be necessary, however I've noticed that occasionally even
                     // though the session reports that it's closed, we still get the "no more sessions"
                     // issue.  My current theory is that it's a race condition and this will fix it.
-                    Thread.sleep(10);
+                    Thread.sleep(100);
                     break;
                 }
-                log.error("SSH_EXEC_CLOSE:  Waiting for SSH Exec Channel Close: " + i);
+                log.trace("SSH_EXEC_CLOSE:  Waiting for SSH Exec Channel Close: " + i);
             }
         } catch (InterruptedException e) {
             // ignore.
