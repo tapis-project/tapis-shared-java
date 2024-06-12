@@ -4,6 +4,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.EnumSet;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.sshd.client.channel.ChannelExec;
 import org.apache.sshd.client.channel.ClientChannelEvent;
@@ -11,6 +14,10 @@ import org.apache.sshd.client.channel.ClientChannelEvent;
 import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
 import edu.utexas.tacc.tapis.shared.exceptions.runtime.TapisRuntimeException;
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
+import org.apache.sshd.common.future.CloseFuture;
+import org.apache.sshd.common.future.SshFutureListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** The execute methods in this class acquire a new channel each time they are
  * invoked.  The exit code of the remote command is returned.  If an output or
@@ -23,6 +30,8 @@ import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
  */
 public class SSHExecChannel implements SSHSession
 {
+    Logger log = LoggerFactory.getLogger(SSHExecChannel.class);
+
     /* ********************************************************************** */
     /*                               Constants                                */
     /* ********************************************************************** */
@@ -172,7 +181,7 @@ public class SSHExecChannel implements SSHSession
             channel.setErr(errStream);
         } catch (Exception e) {
             if(channel != null) {
-                channel.close();
+                close(channel, false);
             }
             if (closeConnectionOnException) {
                 _sshConnection.close();
@@ -193,13 +202,53 @@ public class SSHExecChannel implements SSHSession
             if (status != null) exitCode = status;
         } finally {
             try {
-                channel.close(true);
+                close(channel, false);
             } catch (Exception e) {
             }
         } // double down by closing immediately, ignoring any secondary exceptions.
             
         // Return the remote exit code or the default value.
         return exitCode;
+    }
+
+    private void close(ChannelExec channel, boolean immediate) throws IOException {
+        // I tried using the close future, or waiting for the channel to close.  None
+        // of that really works.  In the end, I have found that sleeping a half second
+        // seems to work the best.  This is really unsatisfying though ... I hope to figure
+        // out a better solution one day.
+        AtomicBoolean isClosed = new AtomicBoolean(false);
+        var future = channel.close(immediate);
+        future.addListener(new SshFutureListener<CloseFuture>() {
+                               @Override
+                               public void operationComplete(CloseFuture closeFuture) {
+                                   isClosed.set(closeFuture.isClosed());
+                                   if(!future.isDone()) {
+                                       Thread.dumpStack();
+                                   }
+                               }
+                           });
+
+        try {
+            for (int i = 0; i < 500; i++) {
+                if (!isClosed.get()) {
+                    Thread.sleep(10);
+                } else {
+                    // this should not be necessary, however I've noticed that occasionally even
+                    // though the session reports that it's closed, we still get the "no more sessions"
+                    // issue.  My current theory is that it's a race condition and this will fix it.
+                    Thread.sleep(10);
+                    break;
+                }
+                log.error("SSH_EXEC_CLOSE:  Waiting for SSH Exec Channel Close: " + i);
+            }
+        } catch (InterruptedException e) {
+            // ignore.
+            log.error("SSH_EXEC_CLOSE:  Close was interrupted.");
+        }
+
+        if(!isClosed.get()) {
+            log.error("SSH_EXEC_CLOSE:  FAILED TO CLOSE EXEC CHANNEL");
+        }
     }
 
     /* ---------------------------------------------------------------------- */

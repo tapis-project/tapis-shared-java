@@ -27,6 +27,7 @@ final class SshConnectionContext {
 
     private final SSHConnection sshConnection;
     private final int maxSessions;
+    private final int maxSftpSessions;
     private final long creationTime;
     private boolean expired;
 
@@ -55,6 +56,8 @@ final class SshConnectionContext {
     protected SshConnectionContext(SSHConnection sshConnection, SshSessionPoolPolicy poolPolicy) {
         this.sshConnection = sshConnection;
         this.maxSessions = poolPolicy.getMaxSessionsPerConnection();
+        // half of sessions will be for sftp, the other half for ssh
+        this.maxSftpSessions = (int)(maxSessions / 2);
         this.creationTime = System.currentTimeMillis();
         this.lifetimeMs = poolPolicy.getMaxConnectionDuration().toMillis();
         this.maxIdleTimeMs = poolPolicy.getMaxConnectionIdleTime().toMillis();
@@ -102,18 +105,25 @@ final class SshConnectionContext {
     // not synchronized.  There's really no reason to synchronize this method, but if the caller is going
     // to make deciesions based on the result (such as reserveSessions) it probably should do this in a
     // synchronized block
-    private boolean hasAvailableSessions() {
+    private synchronized boolean hasAvailableSessions() {
         if(isExpired()) {
             return false;
         }
 
-        return (activeSshSessionHolders.size() + activeSftpSessionHolders.size()) < maxSessions;
+        return (activeSshSessionHolders.size() + activeSftpSessionHolders.size() + parkedSftpSessionHolders.size()) < maxSessions;
     }
 
     protected synchronized SshSessionHolder<SSHSftpClient> reserveSftpSession() throws TapisException {
         if (hasAvailableSessions()) {
             SshSessionHolder<SSHSftpClient> sessionHolder = null;
             Iterator<SshSessionHolder<SSHSftpClient>> parkedSessionHolderIterator = parkedSftpSessionHolders.iterator();
+
+            // only allow reserving the session if it wont exceed the sftpsession max.  We need to leave some
+            // session for ssh use
+            if(activeSftpSessionHolders.size() >= maxSftpSessions) {
+                return null;
+            }
+
             while (parkedSessionHolderIterator.hasNext()) {
                 SshSessionHolder<SSHSftpClient> parkedSftpSessionHolder = parkedSessionHolderIterator.next();
                 parkedSessionHolderIterator.remove();
@@ -174,13 +184,18 @@ final class SshConnectionContext {
         if (sessionHolder != null) {
             SSHSession session = sessionHolder.getSession();
             if (session instanceof SSHSftpClient client) {
+                result = activeSftpSessionHolders.remove(sessionHolder);
                 if (client.isOpen()) {
-                    result = activeSftpSessionHolders.remove(sessionHolder);
-                    if(sessionIsExpired(sessionHolder)) {
+                    // only park the session if it wont exceed the sftpsession max.  We need to leave some
+                    // session for ssh use
+                    if((sessionIsExpired(sessionHolder) || (activeSftpSessionHolders.size() + parkedSftpSessionHolders.size() >= maxSftpSessions))) {
                         IOUtils.closeQuietly(sessionHolder);
                     } else {
-                        parkedSftpSessionHolders.add(sessionHolder);
+                       parkedSftpSessionHolders.add(sessionHolder);
                     }
+                } else {
+                    // This is possibly redundant, but the closed/closing/open states are odd, so just be sure.
+                    IOUtils.closeQuietly(client);
                 }
             } else {
                 result = activeSshSessionHolders.remove(sessionHolder);
@@ -211,7 +226,7 @@ final class SshConnectionContext {
         return System.currentTimeMillis() - idleSinceTime;
     }
 
-    protected void expireConnection() {
+    protected synchronized void expireConnection() {
         this.expired = true;
         String msg = MsgUtils.getMsg("SSH_POOL_CONNECTION_EXPIRATION_REQUESTED");
         log.debug(msg);
@@ -242,7 +257,7 @@ final class SshConnectionContext {
         return sshConnection.getSftpClient();
     }
 
-    private <T extends SSHSession> boolean sessionIsExpired(SshSessionHolder<T> sessionHolder) {
+    private synchronized  <T extends SSHSession> boolean sessionIsExpired(SshSessionHolder<T> sessionHolder) {
         return sessionHolder.getSessionDuration() > maxSessionLifetime;
     }
 
@@ -270,6 +285,10 @@ final class SshConnectionContext {
 
     @Override
     public String toString() {
+       return getDetails(false);
+    }
+
+    public String getDetails(boolean includeAll) {
         StringBuilder builder = new StringBuilder();
         builder.append("Age (ms): ");
         builder.append(getConnectionAge());
@@ -287,6 +306,28 @@ final class SshConnectionContext {
         builder.append(", ");
         builder.append("Parked Sessions: ");
         builder.append(parkedSftpSessionHolders.size());
+
+        if(includeAll) {
+            builder.append(System.lineSeparator());
+            builder.append("Active SFTP Session Holders");
+            builder.append(System.lineSeparator());
+            for(var holder : activeSftpSessionHolders) {
+                builder.append(holder);
+                builder.append(System.lineSeparator());
+            }
+            builder.append("Parked SFTP Session Holders");
+            builder.append(System.lineSeparator());
+            for(var holder : parkedSftpSessionHolders) {
+                builder.append(holder);
+                builder.append(System.lineSeparator());
+            }
+            builder.append("Active SSH Session Holders");
+            builder.append(System.lineSeparator());
+            for(var holder : activeSshSessionHolders) {
+                builder.append(holder);
+                builder.append(System.lineSeparator());
+            }
+        }
         return builder.toString();
     }
 }

@@ -1,5 +1,6 @@
 package edu.utexas.tacc.tapis.shared.ssh.apache;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.security.KeyPair;
 import java.util.Base64;
@@ -42,7 +43,7 @@ import edu.utexas.tacc.tapis.shared.utils.ThrottleMap;
  * @author rcardone
  */
 public class SSHConnection
- implements AutoCloseable
+ implements Closeable
 {
     /* ********************************************************************** */
     /*                               Constants                                */
@@ -286,7 +287,7 @@ public class SSHConnection
     /* ---------------------------------------------------------------------- */
     /* close:                                                                 */
     /* ---------------------------------------------------------------------- */
-    /** Method on the AutoCloseable interface. */
+    /** Method on the Closeable interface. */
     @Override
     public void close() {stop();}
     

@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -42,7 +43,7 @@ public final class SshSessionPool {
 
     private AtomicInteger traceOnCleanupCounter = new AtomicInteger(0);
 
-    public class PooledSshSession<T extends SSHSession> implements AutoCloseable {
+    public class PooledSshSession<T extends SSHSession> implements Closeable {
         private final SshConnectionGroup sshConnectionGroup;
         private final SshSessionHolder<T> sessionHolder;
 
@@ -221,6 +222,9 @@ public final class SshSessionPool {
 
     @Override
     public String toString() {
+        return getDetails(false);
+    }
+    public String getDetails(boolean includeAll) {
         StringBuilder builder = new StringBuilder();
         builder.append(System.lineSeparator());
         builder.append("Policy:");
@@ -241,7 +245,7 @@ public final class SshSessionPool {
                 builder.append(key);
                 builder.append(System.lineSeparator());
                 SshConnectionGroup connectionGroup = pool.get(key);
-                builder.append(connectionGroup.toString());
+                builder.append(connectionGroup.getDetails(includeAll));
             }
         } finally {
             poolRWLock.readLock().unlock();

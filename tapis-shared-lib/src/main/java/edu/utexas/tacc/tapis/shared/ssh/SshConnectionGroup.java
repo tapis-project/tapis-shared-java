@@ -174,14 +174,14 @@ final class SshConnectionGroup {
             phaseStartTime = System.currentTimeMillis();
             sessionHolder.createSession();
             log.trace(String.format("Session established time: %d", System.currentTimeMillis() - phaseStartTime));
-        } catch (Exception ex) {
+        } catch (Throwable th) {
             // if we are unable to create new sessions on this connection, we will expire it
             if (sessionHolder != null) {
-                sessionHolder.expireConnection();
                 sessionHolder.release();
+                sessionHolder.expireConnection();
             }
             String msg = MsgUtils.getMsg("SSH_POOL_UNABLE_TO_ESTABLISH_SESSION", tenant, host, port, effectiveUserId, authnMethod);
-            throw new TapisException(msg, ex);
+            throw new TapisException(msg, th);
         }
 
         log.trace(String.format("Total elapsed time: %d", System.currentTimeMillis() - startTime));
@@ -280,11 +280,15 @@ final class SshConnectionGroup {
 
     @Override
     public String toString() {
+        return getDetails(false);
+    }
+
+    public String getDetails(boolean includeAll) {
         StringBuilder builder = new StringBuilder();
 
         synchronized (connectionContextList) {
             for (SshConnectionContext connectionContext : connectionContextList) {
-                builder.append(connectionContext.toString());
+                builder.append(connectionContext.getDetails(includeAll));
                 builder.append(System.lineSeparator());
             }
         }
