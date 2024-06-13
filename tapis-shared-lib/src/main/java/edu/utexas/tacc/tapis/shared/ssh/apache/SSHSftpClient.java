@@ -42,7 +42,7 @@ import org.slf4j.LoggerFactory;
  * @author rcardone
  */
 public class SSHSftpClient
- implements AutoCloseable, Closeable, SSHSession
+ implements Closeable, SSHSession
 {
     Logger log = LoggerFactory.getLogger(SSHSftpClient.class);
 
@@ -113,21 +113,23 @@ public class SSHSftpClient
             }
         }
 
-        // this is jjust some logging that could come in handy for debugging purposes
+        // this is just some logging that could come in handy for debugging purposes
         if(_sftpClient.isClosing()) {
             // there's really nothing we can do here but it would be interesting to
             // know when it happens.
-            log.error(MsgUtils.getMsg("SSH_SFTP_TRACE_STATE", "isClosing"));
+            if(!_sftpClient.getClientChannel().isClosed()) {
+                log.error(MsgUtils.getMsg("SSH_SFTP_TRACE_STATE", "isClosing"));
+            }
         }
 
-        // this is jjust some logging that could come in handy for debugging purposes
+        // this is just some logging that could come in handy for debugging purposes
         if(!_sftpClient.getClientChannel().isClosed()) {
             // there's really nothing we can do here but it would be interesting to
             // know when it happens.
             log.info(MsgUtils.getMsg("SSH_SFTP_TRACE_STATE", "isClosed"));
         }
 
-        // this is jjust some logging that could come in handy for debugging purposes
+        // this is just some logging that could come in handy for debugging purposes
         if(_sftpClient.isOpen()) {
             // there's really nothing we can do here but it would be interesting to
             // know when it happens.
