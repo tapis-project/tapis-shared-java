@@ -30,6 +30,7 @@ final class SshConnectionContext {
     private final int maxSftpSessions;
     private final long creationTime;
     private boolean expired;
+    private static final double MAX_SFTP_RATIO = .7;
 
     // This will be set to the currentTimeMillis() each time a release is done.   It's used by getIdleTime()
     // getIdleTime will return 0 if there are sessions, or it will return idleSince minus the current time
@@ -56,8 +57,12 @@ final class SshConnectionContext {
     protected SshConnectionContext(SSHConnection sshConnection, SshSessionPoolPolicy poolPolicy) {
         this.sshConnection = sshConnection;
         this.maxSessions = poolPolicy.getMaxSessionsPerConnection();
-        // half of sessions will be for sftp, the other half for ssh
-        this.maxSftpSessions = (int)(maxSessions * .7);
+        // We mostly use sftp sessions, but we also need to have some sftp sessions.  Since we could park a bunch
+        // of sftp sessions and just leave them, we could have the case where we need an SSH session but cant get one
+        // because there are a bunch of parked sftp sessions.  This will reserve a percentage of the sessions for sftp,
+        // and leave the rest for SSH.  Perhaps we could be smarter and discard excess parked sessions on demand - I looked
+        // at this, and it was harder than I first thought it would be, so I just went this route.
+        this.maxSftpSessions = (int)(maxSessions * MAX_SFTP_RATIO);
         this.creationTime = System.currentTimeMillis();
         this.lifetimeMs = poolPolicy.getMaxConnectionDuration().toMillis();
         this.maxIdleTimeMs = poolPolicy.getMaxConnectionIdleTime().toMillis();

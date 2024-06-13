@@ -239,15 +239,15 @@ public class SSHExecChannel implements SSHSession
                     Thread.sleep(100);
                     break;
                 }
-                log.trace("SSH_EXEC_CLOSE:  Waiting for SSH Exec Channel Close: " + i);
+                log.trace(MsgUtils.getMsg("TAPIS_SSH_EXEC_CLOSE_WAIT", i));
             }
         } catch (InterruptedException e) {
             // ignore.
-            log.error("SSH_EXEC_CLOSE:  Close was interrupted.");
+            log.error(MsgUtils.getMsg("TAPIS_SSH_EXEC_CLOSE_INTERRUPTED"));
         }
 
         if(!isClosed.get()) {
-            log.error("SSH_EXEC_CLOSE:  FAILED TO CLOSE EXEC CHANNEL");
+            log.error(MsgUtils.getMsg("TAPIS_SSH_EXEC_CLOSE_FAILURE"));
         }
     }
 
