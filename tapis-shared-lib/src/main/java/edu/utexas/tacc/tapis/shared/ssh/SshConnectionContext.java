@@ -72,10 +72,6 @@ final class SshConnectionContext {
         activeSshSessionHolders = new HashSet<>();
         activeSftpSessionHolders = new HashSet<>();
         parkedSftpSessionHolders = new HashSet<>();
-
-
-
-
     }
 
     protected synchronized int getSessionCount() {
@@ -189,14 +185,20 @@ final class SshConnectionContext {
         if (sessionHolder != null) {
             SSHSession session = sessionHolder.getSession();
             if (session instanceof SSHSftpClient client) {
+                log.trace("Releaseing SSHConnectionHolder: " + System.identityHashCode(sessionHolder));
                 result = activeSftpSessionHolders.remove(sessionHolder);
-                if (client.isOpen()) {
+                if (result && client.isOpen()) {
                     // only park the session if it wont exceed the sftpsession max.  We need to leave some
                     // session for ssh use
                     if((sessionIsExpired(sessionHolder) || (activeSftpSessionHolders.size() + parkedSftpSessionHolders.size() >= maxSftpSessions))) {
                         IOUtils.closeQuietly(sessionHolder);
                     } else {
-                       parkedSftpSessionHolders.add(sessionHolder);
+                        if((parkedSftpSessionHolders.contains(sessionHolder)) || (activeSftpSessionHolders.contains(sessionHolder))) {
+                            // it's in use.  This is likely due to a 'multiple-release' situation.
+                            IOUtils.closeQuietly(client);
+                        } else {
+                            parkedSftpSessionHolders.add(sessionHolder);
+                        }
                     }
                 } else {
                     // This is possibly redundant, but the closed/closing/open states are odd, so just be sure.
@@ -317,19 +319,25 @@ final class SshConnectionContext {
             builder.append("Active SFTP Session Holders");
             builder.append(System.lineSeparator());
             for(var holder : activeSftpSessionHolders) {
-                builder.append(holder);
+                builder.append(System.identityHashCode(holder));
+                builder.append(" : Client = ");
+                builder.append(System.identityHashCode(holder.getSession()));
                 builder.append(System.lineSeparator());
             }
             builder.append("Parked SFTP Session Holders");
             builder.append(System.lineSeparator());
             for(var holder : parkedSftpSessionHolders) {
-                builder.append(holder);
+                builder.append(System.identityHashCode(holder));
+                builder.append(" : Client = ");
+                builder.append(System.identityHashCode(holder.getSession()));
                 builder.append(System.lineSeparator());
             }
             builder.append("Active SSH Session Holders");
             builder.append(System.lineSeparator());
             for(var holder : activeSshSessionHolders) {
-                builder.append(holder);
+                builder.append(System.identityHashCode(holder));
+                builder.append(" : Client = ");
+                builder.append(System.identityHashCode(holder.getSession()));
                 builder.append(System.lineSeparator());
             }
         }
