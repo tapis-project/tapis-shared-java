@@ -17,6 +17,7 @@ public final class SshSessionPoolStats {
     private int sessionCount = 0;
     private int sessionsOnActiveConnections = 0;
     private int sessionsOnExpiredConnections = 0;
+    private int sessionsOnParkedSftpConnections = 0;
 
     protected SshSessionPoolStats(List<ConnectionGroupStats> groupStatsList) {
         for(ConnectionGroupStats groupStats : groupStatsList) {
@@ -26,6 +27,7 @@ public final class SshSessionPoolStats {
             this.sessionCount += groupStats.getSessionCount();
             this.sessionsOnActiveConnections += groupStats.getSessionsOnActiveConnections();
             this.sessionsOnExpiredConnections += groupStats.getSessionsOnExpiredConnections();
+            this.sessionsOnParkedSftpConnections += groupStats.getSessionsOnParkedSftpConnections();
         }
     }
 
@@ -73,6 +75,9 @@ public final class SshSessionPoolStats {
         builder.append(System.lineSeparator());
         builder.append("Sessions on Active Connections: ");
         builder.append(sessionsOnActiveConnections);
+        builder.append(System.lineSeparator());
+        builder.append("Parked Sftp Connections: ");
+        builder.append(sessionsOnParkedSftpConnections);
         builder.append(System.lineSeparator());
         return builder.toString();
     }

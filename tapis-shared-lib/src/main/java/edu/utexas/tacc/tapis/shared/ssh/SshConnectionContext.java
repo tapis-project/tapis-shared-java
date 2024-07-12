@@ -79,6 +79,10 @@ final class SshConnectionContext {
         return (activeSshSessionHolders.size() + activeSftpSessionHolders.size());
     }
 
+    protected synchronized int getParkedSftpSessionCount() {
+        // include all session holders in the count - even the ones with sessions that are not yet created.
+        return parkedSftpSessionHolders.size();
+    }
 
     protected long getConnectionAge() {
         return System.currentTimeMillis() - creationTime;
@@ -269,15 +273,21 @@ final class SshConnectionContext {
     }
 
     protected synchronized void cleanup() {
+        // see if the connection is still connected
+        var sshConnectionClosed = this.sshConnection.isClosed();
+
         Iterator<SshSessionHolder<SSHSftpClient>> activeSessionHolderIterator = parkedSftpSessionHolders.iterator();
         while (activeSessionHolderIterator.hasNext()) {
             SshSessionHolder<SSHSftpClient> sessionHolder = activeSessionHolderIterator.next();
             var session = sessionHolder.getSession();
-            if(session == null) {
+            // if the session is null or the connection for this context is closed, get rid of the sessionHolder
+            if((session == null) || (sshConnection == null) || (sshConnectionClosed)) {
                 activeSessionHolderIterator.remove();
-            } else if(!session.isOpen()) {
-                // this will ensure the session gets actually closed
-                IOUtils.closeQuietly(session);
+            } else if (!session.isOpen()) {
+                // if the session is not pen, remove it from the bool and call close (calling close
+                // is likely redundant probably redundant)
+                activeSessionHolderIterator.remove();
+                IOUtils.closeQuietly(sessionHolder);
             }
         }
         Iterator<SshSessionHolder<SSHSftpClient>> parkedSessionHolderIterator = parkedSftpSessionHolders.iterator();
