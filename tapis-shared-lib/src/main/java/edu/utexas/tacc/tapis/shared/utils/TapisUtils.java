@@ -1122,7 +1122,7 @@ public class TapisUtils
 	  // Maybe there's nothing to do.
 	  if (StringUtils.isBlank(s)) return s;
 		
-	  // Don't double quote a string that's already double quoted.
+	  // Don't single quote a string that's already single quoted.
 	  if (s.startsWith("'") && s.endsWith("'")) return s;
 		
 	  // Check for characters that we want to prohibit
@@ -1131,6 +1131,57 @@ public class TapisUtils
 	  if (!m.matches()) s = TapisUtils.safelySingleQuoteString(s);
 		
 	  return s;
+  }
+
+    /* ---------------------------------------------------------------------- */
+    /* alwaysQuote:                                                           */
+    /* ---------------------------------------------------------------------- */
+    /** Ensure the string is surrounded by DOUBLE QUOTEs.
+     *  No leading, trailing or internal whitespace is removed or changed.
+     *
+     * If the string is already double quoted it will not be changed.
+     *
+     * IT IS ASSUMED THAT THE STRING CONTAINS NO CONTROL CHARACTERS (see
+     * PathSanitizer.detectControlChars() and PathSanitizer.replaceControlChars()).
+     *
+     * @param s an input string to appear on the command line
+     * @return a command line safe version of the string
+     */
+    public static String alwaysQuote(String s)
+    {
+        // Maybe there's nothing to do.
+        if (StringUtils.isBlank(s)) return s;
+
+        // Don't double quote a string that's already double quoted.
+        if (s.startsWith("\"") && s.endsWith("\"")) return s;
+
+        return TapisUtils.safelyDoubleQuoteString(s);
+    }
+
+  /* ---------------------------------------------------------------------- */
+  /* alwaysSingleQuote:                                                     */
+  /* ---------------------------------------------------------------------- */
+  /** Ensure the string is surrounded by SINGLE QUOTEs.
+   *  No leading, trailing or internal whitespace is removed or changed.
+   *
+   * If the string is already single quoted it will not be changed.
+   * Embedded single quotes will be retained.
+   *
+   * IT IS ASSUMED THAT THE STRING CONTAINS NO CONTROL CHARACTERS (see
+   * PathSanitizer.detectControlChars() and PathSanitizer.replaceControlChars()).
+   *
+   * @param s an input string to appear on the command line
+   * @return a command line safe version of the string
+   */
+  public static String alwaysSingleQuote(String s)
+  {
+	  // Maybe there's nothing to do.
+	  if (StringUtils.isBlank(s)) return s;
+		
+	  // Don't single quote a string that's already single quoted.
+	  if (s.startsWith("'") && s.endsWith("'")) return s;
+		
+	  return TapisUtils.safelySingleQuoteString(s);
   }
 
 	/* ---------------------------------------------------------------------------- */
