@@ -18,7 +18,7 @@ import edu.utexas.tacc.tapis.shared.uri.TapisUrl;
 public class TapisUtilsTest 
 {
 	// Control some of the output.
-	private static final boolean QUIET = true;
+	private static final boolean QUIET = false;
 	
 	// Copy of same regex defined in TapisUtils.
 	private static final Pattern _spaceSplitter = Pattern.compile("(?U)\\s+");
@@ -252,7 +252,7 @@ public class TapisUtilsTest
 	   s = "'xxyy'";
 	   t = TapisUtils.safelySingleQuoteString(s);
 	   if (!QUIET) System.out.println(s + " -> " + t);
-	   Assert.assertEquals(t, "''\\''xxyy'\\'''");
+	   Assert.assertEquals(t, "'xxyy'");
 
 	   s = "xx'yy";
 	   t = TapisUtils.safelySingleQuoteString(s);
@@ -300,7 +300,7 @@ public class TapisUtilsTest
 	   s = "\"xxyy\"";
 	   t = TapisUtils.safelyDoubleQuoteString(s);
 	   if (!QUIET) System.out.println(s + " -> " + t);
-	   Assert.assertEquals(t, "\"\\\"xxyy\\\"\"");
+	   Assert.assertEquals(t, "\"xxyy\"");
 
 	   s = "xx\"yy";
 	   t = TapisUtils.safelyDoubleQuoteString(s);
