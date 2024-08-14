@@ -18,7 +18,7 @@ import edu.utexas.tacc.tapis.shared.uri.TapisUrl;
 public class TapisUtilsTest 
 {
 	// Control some of the output.
-	private static final boolean QUIET = false;
+	private static final boolean QUIET = true;
 	
 	// Copy of same regex defined in TapisUtils.
 	private static final Pattern _spaceSplitter = Pattern.compile("(?U)\\s+");
