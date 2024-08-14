@@ -514,5 +514,118 @@ public class TapisUtilsTest
    	Assert.assertFalse(TapisUtils.weaklyValidateUri(s));
    	
    	s = ".https://piggy";
-   	Assert.assertFalse(TapisUtils.weaklyValidateUri(s));   }
+   	Assert.assertFalse(TapisUtils.weaklyValidateUri(s));   
+  }
+   
+   /* ---------------------------------------------------------------------------- */
+   /* embeddedQuoteTest:                                                           */
+   /* ---------------------------------------------------------------------------- */
+   /** This test demonstrates how single and double quoting can work when embedded
+    * quotes are present in string already enclosed in quotes.  The challenge is to
+    * reasonably represent user intent on input quoted string without falling too deep 
+    * into the rabbit hole of preventing every type of malicious injection attack.  
+    * 
+    * The first thing to recognize is that double quoting never stops command injection 
+    * because of the way the shell interprets text within those quotes.  Single quoting
+    * can stop command injection because it treats quoted text as literals.
+    *  
+    * If a user encloses a string in quotes and happens to have embedded quotes in 
+    * the string, Tapis could do any of the following:
+    * 
+    *   A. Nothing, take the string as is.
+    *   B. Escape the whole string using safelyDoubleQuoteString or safelySingleQuoteString.
+    *   C. Escape the interior of the string using safelyDoubleQuoteString or 
+    *      safelySingleQuoteString, leaving the enclosing quotes unescaped.
+    * 
+    * 
+    * Option A allows strings to be easily constructed that can inject commands on the
+    * command line.  Option B creates a string that escapes all quotes, including the
+    * enclosing delimiters (examples 1 & 3).  Option C preserves the enclosing quotes 
+    * as is, but escapes all embedded quotes (examples 2 & 4).  Both options B and C
+    * make injection significantly more difficult when using single quotes.  For a good 
+    * discussion on the subject, see
+    *     
+    *    https://unix.stackexchange.com/questions/171346/security-implications-of-
+    *    forgetting-to-quote-a-variable-in-bash-posix-shells   
+    */
+   @Test(enabled=true)
+   public void embeddedQuoteTest()
+   {
+//	   System.out.println("\n--------- DoubleQuoting ---------");
+	   String s = "\"a\"$(whoami)\"b\"";
+	   var noEmbedded = doesNotContain(s, '"');
+	   Assert.assertFalse(noEmbedded);
+	   var quoted = naiveDoubleQuoteString(s);
+//	   System.out.println("1. s: " + s + " --> " + quoted + " --bash--> " + "\"a\"<username>\"b\"");
+
+	   s = "\"a\"$(whoami)\"b\"";  // "a\"$(whoami)\"b";
+	   noEmbedded = doesNotContain(s, '"');
+	   Assert.assertFalse(noEmbedded);
+	   quoted = TapisUtils.safelyDoubleQuoteString(s);
+//	   System.out.println("2. s: " + s + " --> " + quoted + " --bash--> " + "a\"<username>\"b");
+
+//	   System.out.println("\n--------- SingleQuoting ---------");
+	   s = "\'a\'$(whoami)\'b\'";
+	   noEmbedded = doesNotContain(s, '\'');
+	   Assert.assertFalse(noEmbedded);
+	   quoted = naiveSingleQuoteString(s);
+//	   System.out.println("3. s: " + s + " --> " + quoted + " --bash--> " + "'a'$(whoami)'b'");
+
+	   s = "\'a\'$(whoami)\'b\'";
+	   noEmbedded = doesNotContain(s, '\'');
+	   Assert.assertFalse(noEmbedded);
+	   quoted = TapisUtils.safelySingleQuoteString(s);
+//	   System.out.println("4. s: " + s + " --> " + quoted + " --bash--> " + "a'$(whoami)'b");
+   }
+   
+   /* ---------------------------------------------------------------------------- */
+   /* doesNotContain:                                                              */
+   /* ---------------------------------------------------------------------------- */
+   /** Copied from TapisUtils for testing. */
+   private boolean doesNotContain(String s, char c) {
+   	// Strings with no interiors always pass.
+   	if (s.length() < 3) return true;
+   	
+   	// Iterate through the string character by character.
+   	for (int i = 1; i < s.length()-1; i++) {
+   		if (s.charAt(i) == c) return false;
+   	}
+   	
+   	// Character not found.
+   	return true;
+   }
+   
+   /* ---------------------------------------------------------------------------- */
+   /* naiveSingleQuoteString:                                                      */
+   /* ---------------------------------------------------------------------------- */
+   /** Escapes enclosing quotes. */ 
+   private String naiveSingleQuoteString(String stringToQuote) 
+   {
+ 	  // Don't bother.
+ 	  if (stringToQuote == null) return stringToQuote;
+ 	  
+ 	  // Replace single quotes.
+ 	  StringBuilder sb = new StringBuilder();
+ 	  sb.append("'");
+ 	  sb.append(stringToQuote.replace("'", "'\\''"));
+ 	  sb.append("'");
+ 	  return sb.toString();
+   }
+
+   /* ---------------------------------------------------------------------------- */
+   /* naiveDoubleQuoteString:                                                      */
+   /* ---------------------------------------------------------------------------- */
+   /** Escapes enclosing quotes. */ 
+   private String naiveDoubleQuoteString(String stringToQuote) 
+   {
+ 	  // Don't bother.
+ 	  if (stringToQuote == null) return stringToQuote;
+ 	  
+ 	  // Replace double quotes.
+ 	  StringBuilder sb = new StringBuilder();
+ 	  sb.append("\"");
+ 	  sb.append(stringToQuote.replace("\"", "\\\""));
+ 	  sb.append("\"");
+ 	  return sb.toString();
+   }
 }

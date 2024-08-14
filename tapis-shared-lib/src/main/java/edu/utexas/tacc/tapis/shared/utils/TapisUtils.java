@@ -1016,20 +1016,54 @@ public class TapisUtils
    * works because the escaped single quote \' is technically between two single-quoted 
    * arguments in a script.  
    * 
-   * This escaping is to prevent unix command injection in shell scripts.  Something 
-   * like embedding ;rm -rf / in a command that gets executed in a bash shell.
+   * This escaping is to prevent command injection in shell scripts.  For example,
+   * something like embedding ;rm -rf * in a command could get executed in a bash shell.
    * 
    * If the input string is null, it is returned as is.
    * 
-   * @param unquotedString non-null string
+   * Command Injection
+   * -----------------
+   * This method makes a reasonable attempt to handle already quoted strings that also
+   * have embedded quotes.  Specifically, consider the string: 'a'$(pwd)'b'.
+   * The first and last characters are quotes, so it looks like an already quoted
+   * string.  If this string appeared on the command line is would concatenate the letter
+   * a to the result of a pwd call followed by b.  To avoid this type of injection, we won't
+   * escape the leading and trailing quotes when there embedded quotes, but we will escape 
+   * the embedded quotes. In the example, the command line ready result would be the 
+   * string: a'$(pwd)'b, which will prevent pwd from being called.
+   * 
+   * This method is useful in avoiding simple attempts to inject commands in strings
+   * provided by users.  Since Tapis often incorporates user input in commands it 
+   * puts in a bash shell, this approach addresses many injection scenarios,
+   * intended as well as unintended.  For a good discussion on the subject, see
+   *     
+   *     https://unix.stackexchange.com/questions/171346/security-implications-of-
+   *     forgetting-to-quote-a-variable-in-bash-posix-shells   
+   * 
+   * Also see TapisUtilsTest.embeddedDoubleQuoteTest() for illustrative code.
+   * 
+   * @param stringToQuote non-null string
    * @return the quoted string or null
    */
-  public static String safelySingleQuoteString(String unquotedString) 
+  public static String safelySingleQuoteString(String stringToQuote) 
   {
-	  if (unquotedString == null) return unquotedString;
+	  // Don't bother.
+	  if (stringToQuote == null) return stringToQuote;
+	  
+	  // Determine if we should quote the whole string or just the interior.
+	  // To be a candidate for interior-only quoting, the string must be
+	  // enclosed in quotes and, therefore, have a length of at least 2.
+	  String s;
+	  if (stringToQuote.length() > 1    && 
+	      stringToQuote.startsWith("'") && 
+	      stringToQuote.endsWith("'")) 
+		s = stringToQuote.substring(1, stringToQuote.length()-1);
+	  else s = stringToQuote;
+	  
+	  // Replace single quotes.
 	  StringBuilder sb = new StringBuilder();
 	  sb.append("'");
-	  sb.append(unquotedString.replace("'", "'\\''"));
+	  sb.append(s.replace("'", "'\\''"));
 	  sb.append("'");
 	  return sb.toString();
   }
@@ -1038,19 +1072,36 @@ public class TapisUtils
   /* safelyDoubleQuoteString:                                                     */
   /* ---------------------------------------------------------------------------- */
   /** This method will double quote a string and convert all embedded double quotes
-   * into \\\".  For example, file"name would be converted to "file\\\"name".  
+   * into \\\".  For example, file"name would be converted to "file\\\"name". 
+   * 
+   * Double quoting will not prevent command injection in bash scripts, but it will
+   * allow strings with embedded whitespace to be as a whole.  See the comments 
+   * above in safelySingleQuoteString() for more discussion. 
    * 
    * If the input string is null, it is returned as is.
    * 
-   * @param unquotedString non-null string
+   * @param stringToQuote non-null string
    * @return the quoted string or null
    */
-  public static String safelyDoubleQuoteString(String unquotedString) 
+  public static String safelyDoubleQuoteString(String stringToQuote) 
   {
-	  if (unquotedString == null) return unquotedString;
+	  // Don't bother.
+	  if (stringToQuote == null) return stringToQuote;
+	  
+	  // Determine if we should quote the whole string or just the interior.
+	  // To be a candidate for interior-only quoting, the string must be
+	  // enclosed in quotes and, therefore, have a length of at least 2.
+	  String s;
+	  if (stringToQuote.length() > 1     && 
+	      stringToQuote.startsWith("\"") && 
+	      stringToQuote.endsWith("\"")) 
+		s = stringToQuote.substring(1, stringToQuote.length()-1);
+	  else s = stringToQuote;
+	  
+	  // Replace double quotes.
 	  StringBuilder sb = new StringBuilder();
 	  sb.append("\"");
-	  sb.append(unquotedString.replace("\"", "\\\""));
+	  sb.append(s.replace("\"", "\\\""));
 	  sb.append("\"");
 	  return sb.toString();
   }
@@ -1083,8 +1134,9 @@ public class TapisUtils
 	  // Maybe there's nothing to do.
 	  if (StringUtils.isBlank(s)) return s;
 		
-	  // Don't double quote a string that's already double quoted.
-	  if (s.startsWith("\"") && s.endsWith("\"")) return s;
+	  // Don't double quote a string that's already double quoted
+	  // and has no interior double quotes.
+	  if (s.startsWith("\"") && s.endsWith("\"") && doesNotContain(s, '"')) return s;
 		
 	  // Check for characters that we want to prohibit
 	  // from appearing on the command line unquoted.
@@ -1122,8 +1174,9 @@ public class TapisUtils
 	  // Maybe there's nothing to do.
 	  if (StringUtils.isBlank(s)) return s;
 		
-	  // Don't single quote a string that's already single quoted.
-	  if (s.startsWith("'") && s.endsWith("'")) return s;
+	  // Don't single quote a string that's already single quoted
+	  // and has no interior single quotes.
+	  if (s.startsWith("'") && s.endsWith("'") && doesNotContain(s, '\'')) return s;
 		
 	  // Check for characters that we want to prohibit
 	  // from appearing on the command line unquoted.
@@ -1133,7 +1186,7 @@ public class TapisUtils
 	  return s;
   }
 
-    /* ---------------------------------------------------------------------- */
+	/* ---------------------------------------------------------------------- */
     /* alwaysQuote:                                                           */
     /* ---------------------------------------------------------------------- */
     /** Ensure the string is surrounded by DOUBLE QUOTEs.
@@ -1152,8 +1205,9 @@ public class TapisUtils
         // Maybe there's nothing to do.
         if (StringUtils.isBlank(s)) return s;
 
-        // Don't double quote a string that's already double quoted.
-        if (s.startsWith("\"") && s.endsWith("\"")) return s;
+        // Don't double quote a string that's already double quoted
+        // and has no interior double quotes.
+        if (s.startsWith("\"") && s.endsWith("\"") && doesNotContain(s, '"')) return s;
 
         return TapisUtils.safelyDoubleQuoteString(s);
     }
@@ -1178,8 +1232,9 @@ public class TapisUtils
 	  // Maybe there's nothing to do.
 	  if (StringUtils.isBlank(s)) return s;
 		
-	  // Don't single quote a string that's already single quoted.
-	  if (s.startsWith("'") && s.endsWith("'")) return s;
+	  // Don't single quote a string that's already single quoted
+	  // and has no interior single quotes.
+	  if (s.startsWith("'") && s.endsWith("'") && doesNotContain(s, '\'')) return s;
 		
 	  return TapisUtils.safelySingleQuoteString(s);
   }
@@ -1244,4 +1299,39 @@ public class TapisUtils
 		// Return whether the string qualifies as a weakly validated uri.
 		return _weakUriValidator.matcher(s).matches();
 	}
+	
+	/* ---------------------------------------------------------------------------- */
+	/* doesNotContain:                                                              */
+	/* ---------------------------------------------------------------------------- */
+	/** This method scans the interior of the string for the specified character and
+	 * returns true if it is found.  The string interior is the text not including the
+	 * first and last characters (i.e., the quotes delimiting the string).  The string 
+	 * cannot be null and is assumed to start and end with quotes of type c.
+	 * 
+	 * The method is used to determine if quoted strings still need to be escaped
+	 * because it contains interior quotes.  Consider this string and how it would be
+	 * interpreted on the bash command line:
+	 * 
+	 *    	"a"$(pwd)"b" --> a/home/budb
+	 *    
+	 * If safelyDoubleQuoted, the bash result would be:
+	 * 
+	 * 		safelyDoubleQuote("a"$(pwd)"b") --> a"/home/bud"b
+	 * 
+	 * @param s non-null string
+	 * @param c the quote character to discover in string interior
+	 * @return true if c is found, false otherwise
+	 */
+    private static boolean doesNotContain(String s, char c) {
+    	// Strings with no interiors always pass.
+    	if (s.length() < 3) return true;
+    	
+    	// Iterate through the string character by character.
+    	for (int i = 1; i < s.length()-1; i++) {
+    		if (s.charAt(i) == c) return false;
+    	}
+    	
+    	// Character not found.
+    	return true;
+    }
 }
