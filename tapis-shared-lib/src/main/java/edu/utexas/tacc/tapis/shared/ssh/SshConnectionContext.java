@@ -276,23 +276,24 @@ final class SshConnectionContext {
         // see if the connection is still connected
         var sshConnectionClosed = this.sshConnection.isClosed();
 
-        Iterator<SshSessionHolder<SSHSftpClient>> activeSessionHolderIterator = parkedSftpSessionHolders.iterator();
+        // iterate through all active sessions
+        Iterator<SshSessionHolder<SSHSftpClient>> activeSessionHolderIterator = activeSftpSessionHolders.iterator();
         while (activeSessionHolderIterator.hasNext()) {
             SshSessionHolder<SSHSftpClient> sessionHolder = activeSessionHolderIterator.next();
-            var session = sessionHolder.getSession();
-            // if the session is null or the connection for this context is closed, get rid of the sessionHolder
-            if((session == null) || (sshConnection == null) || (sshConnectionClosed)) {
-                activeSessionHolderIterator.remove();
-            } else if (!session.isOpen()) {
-                // if the session is not pen, remove it from the bool and call close (calling close
-                // is likely redundant probably redundant)
+            // if the connection is null or the connection for this context is closed, get rid of the sessionHolder
+            // in theory we should never have this come up, but this will just make sure we are keeping things
+            // all cleaned up.
+            if((sshConnection == null) || (sshConnectionClosed)) {
                 activeSessionHolderIterator.remove();
                 IOUtils.closeQuietly(sessionHolder);
             }
         }
+
+        // iterate through all parked sessions
         Iterator<SshSessionHolder<SSHSftpClient>> parkedSessionHolderIterator = parkedSftpSessionHolders.iterator();
         while (parkedSessionHolderIterator.hasNext()) {
             SshSessionHolder<SSHSftpClient> sessionHolder = parkedSessionHolderIterator.next();
+            // if a parked session is expired, discard it
             if(sessionIsExpired(sessionHolder)) {
                 parkedSessionHolderIterator.remove();
                 IOUtils.closeQuietly(sessionHolder);

@@ -45,7 +45,7 @@ class SshSessionHolder <T extends SSHSession> implements Closeable {
     public void close() throws IOException {
         if(session instanceof SSHSftpClient sftpClient) {
             sftpClient.close();
-            sftpClient = null;
+            session = null;
         }
     }
 
