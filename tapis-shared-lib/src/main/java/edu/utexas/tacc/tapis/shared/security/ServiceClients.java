@@ -319,6 +319,7 @@ public class ServiceClients
                 
             case TapisConstants.SERVICE_NAME_META: {
                 client = new MetaClient(router.getServiceBaseUrl(), router.getAccessJWT());
+			    client.addDefaultHeader("Content-Type", "application/json");
                 break;
             }   
                 
@@ -344,11 +345,15 @@ public class ServiceClients
         if (client == null) 
             throw new TapisException(MsgUtils.getMsg("TAPIS_CLIENT_NOT_FOUND", service, tenant, user));
         
-        // Assign required headers.
+        // Assign headers required by all clients.
         client.addDefaultHeader("X-Tapis-User", user);
         client.addDefaultHeader("X-Tapis-Tenant", tenant);
-        client.addDefaultHeader("Content-Type", "application/json");
-        
+		//  NOTE that we do not add Content-Type header for globus-proxy client. Client is only used for GET.
+		//  Including it can cause the globus-proxy service to return a 400. Header not needed for GET.
+		if (!TapisConstants.SERVICE_NAME_GLOBUSPROXY.equals(service)) {
+			client.addDefaultHeader("Content-Type", "application/json");
+		}
+
         // Return the client.
         return client;
     }
