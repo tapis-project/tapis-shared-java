@@ -399,6 +399,12 @@ public class JWTValidateRequestFilter
             // Make sure the target site claim is present.
             String jwtSite = (String)claims.get(CLAIM_SITE);
             if (!validateTargetSite(requestContext, jwtSite, jwtTenant, jwtUser)) return;
+            
+            // ~~~~~~~~~~~~~~~~~~~~~~~~~~ TEMPORARY CODE ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+            // This code should be removed once the restricted service code is deployed.
+            if (!temporaryRestrictedTenantCheck(requestContext, jwtUser, jwtTenant, oboTenantId))
+            	return;
+            // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         } else {
             // Account type is user. Reject any user tokens in the site-admin tenant. This
             // tenant is reserved for use by services only. Note that this check is not 
@@ -1046,5 +1052,38 @@ public class JWTValidateRequestFilter
                    c.get(CLAIM_TENANT),
                    c.get(CLAIM_USERNAME),
                    c.get(CLAIM_ACCOUNT_TYPE));
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* temporaryRestrictedTenantCheck:                                        */
+    /* ---------------------------------------------------------------------- */
+    /** A temporarily hardcoded check that detects requests in the dnasubway tenant
+     * that attempt to access resources in another tenant.  This temporary code
+     * should be deleted when the restricted service capability is deployed.  
+     * 
+     * @param requestContext - the jaxrs context
+     * @param jwtUser - user specified in jwt
+     * @param jwtTenant - tenant specified in jwt
+     * @param oboTenant - user specified in tapis header
+     * @return true if request can proceed, false to reject request.
+     */
+    private boolean temporaryRestrictedTenantCheck(ContainerRequestContext requestContext, 
+    		                 String jwtUser, String jwtTenant, String oboTenant)
+    {
+    	// We only do this for tenants that have 3rd party service implementations.
+    	if (!jwtTenant.equals("dnasubway")) return true;
+    	
+    	// If the JWT contains one of the tenants with restricted services,
+    	// then the request cannot operate outside of that tenant.
+    	if (!jwtTenant.equals(oboTenant)) {
+            String msg = MsgUtils.getMsg("TAPIS_SECURITY_TENANT_NOT_ALLOWED", 
+                                         jwtUser, jwtTenant, oboTenant);
+            _log.error(msg);
+            requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
+            return false;
+    	}
+    	
+    	// No attempt at cross-tenant access.
+    	return true;
     }
 }

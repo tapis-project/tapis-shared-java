@@ -503,7 +503,7 @@ public class TenantManager
     		// Make sure every site has a admin tenant.
     		var adminTenant = tenants.get(entry.getValue().getSiteAdminTenantId());
     		if (adminTenant == null) {
-                String msg = MsgUtils.getMsg("TAPIS_SITE_NO_ADMIN_TENANT", entry.getKey(), 
+                String msg = MsgUtils.getMsg("TAPIS_SITE_UNKNOWN_ADMIN_TENANT", entry.getKey(), 
                 		                     entry.getValue().getSiteAdminTenantId());
                 _log.error(msg);
                 noErrors = false;

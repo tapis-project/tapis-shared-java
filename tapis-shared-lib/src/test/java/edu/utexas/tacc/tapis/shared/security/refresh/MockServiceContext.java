@@ -129,7 +129,7 @@ public class MockServiceContext
 		// Get the admin tenant id of the site at which we are running. 
 		var tenantId = TenantManager.getInstance().getSiteAdminTenantId(siteId);
 		if (StringUtils.isBlank(tenantId)) {
-		     String msg = MsgUtils.getMsg("TAPIS_SITE_NO_ADMIN_TENANT",
+		     String msg = MsgUtils.getMsg("TAPIS_SITE_UNKNOWN_ADMIN_TENANT",
 		    		                      siteId, tenantId);
 		     throw new TapisException(msg);
 		}
