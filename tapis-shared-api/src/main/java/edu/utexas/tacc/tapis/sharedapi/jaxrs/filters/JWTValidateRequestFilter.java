@@ -1070,12 +1070,12 @@ public class JWTValidateRequestFilter
     private boolean temporaryRestrictedTenantCheck(ContainerRequestContext requestContext, 
     		                 String jwtUser, String jwtTenant, String oboTenant)
     {
-    	// We only do this for tenants that have 3rd party service implementations.
+    	// We only do this to detect 3rd party service implementations.
     	if (!jwtUser.equals("dnasubway-authenticator")) return true;
     	
     	// If the JWT contains one of the tenants with restricted services,
     	// then the request cannot operate outside of that tenant.
-    	if (!jwtTenant.equals(oboTenant)) {
+    	if (!"dnasubway".equals(oboTenant)) {
             String msg = MsgUtils.getMsg("TAPIS_SECURITY_TENANT_NOT_ALLOWED", 
                                          jwtUser, jwtTenant, oboTenant);
             _log.error(msg);
