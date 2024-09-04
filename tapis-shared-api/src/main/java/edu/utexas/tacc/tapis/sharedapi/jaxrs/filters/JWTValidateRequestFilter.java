@@ -1057,9 +1057,8 @@ public class JWTValidateRequestFilter
     /* ---------------------------------------------------------------------- */
     /* temporaryRestrictedTenantCheck:                                        */
     /* ---------------------------------------------------------------------- */
-    /** A temporarily hardcoded check that detects requests in the dnasubway tenant
-     * that attempt to access resources in another tenant.  This temporary code
-     * should be deleted when the restricted service capability is deployed.  
+    /** A temporarily hardcoded check that detects requests from the 3rd party
+     * dnasubway-authenticator, which are always rejected by Java services.
      * 
      * @param requestContext - the jaxrs context
      * @param jwtUser - user specified in jwt
@@ -1070,20 +1069,16 @@ public class JWTValidateRequestFilter
     private boolean temporaryRestrictedTenantCheck(ContainerRequestContext requestContext, 
     		                 String jwtUser, String jwtTenant, String oboTenant)
     {
-    	// We only do this to detect 3rd party service implementations.
+    	// Quickly determine if we are in the common case.
     	if (!jwtUser.equals("dnasubway-authenticator")) return true;
     	
-    	// If the JWT contains one of the tenants with restricted services,
-    	// then the request cannot operate outside of that tenant.
-    	if (!"dnasubway".equals(oboTenant)) {
-            String msg = MsgUtils.getMsg("TAPIS_SECURITY_TENANT_NOT_ALLOWED", 
-                                         jwtUser, jwtTenant, oboTenant);
-            _log.error(msg);
-            requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
-            return false;
-    	}
-    	
-    	// No attempt at cross-tenant access.
-    	return true;
+    	// We expect the dnasubway-authenticator service to not have any need to 
+    	// communicate with any Java service, so any requests received from it 
+    	// by all Java services are rejected.
+        String msg = MsgUtils.getMsg("TAPIS_SECURITY_TENANT_NOT_ALLOWED", 
+                                     jwtUser, jwtTenant, oboTenant);
+        _log.error(msg);
+        requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
+        return false;
     }
 }
