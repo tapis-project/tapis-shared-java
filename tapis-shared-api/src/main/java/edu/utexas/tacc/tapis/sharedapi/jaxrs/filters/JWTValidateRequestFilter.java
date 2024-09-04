@@ -1071,7 +1071,7 @@ public class JWTValidateRequestFilter
     		                 String jwtUser, String jwtTenant, String oboTenant)
     {
     	// We only do this for tenants that have 3rd party service implementations.
-    	if (!jwtTenant.equals("dnasubway")) return true;
+    	if (!jwtUser.equals("dnasubway-authenticator")) return true;
     	
     	// If the JWT contains one of the tenants with restricted services,
     	// then the request cannot operate outside of that tenant.
