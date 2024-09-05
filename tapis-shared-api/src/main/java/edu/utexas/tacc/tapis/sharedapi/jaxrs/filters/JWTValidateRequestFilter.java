@@ -1070,7 +1070,7 @@ public class JWTValidateRequestFilter
     		                 String jwtUser, String jwtTenant, String oboTenant)
     {
     	// Quickly determine if we are in the common case.
-    	if (!jwtUser.equals("dnasubway-authenticator")) return true;
+    	if (!jwtUser.startsWith("dnasubway")) return true;
     	
     	// We expect the dnasubway-authenticator service to not have any need to 
     	// communicate with any Java service, so any requests received from it 
