@@ -70,8 +70,11 @@ public class TapisEnv
 	  // Comma or semi-colon separated list of servlet path names 
 	  // suffixes for which logging filters should be turned off. 
 	  TAPIS_REQUEST_LOGGING_IGNORE_SUFFIXES("tapis.request.logging.ignore.suffixes"),
+	  
+	  // Boolean value that turns on auditing in a service, default = false. 
+	  TAPIS_AUDITING_ENABLED("tapis.auditing.enabled"),
 		
-		// The path to a properties file that contains a service's input parameters.
+	  // The path to a properties file that contains a service's input parameters.
 	  TAPIS_SERVICE_PROPERTIES_PATHNAME("tapis.service.properties.pathname"),
 	  
 	  // The path to the queue definitions directory.  This directory contains 
