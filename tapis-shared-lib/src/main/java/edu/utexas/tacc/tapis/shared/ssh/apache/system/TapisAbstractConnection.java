@@ -159,31 +159,28 @@ abstract class TapisAbstractConnection
             throw new TapisException(msg);
         }
         
-        // We currently only use two types of authn for target systems.
-        if (system.getDefaultAuthnMethod() != AuthnEnum.PASSWORD &&
-            system.getDefaultAuthnMethod() != AuthnEnum.PKI_KEYS) 
-        {
-            String msg = MsgUtils.getMsg("SYSTEMS_CMD_UNSUPPORTED_AUTHN_METHOD", 
-                                         getSystemHostMessage(system),
-                                         system.getTenant(), system.getDefaultAuthnMethod());
-            throw new TapisException(msg);
-        }
-        
         // Connect.
         SSHConnection conn = null;
-        // Three types of Tapis credential authn methods are supported: PASSWORD, PKI_KEYS, TMS_KEYS
+        // We support three types of Tapis credential authn methods: PASSWORD, PKI_KEYS, TMS_KEYS
         try {
-            if (system.getDefaultAuthnMethod() == AuthnEnum.PASSWORD) 
-                conn = new SSHConnection(system.getHost(), system.getPort(), 
-                                         system.getEffectiveUserId(), cred.getPassword());
-            else if (system.getDefaultAuthnMethod() == AuthnEnum.PKI_KEYS)
-                conn = new SSHConnection(system.getHost(), system.getPort(), 
-                                         system.getEffectiveUserId(), 
-                                         cred.getPublicKey(), cred.getPrivateKey());
-            else
+            if (system.getDefaultAuthnMethod() == AuthnEnum.PASSWORD) {
                 conn = new SSHConnection(system.getHost(), system.getPort(),
-                      system.getEffectiveUserId(),
-                      cred.getTmsPublicKey(), cred.getTmsPrivateKey());
+                                         system.getEffectiveUserId(), cred.getPassword());
+            }
+            else if (system.getDefaultAuthnMethod() == AuthnEnum.PKI_KEYS) {
+                conn = new SSHConnection(system.getHost(), system.getPort(),
+                                         system.getEffectiveUserId(), cred.getPublicKey(), cred.getPrivateKey());
+            }
+            else if (system.getDefaultAuthnMethod() == AuthnEnum.TMS_KEYS) {
+                conn = new SSHConnection(system.getHost(), system.getPort(),
+                                         system.getEffectiveUserId(), cred.getTmsPublicKey(), cred.getTmsPrivateKey());
+            }
+            else {
+                String msg = MsgUtils.getMsg("SYSTEMS_CMD_UNSUPPORTED_AUTHN_METHOD",
+                                             getSystemHostMessage(system),
+                                             system.getTenant(), system.getDefaultAuthnMethod());
+                throw new TapisException(msg);
+            }
         } catch (TapisRecoverableException e) {
             // Handle recoverable exceptions, let non-recoverable ones through.
             // We add the systemId to all recoverable exceptions.
