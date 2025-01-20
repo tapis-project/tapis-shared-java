@@ -246,26 +246,27 @@ final class SshConnectionGroup {
             throw new TapisException(msg);
         }
 
-        // We currently only use two types of authn for target systems.
-        if (authnMethod != AuthnEnum.PASSWORD &&
-                authnMethod != AuthnEnum.PKI_KEYS)
-        {
-            String msg = MsgUtils.getMsg("SSH_POOL_UNSUPPORTED_AUTHN_METHOD",
-                    tenant, host, port, effectiveUserId, authnMethod);
-            log.warn(msg);
-            throw new TapisException(msg);
-        }
-
         // Connect.
+        // We support three types of authn for target systems.
         SSHConnection conn = null;
         try {
             if (authnMethod == AuthnEnum.PASSWORD) {
                 conn = new SSHConnection(host, port,
                         effectiveUserId, credential.getPassword());
-            } else {
+            } else if (authnMethod == AuthnEnum.PKI_KEYS) {
                 conn = new SSHConnection(host, port,
                         effectiveUserId,
                         credential.getPublicKey(), credential.getPrivateKey());
+            } else  if (authnMethod == AuthnEnum.TMS_KEYS) {
+                conn = new SSHConnection(host, port,
+                        effectiveUserId,
+                        credential.getTmsPublicKey(), credential.getTmsPrivateKey());
+            }
+            else {
+                String msg = MsgUtils.getMsg("SSH_POOL_UNSUPPORTED_AUTHN_METHOD",
+                      tenant, host, port, effectiveUserId, authnMethod);
+                log.warn(msg);
+                throw new TapisException(msg);
             }
         } catch (TapisRecoverableException e) {
             // Handle recoverable exceptions, let non-recoverable ones through.
