@@ -60,19 +60,19 @@ final class SshSessionPoolKey {
         this.host = host;
         this.port = port;
         this.effectiveUserId = effectiveUserId;
-        if(!AuthnEnum.PASSWORD.equals(authnMethod) && (!AuthnEnum.PKI_KEYS.equals(authnMethod))) {
-            // We currently only use two types of authn for target systems.
-            if (authnMethod != AuthnEnum.PASSWORD &&
-                    authnMethod != AuthnEnum.PKI_KEYS)
-            {
-                String msg = MsgUtils.getMsg("SSH_POOL_UNSUPPORTED_AUTHN_METHOD",
-                        tenant, host, port, effectiveUserId, authnMethod);
-                log.error(msg);
-                throw new TapisException(msg);
-            }
-
+        // If we need to support additional auth types, we must handle that case below when building the
+        // credential hash.  This check is here to remind us to do that.
+        if (authnMethod != AuthnEnum.PASSWORD &&
+                authnMethod != AuthnEnum.PKI_KEYS &&
+                authnMethod != AuthnEnum.TMS_KEYS)
+        {
+            String msg = MsgUtils.getMsg("SSH_POOL_UNSUPPORTED_AUTHN_METHOD",
+                     tenant, host, port, effectiveUserId, authnMethod);
+            log.error(msg);
+            throw new TapisException(msg);
         }
         this.authnMethod = authnMethod;
+        // Build hash using all relevant credentials
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append(credential.getLoginUser());
         stringBuilder.append("|");
@@ -81,6 +81,10 @@ final class SshSessionPoolKey {
         stringBuilder.append(credential.getPrivateKey());
         stringBuilder.append("|");
         stringBuilder.append(credential.getPublicKey());
+        stringBuilder.append("|");
+        stringBuilder.append(credential.getTmsPrivateKey());
+        stringBuilder.append("|");
+        stringBuilder.append(credential.getTmsPublicKey());
 
         // Is this good enough, or should we comput a sha256 or something?
         this.credentialHash = HashUtils.computeSHA256(stringBuilder.toString().getBytes());
