@@ -3,6 +3,9 @@ package edu.utexas.tacc.tapis.shared.utils;
 import com.google.gson.Gson;
 
 import edu.utexas.tacc.tapis.shared.TapisConstants;
+import org.apache.commons.lang3.StringUtils;
+
+import java.util.UUID;
 
 /** This file contains utility methods that assist in writing and managing audit logs.
  * 
@@ -147,8 +150,10 @@ public final class AuditUtils
 		a.sourcePath = sourcePath;
 		a.trackingId = trackingId;
 		a.parentTrackingId = parentTrackingId;
+		// Generate GUID on-demand. Used by Audit Trails project to prevent duplicate records.
+		a.guid = UUID.randomUUID().toString();
 		a.data = data;
-	  
+
 		// Return a json string.
 		return auditMsg(a);
 	}
@@ -180,6 +185,8 @@ public final class AuditUtils
 		if (a.sourcePath == null) a.sourcePath = AUDIT_EMPTY;
 		if (a.trackingId == null) a.trackingId = AUDIT_EMPTY;
 		if (a.parentTrackingId == null) a.parentTrackingId = AUDIT_EMPTY;
+		// Generate GUID on-demand. Used by Audit Trails project to prevent duplicate records.
+		if (StringUtils.isBlank(a.guid)) a.guid = UUID.randomUUID().toString();
 		if (a.data == null) a.data = TapisConstants.EMPTY_JSON;
 
 		// Return a json string.
@@ -207,6 +214,7 @@ public final class AuditUtils
 		public String sourcePath;
 		public String trackingId;
 		public String parentTrackingId;
+		public String guid;
 		public String data;
 	}
 }

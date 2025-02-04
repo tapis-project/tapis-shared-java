@@ -408,13 +408,12 @@ public class JWTValidateRequestFilter
             
             // ~~~~~~~~~~~~~~~~~~~~~~~~~~ TEMPORARY CODE ~~~~~~~~~~~~~~~~~~~~~~~~~~~
             // This code should be removed once the restricted service code is deployed.
-            if (!temporaryRestrictedTenantCheck(requestContext, jwtUser, jwtTenant, oboTenantId))
-            	return;
+            if (!temporaryRestrictedTenantCheck(requestContext, jwtUser, jwtTenant, oboTenantId)) return;
             // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         } else {
             // Account type is user. Reject any user tokens in the site-admin tenant. This
             // tenant is reserved for use by services only. Note that this check is not 
-            // completely leak proof since several short circuiting conditions above accept
+            // completely leakproof since several short-circuiting conditions above accept
             // any token without making this check. This exposure is minor since the leak 
             // involves only globally permitted or unauthenticated requests. The vast 
             // majority of user tokens are subject to this check.
@@ -1065,7 +1064,7 @@ public class JWTValidateRequestFilter
     /* temporaryRestrictedTenantCheck:                                        */
     /* ---------------------------------------------------------------------- */
     /** A temporarily hardcoded check that detects requests from the 3rd party
-     * dnasubway-authenticator, which are always rejected by Java services.
+     * dnasubway-authenticator or osp-authenticator, which are always rejected by Java services.
      * 
      * @param requestContext - the jaxrs context
      * @param jwtUser - user specified in jwt
@@ -1077,15 +1076,13 @@ public class JWTValidateRequestFilter
     		                 String jwtUser, String jwtTenant, String oboTenant)
     {
     	// Quickly determine if we are in the common case.
-    	if (!jwtUser.startsWith("dnasubway")) return true;
+    	if (!jwtUser.startsWith("dnasubway") && !jwtUser.startsWith("osp")) return true;
     	
-    	// We expect the dnasubway-authenticator service to not have any need to 
-    	// communicate with any Java service, so any requests received from it 
-    	// by all Java services are rejected.
-        String msg = MsgUtils.getMsg("TAPIS_SECURITY_TENANT_NOT_ALLOWED", 
-                                     jwtUser, jwtTenant, oboTenant);
-        _log.error(msg);
-        requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
-        return false;
+    	// We expect the dnasubway-authenticator and osp-authenticator services to not have any need to
+    	// communicate with any Java service, so any requests received are rejected.
+      String msg = MsgUtils.getMsg("TAPIS_SECURITY_TENANT_NOT_ALLOWED", jwtUser, jwtTenant, oboTenant);
+      _log.error(msg);
+      requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
+      return false;
     }
 }

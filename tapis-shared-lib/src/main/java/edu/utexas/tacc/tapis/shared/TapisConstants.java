@@ -12,10 +12,8 @@ public class TapisConstants
 	
 	// Service names used to identify service code externally.
 	public static final String SERVICE_NAME_JOBS     = "jobs";
-	public static final String SERVICE_NAME_SAMPLE   = "sample";
 	public static final String SERVICE_NAME_SECURITY = "security";
 	public static final String SERVICE_NAME_SYSTEMS  = "systems";
-	public static final String SERVICE_NAME_UUIDS    = "uuid";
 	public static final String SERVICE_NAME_ABACO    = "abaco";
 	public static final String SERVICE_NAME_TENANTS  = "tenants";
 	public static final String SERVICE_NAME_TOKENS   = "tokens";
@@ -25,7 +23,6 @@ public class TapisConstants
 	public static final String SERVICE_NAME_FILES    = "files";
 	public static final String SERVICE_NAME_POSTITS  = "postits";
 	public static final String SERVICE_NAME_META     = "meta";
-	public static final String SERVICE_NAME_PGREST   = "pgrest";
 	public static final String SERVICE_NAME_NOTIFICATIONS = "notifications";
     public static final String SERVICE_NAME_GLOBUSPROXY = "globusproxy";
 
