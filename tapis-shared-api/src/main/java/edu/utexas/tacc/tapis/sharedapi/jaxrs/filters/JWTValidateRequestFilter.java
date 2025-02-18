@@ -545,9 +545,13 @@ public class JWTValidateRequestFilter
                         claimsMsg = buildClaimsMsg(claims); // returns a default if claims == null
                     }
                     msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_EXPIRED", emsg, claimsMsg);
+                    _log.warn(msg);
                 }
-                else msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_PARSE_ERROR", emsg);
-                _log.error(msg, e);
+                else
+                {
+                    msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_PARSE_ERROR", emsg);
+                    _log.error(msg, e);
+                }
                 throw new TapisSecurityException(msg, e);
             }
         return jwt;
@@ -556,9 +560,9 @@ public class JWTValidateRequestFilter
     /* ---------------------------------------------------------------------- */
     /* prohibitNoAlg:                                                         */
     /* ---------------------------------------------------------------------- */
-    /** This method must be called before once before verifyJwt to avoid allowing
-     * attacker to constructing JWT that avoid robust signature verification by 
-     * specifying weak or no algorithms.
+    /**
+     * This method must be called once before verifyJwt to avoid allowing an attacker to construct a JWT
+     * that would avoid robust signature verification by specifying weak or no algorithms.
      * 
      * @param claims the JWT's claims
      * @param unverifiedJwt the unverified JWT with header
