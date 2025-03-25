@@ -226,7 +226,7 @@ public class JWTValidateRequestFilter
         String encodedJWT = null;
         
         // Extract the jwt header from the set of headers. 
-        // We expect the key search to be case insensitive.
+        // We expect the key search to be case-insensitive.
         MultivaluedMap<String, String> headers = requestContext.getHeaders();
         encodedJWT = headers.getFirst(TAPIS_JWT_HEADER);
             
