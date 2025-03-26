@@ -49,7 +49,7 @@ public interface SkConstants
     public static final String SK_TENANT_UPDATER_ROLE = "tenant_definition_updater";
 
     // The role assigned to the tokens service allowing it to update tenant definitions.
-    public static final String SK_PRIMARY_SITE_ADMIN_ROLE = "primary_site_admin_role";
+    public static final String SK_PRIMARY_SITE_ADMIN_ROLE = "$!primary_site_admin_role";
 
     // Role name max characters allowed in database.
     public static final int MAX_USER_NAME_LEN = 58;
