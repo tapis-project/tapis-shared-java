@@ -36,6 +36,21 @@ public class TapisRestUtils
   private static final HashMap<String,Status> _exceptionStatuses = initExceptionStatuses();
 
   /* **************************************************************************** */
+    /* ---------------------------------------------------------------------------- */
+    /* createSuccessResponse:                                                       */
+    /* ---------------------------------------------------------------------------- */
+    /** Return the json string that represent the response to a REST call that succeeds
+     * and returns a result object.
+     *
+     * @param message the application level error message to be included in the response
+     * @param resp a response object to be converted to json
+     * @return the json response string
+     */
+    public static String createSuccessResponse(String message, RespAbstract resp)
+    {
+        return createSuccessResponse(message, false, resp);
+    }
+
     /*                                Public Methods                                */
     /* **************************************************************************** */
     /* ---------------------------------------------------------------------------- */
@@ -48,6 +63,7 @@ public class TapisRestUtils
      * @param prettyPrint true for multi-line formatting, false for compact formatting
      * @param resp a response object to be converted to json
      * @return the json response string
+     * @deprecated Removing "prettyPrint" option
      */
     public static String createSuccessResponse(String message, boolean prettyPrint, RespAbstract resp)
     {
@@ -59,8 +75,21 @@ public class TapisRestUtils
         resp.build   = TapisUtils.getBuildTime();
         return TapisGsonUtils.getGson(prettyPrint).toJson(resp);
     }
-    
+
     /* ---------------------------------------------------------------------------- */
+    /* createSuccessResponse:                                                       */
+    /* ---------------------------------------------------------------------------- */
+    /** Return the json string that represent the response to a REST call that succeeds.
+     *
+     * @param message the application level error message to be included in the response
+     * @return the json response string
+     */
+    public static String createSuccessResponse(String message)
+    {
+        return createSuccessResponse(message, false);
+    }
+
+        /* ---------------------------------------------------------------------------- */
     /* createSuccessResponse:                                                       */
     /* ---------------------------------------------------------------------------- */
     /** Return the json string that represent the response to a REST call that succeeds.
@@ -68,6 +97,7 @@ public class TapisRestUtils
      * @param message the application level error message to be included in the response
      * @param prettyPrint true for multi-line formating, false for compact formatting
      * @return the json response string
+     * @deprecated Removing "prettyPrint" option
      */
     public static String createSuccessResponse(String message, boolean prettyPrint)
     {
@@ -88,9 +118,24 @@ public class TapisRestUtils
      * experienced an error and returns a result object.
      * 
      * @param message the application level error message to be included in the response
+     * @param resp a response object to be converted to json
+     * @return the json response string
+     */
+    public static String createErrorResponse(String message, RespAbstract resp) {
+        return createErrorResponse(message, false, resp);
+    }
+
+    /* ---------------------------------------------------------------------------- */
+    /* createErrorResponse:                                                         */
+    /* ---------------------------------------------------------------------------- */
+    /** Return the json string that represent the response to a REST call that 
+     * experienced an error and returns a result object.
+     * 
+     * @param message the application level error message to be included in the response
      * @param prettyPrint true for multi-line formating, false for compact formatting
      * @param resp a response object to be converted to json
      * @return the json response string
+     * @deprecated Removing "prettyPrint" option
      */
     public static String createErrorResponse(String message, boolean prettyPrint, RespAbstract resp)
     {
@@ -102,8 +147,22 @@ public class TapisRestUtils
         resp.build   = TapisUtils.getBuildTime();
         return TapisGsonUtils.getGson(prettyPrint).toJson(resp);
     }
-    
+
     /* ---------------------------------------------------------------------------- */
+    /* createErrorResponse:                                                         */
+    /* ---------------------------------------------------------------------------- */
+    /** Return the json string that represent the response to a REST call that
+     * experienced an error.
+     *
+     * @param message the application level error message to be included in the response
+     * @return the json response string
+     */
+    public static String createErrorResponse(String message)
+    {
+        return createErrorResponse(message, false);
+    }
+
+        /* ---------------------------------------------------------------------------- */
     /* createErrorResponse:                                                         */
     /* ---------------------------------------------------------------------------- */
     /** Return the json string that represent the response to a REST call that 
@@ -112,6 +171,7 @@ public class TapisRestUtils
      * @param message the application level error message to be included in the response
      * @param prettyPrint true for multi-line formating, false for compact formatting
      * @return the json response string
+     * @deprecated Removing "prettyPrint" option
      */
     public static String createErrorResponse(String message, boolean prettyPrint)
     {
