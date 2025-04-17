@@ -2,6 +2,7 @@ package edu.utexas.tacc.tapis.sharedapi.jaxrs.filters;
 
 import java.security.KeyFactory;
 import java.security.PublicKey;
+import java.security.interfaces.RSAPublicKey;
 import java.security.spec.X509EncodedKeySpec;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -25,10 +26,10 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.ext.Provider;
 
 import com.auth0.jwt.JWT;
-import com.auth0.jwt.exceptions.JWTDecodeException;
+import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.SignatureVerificationException;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
-import com.auth0.jwt.interfaces.JWTVerifier;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,6 +46,7 @@ import edu.utexas.tacc.tapis.shared.threadlocal.TapisThreadContext;
 import edu.utexas.tacc.tapis.shared.threadlocal.TapisThreadContext.AccountType;
 import edu.utexas.tacc.tapis.shared.threadlocal.TapisThreadLocal;
 import edu.utexas.tacc.tapis.sharedapi.security.AuthenticatedUser;
+import edu.utexas.tacc.tapis.sharedapi.security.TapisSecurityContext;
 import edu.utexas.tacc.tapis.sharedapi.utils.TapisRestUtils;
 import edu.utexas.tacc.tapis.tenants.client.gen.model.Site;
 import edu.utexas.tacc.tapis.tenants.client.gen.model.Tenant;
@@ -228,7 +230,7 @@ public class JWTValidateRequestFilter
         }
         
         // Parse variables.
-        String encodedJWT = null;
+        String encodedJWT;
         
         // Extract the jwt header from the set of headers. 
         // We expect the key search to be case-insensitive.
@@ -249,11 +251,10 @@ public class JWTValidateRequestFilter
             return;
         }
 
-        boolean jwtError = false;
-        String jwtErrorMsg = "";
+        String jwtErrorMsg;
         Map<String, Claim> claims;
         String claimsMsg;
-        String jwtTenant;
+        String jwtTenant = "";
         // Decode the jwt, get the claims, check expiry and verify using the signature
         // Use com.auth0 java-jwt to decode and verify
         try
@@ -294,7 +295,7 @@ public class JWTValidateRequestFilter
             // Make sure the signature algorithm is not weak or "none".
             prohibitNoAlg(claimsMsg, unverifiedJwt);
             // Verify the jwt, allow for refreshing of the keypair associated with the tenant
-            verifyJwt(unverifiedJwt, jwtTenant, true);
+            verifyJwt(unverifiedJwt, jwtTenant, true, claimsMsg);
           }
         }
         catch (Exception e)
@@ -308,7 +309,7 @@ public class JWTValidateRequestFilter
           return;
         }
 
-        //TODO ------------------------ Validate Claims ----------------------------
+        // ------------------------ Validate Claims ----------------------------
         // Check that the token is always an access token.
         String tokenType = claims.get(CLAIM_TOKEN_TYPE).asString();
         if (StringUtils.isBlank(tokenType) || !TOKEN_ACCESS.contentEquals(tokenType))
@@ -318,9 +319,8 @@ public class JWTValidateRequestFilter
             requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
             return;
         }
-        
         // Check the account type.
-        String accountTypeStr = (String)claims.get(CLAIM_ACCOUNT_TYPE);
+        String accountTypeStr = claims.get(CLAIM_ACCOUNT_TYPE).asString();
         if (StringUtils.isBlank(accountTypeStr)) {
             String msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_INVALID_CLAIM", CLAIM_ACCOUNT_TYPE,
                                          accountTypeStr);
@@ -328,7 +328,7 @@ public class JWTValidateRequestFilter
             requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
             return;
         }
-        AccountType accountType = null;
+        AccountType accountType;
         try {accountType = AccountType.valueOf(accountTypeStr);}
         catch (Exception e) {
             String msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_INVALID_CLAIM", CLAIM_ACCOUNT_TYPE,
@@ -337,33 +337,29 @@ public class JWTValidateRequestFilter
             requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
             return;
         }
-        
-        // Get the user.
-        String jwtUser = (String)claims.get(CLAIM_USERNAME);
+        // Check the username.
+        String jwtUser = claims.get(CLAIM_USERNAME).asString();
         if (StringUtils.isBlank(jwtUser)) {
             String msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_INVALID_CLAIM", CLAIM_USERNAME, jwtUser);
             _log.error(msg);
             requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
             return;
         }
-       
-        // Get the delegation information if it exists.
+        // Check the delegation information if it exists.
         String delegator = null;
-        Boolean delegation = (Boolean)claims.get(CLAIM_DELEGATION);
+        Boolean delegation = claims.get(CLAIM_DELEGATION).asBoolean();
         if (delegation != null && delegation) {
-            delegator = (String)claims.get(CLAIM_DELEGATION_SUB);
+            delegator = claims.get(CLAIM_DELEGATION_SUB).asString();
             if (!TapisRestUtils.checkJWTSubjectFormat(delegator)) {
-                String msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_INVALID_CLAIM", CLAIM_DELEGATION_SUB,
-                                             delegator);
+                String msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_INVALID_CLAIM", CLAIM_DELEGATION_SUB, delegator);
                 _log.error(msg);
                 requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
                 return;
             }
-            
-            // Get the tenant component of the user@tenant string.  The  
+            // Get the tenant component of the user@tenant string.  The
             // above validation call guarantees that this won't blow up.
             String delegationTenant = delegator.substring(delegator.indexOf('@') + 1);
-            
+
             // Check that the jwt tenant is allowed to act on behalf of the delegation tenant.
             // If false returned, the called method has already modified the context to
             // abort the request, in which case we immediately return from here.
@@ -538,69 +534,6 @@ public class JWTValidateRequestFilter
         return msg;
     }
 
-    /**
-     * Decode the jwt without verifying its signature.
-     * 
-     * @param encodedJWT the JWT from the request header
-     * @return the decoded but not verified jwt
-     */
-    private DecodedJWT decodeJwt(String encodedJWT) throws JWTDecodeException
-    {
-        // Some defensive programming.
-        if (StringUtils.isBlank(encodedJWT)) return null;
-        String msg;
-        return JWT.decode(encodedJWT);
-
-//        // Lop off the signature part of the encoding so that the
-//        // jjwt library can parse it without attempting validation.
-//        // We expect the jwt to contain exactly two periods in
-//        // the following encoded format: header.body.signature
-//        // We need to remove the signature but leave both periods.
-//        String headerAndPayload;
-//        int lastDot = encodedJWT.lastIndexOf(".");
-//        if (lastDot + 1 < encodedJWT.length()) // should always be true
-//            headerAndPayload = encodedJWT.substring(0, lastDot + 1);
-//        else
-//            // Signature is missing, throw exception
-//            throw new TapisSecurityException(MsgUtils.getMsg("TAPIS_SECURITY_JWT_PARSE_ERROR", "Missing signature"));
-//
-//        // Parse the header and payload.
-//        // TODO use com.auth0 java-jwt (version 4.5.0) in place of or in addition to jsonwebtoken library?
-//        DecodedJWT decodedJWT;
-//        try { decodedJWT = JWT.decode(headerAndPayload);}
-//        catch (JWTDecodeException e) {
-//            msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_PARSE_ERROR", e.getMessage());
-//            _log.error(msg, e);
-//            throw new TapisSecurityException(msg, e);
-//        }
-//        // We were able to decode the jwt. Now check expiry to see if we should silently ignore it.
-//        Date jwtExpiry = decodedJWT.getExpiresAt();
-//        Jwt jwt;
-//        try {jwt = Jwts.parser().build().parse(headerAndPayload);}
-//            catch (Exception e) {
-//                // The decode may have detected an expired JWT.
-//                String emsg = e.getMessage();
-//                boolean ignoreExpiredJwt = false;
-//                if (emsg != null && emsg.startsWith("JWT expired at")) {
-//                    // If an expired JWT and we can extract the claims then include them in the message.
-//                    String claimsMsg = DEFAULT_CLAIMS_MSG;
-//                    if (e instanceof ExpiredJwtException) {
-//                        var claims = ((ExpiredJwtException)e).getClaims();
-//                        claimsMsg = buildClaimsMsg(claims); // returns a default if claims == null
-//                    }
-//                    msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_EXPIRED", emsg, claimsMsg);
-//                    _log.warn(msg);
-//                }
-//                else
-//                {
-//                    msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_PARSE_ERROR", emsg);
-//                    _log.error(msg, e);
-//                }
-//                throw new TapisSecurityException(msg, e);
-//            }
-//        return jwt;
-    }
-
     /* ---------------------------------------------------------------------- */
     /* prohibitNoAlg:                                                         */
     /* ---------------------------------------------------------------------- */
@@ -642,47 +575,40 @@ public class JWTValidateRequestFilter
      * 
      * @param decodedJWT the decoded jwt created by com.auth0
      * @param tenant the tenant to verify against
-     * @param allowRefresh allow the tenants list to be refreshed
+     * @param allowRefresh allow the tenants list to be refreshed. Needed due to recursion
+     * @param claimsMsg list of claims, for logging errors
      * @throws TapisSecurityException if the jwt cannot be verified 
      */
-    private void verifyJwt(DecodedJWT decodedJWT, String tenant, boolean allowRefresh)
+    private void verifyJwt(DecodedJWT decodedJWT, String tenant, boolean allowRefresh, String claimsMsg)
      throws TapisSecurityException
     {
-        // TODO Look at previous work on updating handling of ssh keys
-        //      get keypair or maybe just public key,
-        //      create auth0 Algorithm,
-        //      create auth0 jwt verifier,
-        //      verify jwt
-
       // Get the public part of the signing key.
       PublicKey publicKey = getJwtPublicKey(tenant);
 
-      JWTVerifier verifier = JWT.require(alg);
-      verifier.verify(decodedJWT);
-
-      // Verify and import the jwt data.
-//        @SuppressWarnings({ "unused", "rawtypes" })
-//        Jwt jwt = null;
-//        try {jwt = Jwts.parser().setSigningKey(publicKey).parse(encodedJwt);}
-//            catch (SignatureException e) {
-//                // Signature validation could have failed because we used
-//                // a stale public key for this tenant.  Let's see if refreshing
-//                // the tenant information is possible and helpful.  No need to
-//            	// recheck the algorithm since the jwt doesn't change on the
-//            	// recursive call.
-//                if (allowRefresh && refreshTenants())
-//                    verifyJwt(encodedJwt, tenant, false); // prevent infinite recursion
-//                  else {
-//                      String msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_PARSE_ERROR", e.getMessage());
-//                      _log.error(msg, e);
-//                      throw new TapisSecurityException(msg, e);
-//                  }
-//            }
-//            catch (Exception e) {
-//                String msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_PARSE_ERROR", e.getMessage());
-//                _log.error(msg, e);
-//                throw new TapisSecurityException(msg, e);
-//            }
+      // From SkAdmin code we see the signing keypair is of type RSA
+      // Also, decoding a jwt shows this for the header: { "alg": "RS256", "typ": "JWT"}, so RSA256 should be correct.
+      try { Algorithm.RSA256((RSAPublicKey) publicKey, null).verify(decodedJWT); }
+      catch (SignatureVerificationException e)
+      {
+        // Signature validation could have failed because we used a stale public key for this tenant.
+        // Let's see if refreshing the tenant information is possible and helpful. No need to recheck the algorithm
+        // since the jwt does not change on the recursive call.
+        if (allowRefresh && refreshTenants())
+        {
+          // Recursive call. Pass in allowRefresh=false to prevent infinite recursion.
+          verifyJwt(decodedJWT, tenant, false, claimsMsg);
+        }
+        else
+        {
+          String msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_VERIFY_FAIL", claimsMsg, e.getMessage());;
+          throw new TapisSecurityException(msg, e);
+        }
+      }
+      catch (Exception e)
+      {
+        String msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_PARSE_ERROR", e.getMessage());
+        throw new TapisSecurityException(msg, e);
+      }
     }
     
     /* ---------------------------------------------------------------------- */
@@ -1064,7 +990,7 @@ public class JWTValidateRequestFilter
     /* ---------------------------------------------------------------------- */
     /* refreshTenants:                                                        */
     /* ---------------------------------------------------------------------- */
-    /** Request the TenantManager to refresh its tenants information.
+    /** Request the TenantManager to refresh tenant information.
      * 
      * @return true if a refresh occurred, false otherwise
      */
@@ -1075,8 +1001,10 @@ public class JWTValidateRequestFilter
         var beforeUpdateTime = _tenantManager.getLastUpdateTime();
         _tenantManager.refreshTenants();
         var afterUpdateTime  = _tenantManager.getLastUpdateTime();
-        if (afterUpdateTime.isAfter(beforeUpdateTime)) return true;
-          else return false;
+        if (afterUpdateTime.isAfter(beforeUpdateTime))
+          return true;
+        else
+          return false;
     }
 
     /* ---------------------------------------------------------------------- */

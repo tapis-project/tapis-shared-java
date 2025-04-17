@@ -112,8 +112,9 @@ public class JWTValidateRequestFilterNegativeClaimTest {
 		CreateJWTParameters parms;
 
 		parms = new CreateJWTParameters(args);
-		CreateJWT cj = new CreateJWT(parms);
-		cj.exec();
+// TODO
+//		CreateJWT cj = new CreateJWT(parms);
+//		cj.exec();
 
 		BufferedReader input = new BufferedReader(new FileReader(pathToJWTOutputFileWithCorrectClaim));
 		jwtWithCorrectClaim = input.readLine(); // jwt is a base64url encoded string with no newline
