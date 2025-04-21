@@ -103,7 +103,7 @@ public class JWTValidateRequestFilter
     private static final String CLAIM_TENANT          = "tapis/tenant_id";
     private static final String TAPIS_TENANT_HEADER   = "X-Tapis-Tenant";
  
-	private static final String CLAIM_USERNAME        = "tapis/username";
+    private static final String CLAIM_USERNAME        = "tapis/username";
     private static final String CLAIM_TOKEN_TYPE      = "tapis/token_type";
     private static final String CLAIM_ACCOUNT_TYPE    = "tapis/account_type";
     private static final String CLAIM_DELEGATION      = "tapis/delegation";
@@ -229,141 +229,92 @@ public class JWTValidateRequestFilter
             return;
         }
         
-        // Parse variables.
-        String encodedJWT;
-        
-        // Extract the jwt header from the set of headers. 
-        // We expect the key search to be case-insensitive.
+        // Extract the encoded jwt from the set of headers. We expect the key search to be case-insensitive.
         MultivaluedMap<String, String> headers = requestContext.getHeaders();
-        encodedJWT = headers.getFirst(TAPIS_JWT_HEADER);
+        String encodedJWT = headers.getFirst(TAPIS_JWT_HEADER);
             
-        // Make sure that a JWT was provided when it is required.
-        if (StringUtils.isBlank(encodedJWT)) {
-            // This is an error in production, but allowed when running in test mode.
-            // We let the endpoint verify that all needed parameters have been supplied.
-            boolean jwtOptional = TapisEnv.getBoolean(EnvVar.TAPIS_ENVONLY_JWT_OPTIONAL);
-            if (jwtOptional) return;
-            
-            // We abort the request because we're missing required security information.
-            String msg = MsgUtils.getMsg("TAPIS_SECURITY_MISSING_JWT_INFO", requestContext.getMethod());
-            _log.error(msg);
-            requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
-            return;
-        }
-
-        String jwtErrorMsg;
-        Map<String, Claim> claims;
-        String claimsMsg;
-        String jwtTenant = "";
-        // Decode the jwt, get the claims, check expiry and verify using the signature
-        // Use com.auth0 java-jwt to decode and verify
-        try
+        // Make sure that a JWT was provided unless we are in test mode.
+        if (StringUtils.isBlank(encodedJWT))
         {
-          // Decode the jwt
-          DecodedJWT unverifiedJwt = JWT.decode(encodedJWT);
-          // Get claims. If no claims then abort
-          claims = unverifiedJwt.getClaims();
-          if (claims == null || claims.isEmpty())
-          {
-            jwtErrorMsg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_NO_CLAIMS", unverifiedJwt);
-            _log.error(jwtErrorMsg);
-            requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(jwtErrorMsg).build());
-            return;
-          }
-          claimsMsg = buildClaimsMsg(unverifiedJwt, claims);
-
-          // Check expiry. If expired then abort
-          jwtErrorMsg = checkForExpiredJwt(unverifiedJwt, claimsMsg);
-          if (!StringUtils.isBlank(jwtErrorMsg))
-          {
-            requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(jwtErrorMsg).build());
-            return;
-          }
-          // Unless skipping verify the jwt signature
-          boolean skipJWTVerify = TapisEnv.getBoolean(EnvVar.TAPIS_ENVONLY_SKIP_JWT_VERIFY);
-          if (!skipJWTVerify)
-          {
-            // Retrieve the tenant id from the claims section. If no tenant then abort.
-            jwtTenant = claims.get(CLAIM_TENANT).asString();
-            if (StringUtils.isBlank(jwtTenant))
+          // No JWT. If optional all is OK, simply return, else abort with UNAUTHORIZED
+            if (TapisEnv.getBoolean(EnvVar.TAPIS_ENVONLY_JWT_OPTIONAL))
             {
-              String msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_CLAIM_NOT_FOUND", unverifiedJwt, CLAIM_TENANT);
+              return;
+            }
+            else
+            {
+              String msg = MsgUtils.getMsg("TAPIS_SECURITY_MISSING_JWT_INFO", requestContext.getMethod());
               _log.error(msg);
               requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
               return;
             }
-            // Make sure the signature algorithm is not weak or "none".
-            prohibitNoAlg(claimsMsg, unverifiedJwt);
-            // Verify the jwt, allow for refreshing of the keypair associated with the tenant
-            verifyJwt(unverifiedJwt, jwtTenant, true, claimsMsg);
-          }
-        }
-        catch (Exception e)
-        {
-          // If decode or verify fail for any reason we abort
-          Status status = Status.UNAUTHORIZED;
-          String msg = e.getMessage();
-          if (msg.startsWith("TAPIS_SECURITY_JWT_KEY_ERROR")) status = Status.INTERNAL_SERVER_ERROR;
-          _log.error(e.getMessage(), e);
-          requestContext.abortWith(Response.status(status).entity(e.getMessage()).build());
-          return;
         }
 
+        // Decode and verify the JWT using the signature
+        Map<String, Claim> claims = decodeAndVerifyJWT(encodedJWT, requestContext);
+        // The decode call above returns null if there was a problem and we are aborting.
+        if (claims == null) return;
+
+        // Get tenant from JWT. decodeAndVerifyJWT call has already validated the claim attribute.
+        String jwtTenant = claims.get(CLAIM_TENANT).asString();
+
         // ------------------------ Validate Claims ----------------------------
-        // Check that the token is always an access token.
+        // Check that the token type is always set and is always of type *access*.
         String tokenType = claims.get(CLAIM_TOKEN_TYPE).asString();
         if (StringUtils.isBlank(tokenType) || !TOKEN_ACCESS.contentEquals(tokenType))
         {
-            String msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_INVALID_CLAIM", CLAIM_TOKEN_TYPE, tokenType);
-            _log.error(msg);
-            requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
-            return;
+          String msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_INVALID_CLAIM", CLAIM_TOKEN_TYPE, tokenType);
+          _log.error(msg);
+          requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
+          return;
         }
         // Check the account type.
         String accountTypeStr = claims.get(CLAIM_ACCOUNT_TYPE).asString();
-        if (StringUtils.isBlank(accountTypeStr)) {
-            String msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_INVALID_CLAIM", CLAIM_ACCOUNT_TYPE,
-                                         accountTypeStr);
-            _log.error(msg);
-            requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
-            return;
+        if (StringUtils.isBlank(accountTypeStr))
+        {
+          String msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_INVALID_CLAIM", CLAIM_ACCOUNT_TYPE, accountTypeStr);
+          _log.error(msg);
+          requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
+          return;
         }
         AccountType accountType;
         try {accountType = AccountType.valueOf(accountTypeStr);}
-        catch (Exception e) {
-            String msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_INVALID_CLAIM", CLAIM_ACCOUNT_TYPE,
-                                         accountTypeStr);
-            _log.error(msg, e);
-            requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
-            return;
+        catch (Exception e)
+        {
+          String msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_INVALID_CLAIM", CLAIM_ACCOUNT_TYPE, accountTypeStr);
+          _log.error(msg, e);
+          requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
+          return;
         }
         // Check the username.
         String jwtUser = claims.get(CLAIM_USERNAME).asString();
-        if (StringUtils.isBlank(jwtUser)) {
-            String msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_INVALID_CLAIM", CLAIM_USERNAME, jwtUser);
-            _log.error(msg);
-            requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
-            return;
+        if (StringUtils.isBlank(jwtUser))
+        {
+          String msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_INVALID_CLAIM", CLAIM_USERNAME, jwtUser);
+          _log.error(msg);
+          requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
+          return;
         }
         // Check the delegation information if it exists.
         String delegator = null;
         Boolean delegation = claims.get(CLAIM_DELEGATION).asBoolean();
-        if (delegation != null && delegation) {
-            delegator = claims.get(CLAIM_DELEGATION_SUB).asString();
-            if (!TapisRestUtils.checkJWTSubjectFormat(delegator)) {
-                String msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_INVALID_CLAIM", CLAIM_DELEGATION_SUB, delegator);
-                _log.error(msg);
-                requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
-                return;
-            }
-            // Get the tenant component of the user@tenant string.  The
-            // above validation call guarantees that this won't blow up.
-            String delegationTenant = delegator.substring(delegator.indexOf('@') + 1);
+        if (delegation != null && delegation)
+        {
+          delegator = claims.get(CLAIM_DELEGATION_SUB).asString();
+          if (!TapisRestUtils.checkJWTSubjectFormat(delegator))
+          {
+            String msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_INVALID_CLAIM", CLAIM_DELEGATION_SUB, delegator);
+            _log.error(msg);
+            requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
+            return;
+          }
+          // Get the tenant component from user@tenant string. checkJWTSubjectFormat has checked the format.
+          String delegationTenant = delegator.substring(delegator.indexOf('@') + 1);
 
-            // Check that the jwt tenant is allowed to act on behalf of the delegation tenant.
-            // If false returned, the called method has already modified the context to
-            // abort the request, in which case we immediately return from here.
-            if (!allowTenant(requestContext, jwtUser, jwtTenant, delegationTenant)) return;
+          // Check that the jwt tenant is allowed to act on behalf of the delegation tenant.
+          // If false returned, the called method has already modified the context to
+          // abort the request, in which case we immediately return from here.
+          if (!allowTenant(requestContext, jwtUser, jwtTenant, delegationTenant)) return;
         }
         
         // ------------------------ Assign Header Values -----------------------
@@ -378,82 +329,87 @@ public class JWTValidateRequestFilter
         String trackingId = headers.getFirst(TAPIS_TRACKING_HEADER);
         
         // ------------------------ Validate Site Services ---------------------
-        if (accountType == AccountType.service) {
-            // The X-Tapis-User header is mandatory when a service jwt is used.
-            if (StringUtils.isBlank(oboUser)) {
-                String msg = MsgUtils.getMsg("TAPIS_SECURITY_MISSING_HEADER", jwtUser, jwtTenant,
-                                             accountType.name(), TAPIS_USER_HEADER);
-                _log.error(msg);
-                requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
-                return;
-            }
+        if (accountType == AccountType.service)
+        {
+          // Account type is service. oboUser and oboTenant headers are mandatory.
+          if (StringUtils.isBlank(oboUser))
+          {
+            String msg = MsgUtils.getMsg("TAPIS_SECURITY_MISSING_HEADER", jwtUser, jwtTenant, accountType.name(),
+                                         TAPIS_USER_HEADER);
+            _log.error(msg);
+            requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
+            return;
+          }
+          if (StringUtils.isBlank(oboTenantId))
+          {
+            String msg = MsgUtils.getMsg("TAPIS_SECURITY_MISSING_HEADER", jwtUser, jwtTenant, accountType.name(),
+                                         TAPIS_TENANT_HEADER);
+            _log.error(msg);
+            requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
+            return;
+          }
+
+          // Check that the jwt tenant is allowed to act on behalf of the header tenant.
+          // If false returned, the called method has already modified the context to
+          // abort the request, in which case we immediately return from here.
+          if (!allowTenant(requestContext, jwtUser, jwtTenant, oboTenantId)) return;
+
+          // Make sure the target site claim is present and valid.
+          if (!validateTargetSite(requestContext, claims.get(CLAIM_SITE).asString(), jwtTenant, jwtUser)) return;
+
+          // ~~~~~~~~~~~~~~~~~~~~~~~~~~ TEMPORARY CODE ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+          // This code should be removed once the restricted service code is deployed.
+          if (!temporaryRestrictedTenantCheck(requestContext, jwtUser, jwtTenant, oboTenantId)) return;
+          // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        }
+        else
+        {
+          // Account type is user. Reject any user tokens in the site-admin tenant. This
+          // tenant is reserved for use by services only. Note that this check is not
+          // completely leakproof since several short-circuiting conditions above accept
+          // any token without making this check. This exposure is minor since the leak
+          // involves only globally permitted or unauthenticated requests. The vast
+          // majority of user tokens are subject to this check.
+          if (jwtTenant.equals(_localSite.getSiteAdminTenantId()))
+          {
+            String msg = MsgUtils.getMsg("TAPIS_SECURITY_USER_IN_ADMIN_TENANT",
+                                         jwtUser, jwtTenant, _siteId);
+            _log.error(msg);
+            requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
+            return;
+          }
             
-            // The X-Tapis-User header is mandatory when a service jwt is used.
-            if (StringUtils.isBlank(oboTenantId)) {
-                String msg = MsgUtils.getMsg("TAPIS_SECURITY_MISSING_HEADER", jwtUser, jwtTenant,
-                                             accountType.name(), TAPIS_TENANT_HEADER);
-                _log.error(msg);
-                requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
-                return;
-            }
+          // Make sure the obo headers are not present. We tolerate but ignore any site
+          // claim that may be present.
+          if (StringUtils.isNotBlank(oboUser))
+          {
+            String msg = MsgUtils.getMsg("TAPIS_SECURITY_UNEXPECTED_HEADER", jwtUser,
+                                         jwtTenant, accountType.name(), TAPIS_USER_HEADER);
+            _log.error(msg);
+            requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
+            return;
+          }
+          if (StringUtils.isNotBlank(oboTenantId))
+          {
+            String msg = MsgUtils.getMsg("TAPIS_SECURITY_UNEXPECTED_HEADER", jwtUser,
+                                         jwtTenant, accountType.name(), TAPIS_TENANT_HEADER);
+            _log.error(msg);
+            requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
+            return;
+          }
             
-            // Check that the jwt tenant is allowed to act on behalf of the header tenant.
-            // If false returned, the called method has already modified the context to
-            // abort the request, in which case we immediately return from here.
-            if (!allowTenant(requestContext, jwtUser, jwtTenant, oboTenantId)) return;
-            
-            // Make sure the target site claim is present.
-            String jwtSite = claims.get(CLAIM_SITE).asString();
-            if (!validateTargetSite(requestContext, jwtSite, jwtTenant, jwtUser)) return;
-            
-            // ~~~~~~~~~~~~~~~~~~~~~~~~~~ TEMPORARY CODE ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-            // This code should be removed once the restricted service code is deployed.
-            if (!temporaryRestrictedTenantCheck(requestContext, jwtUser, jwtTenant, oboTenantId)) return;
-            // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        } else {
-            // Account type is user. Reject any user tokens in the site-admin tenant. This
-            // tenant is reserved for use by services only. Note that this check is not 
-            // completely leakproof since several short-circuiting conditions above accept
-            // any token without making this check. This exposure is minor since the leak 
-            // involves only globally permitted or unauthenticated requests. The vast 
-            // majority of user tokens are subject to this check.
-            if (jwtTenant.equals(_localSite.getSiteAdminTenantId())) {
-                String msg = MsgUtils.getMsg("TAPIS_SECURITY_USER_IN_ADMIN_TENANT", 
-                                             jwtUser, jwtTenant, _siteId);
-                _log.error(msg);
-                requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
-                return;
-            }
-            
-            // Make sure the obo headers are not present. We tolerate but ignore any site 
-            // claim that may be present.
-            if (StringUtils.isNotBlank(oboUser)) {
-                String msg = MsgUtils.getMsg("TAPIS_SECURITY_UNEXPECTED_HEADER", jwtUser, 
-                                             jwtTenant, accountType.name(), TAPIS_USER_HEADER);
-                _log.error(msg);
-                requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
-                return;
-            }
-            if (StringUtils.isNotBlank(oboTenantId)) {
-                String msg = MsgUtils.getMsg("TAPIS_SECURITY_UNEXPECTED_HEADER", jwtUser, 
-                                             jwtTenant, accountType.name(), TAPIS_TENANT_HEADER);
-                _log.error(msg);
-                requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
-                return;
-            }
-            
-            // Set the on-behalf-of values to the jwt claim values with user tokens.
-            oboTenantId = jwtTenant;
-            oboUser     = jwtUser;
+          // Set the on-behalf-of values to the jwt claim values with user tokens.
+          oboTenantId = jwtTenant;
+          oboUser     = jwtUser;
         }
         
-        // Verify the site and tenant information AFTER the account-specific checking
+        // Verify the site and tenant information AFTER the account-type specific checking
         // has been performed. If false is returned, the called method has already modified 
         // the context to abort the request, in which case we immediately return from here.
         if (!validateSite(requestContext, jwtTenant, jwtUser)) return;
 
         // ------------------------ Assign Effective Values --------------------
-        // Assign pertinent claims and header values to our threadlocal context.
+        // Update our thread-local context with pertinent claims and header values.
         TapisThreadContext threadContext = TapisThreadLocal.tapisThreadContext.get();
         threadContext.setJwtTenantId(jwtTenant);             // from jwt claim, never null
         threadContext.setJwtUser(jwtUser);                   // from jwt claim, never null
@@ -467,8 +423,7 @@ public class JWTValidateRequestFilter
 
         // Inject the user and JWT into the security context and request context
         AuthenticatedUser requestUser = 
-            new AuthenticatedUser(jwtUser, jwtTenant, accountTypeStr, 
-                                  delegator, oboUser, oboTenantId, 
+            new AuthenticatedUser(jwtUser, jwtTenant, accountTypeStr, delegator, oboUser, oboTenantId,
                                   headerUserTokenHash, _siteId, encodedJWT);
         requestContext.setSecurityContext(new TapisSecurityContext(requestUser));
     }
@@ -503,10 +458,77 @@ public class JWTValidateRequestFilter
     /* ********************************************************************** */
     /*                            Private Methods                             */
     /* ********************************************************************** */
-    /* ---------------------------------------------------------------------- */
-    /* isExpiredJwt:                                                       */
-    /* ---------------------------------------------------------------------- */
-    /**
+
+  /**
+   *  Given JWT encoded as a base64 string decode and verify JWT using signature
+   *
+   * @param encodedJWT the JWT from the request header
+   * @param requestContext context fromt the request
+   * @return claims - All claims from the JWT
+   */
+  private Map<String, Claim> decodeAndVerifyJWT(String encodedJWT, ContainerRequestContext requestContext)
+  {
+    String jwtErrorMsg;
+    Map<String, Claim> claims;
+    String claimsMsg;
+    String jwtTenant = "";
+    // Decode the jwt, get the claims, check expiry and verify using the signature
+    // Use com.auth0 java-jwt to decode and verify
+    try
+    {
+      // Decode the jwt
+      DecodedJWT unverifiedJwt = JWT.decode(encodedJWT);
+      // Get claims. If no claims then abort
+      claims = unverifiedJwt.getClaims();
+      if (claims == null || claims.isEmpty())
+      {
+        jwtErrorMsg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_NO_CLAIMS", unverifiedJwt);
+        _log.error(jwtErrorMsg);
+        requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(jwtErrorMsg).build());
+        return null;
+      }
+      claimsMsg = buildClaimsMsg(unverifiedJwt, claims);
+
+      // Check expiry. If expired then abort
+      jwtErrorMsg = checkForExpiredJwt(unverifiedJwt, claimsMsg);
+      if (!StringUtils.isBlank(jwtErrorMsg))
+      {
+        requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(jwtErrorMsg).build());
+        return null;
+      }
+      // Unless skipping verify the jwt signature
+      boolean skipJWTVerify = TapisEnv.getBoolean(EnvVar.TAPIS_ENVONLY_SKIP_JWT_VERIFY);
+      if (!skipJWTVerify)
+      {
+        // Retrieve the tenant id from the claims section. If no tenant then abort.
+        jwtTenant = claims.get(CLAIM_TENANT).asString();
+        if (StringUtils.isBlank(jwtTenant))
+        {
+          String msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_CLAIM_NOT_FOUND", unverifiedJwt, CLAIM_TENANT);
+          _log.error(msg);
+          requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
+          return null;
+        }
+        // Make sure the signature algorithm is not weak or "none".
+        prohibitNoAlg(claimsMsg, unverifiedJwt);
+        // Verify the jwt, allow for refreshing of the keypair associated with the tenant
+        verifyJwt(unverifiedJwt, jwtTenant, true, claimsMsg);
+      }
+    }
+    catch (Exception e)
+    {
+      // If decode or verify fail for any reason we abort
+      Status status = Status.UNAUTHORIZED;
+      String msg = e.getMessage();
+      if (msg.startsWith("TAPIS_SECURITY_JWT_KEY_ERROR")) status = Status.INTERNAL_SERVER_ERROR;
+      _log.error(e.getMessage(), e);
+      requestContext.abortWith(Response.status(status).entity(e.getMessage()).build());
+      return null;
+    }
+    return claims;
+  }
+
+  /**
      *  Determine if jwt has expired. If yes then return true.
      *  If expired less than ignoreAfterDays then log warning, else no logging.
      *
@@ -789,33 +811,34 @@ public class JWTValidateRequestFilter
     /* validateTargetSite:                                                    */
     /* ---------------------------------------------------------------------- */
     /** This method validates the target site claim from service jwt (user jwt's
-     * do not have that claim).  The target site must match the local site.
+     * do not have that claim). The target site must match the local site.
      * 
      * @param requestContext context used to report errors
-     * @param jwtSite the tapis/target_site claim from jwt
+     * @param jwtSite from jwt claims
      * @param jwtTenant non-null tenant from jwt
      * @param jwtUser non-null user from jwt
      * @return true if all checks pass, false otherwise
      */
-    private boolean validateTargetSite(ContainerRequestContext requestContext,
-                                       String jwtSite, String jwtTenant, String jwtUser)
+    private boolean validateTargetSite(ContainerRequestContext requestContext, String jwtSite,
+                                       String jwtTenant, String jwtUser)
     {
-        // Make sure the assigned target site match the local site.
-        if (StringUtils.isBlank(jwtSite)) {
-            String msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_INVALID_CLAIM", CLAIM_SITE, jwtSite);
-            _log.error(msg);
-            requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
-            return false;
-        }
-        if (!jwtSite.equals(_siteId)) {
-            String msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_WRONG_SITE", jwtUser, jwtTenant, jwtSite, _siteId);
-            _log.error(msg);
-            requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
-            return false;
-        }
-        
-        // Success.
-        return true;
+      // Make sure the assigned target site matches the local site.
+      if (StringUtils.isBlank(jwtSite))
+      {
+        String msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_INVALID_CLAIM", CLAIM_SITE, jwtSite);
+        _log.error(msg);
+        requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
+        return false;
+      }
+      if (!jwtSite.equals(_siteId))
+      {
+        String msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_WRONG_SITE", jwtUser, jwtTenant, jwtSite, _siteId);
+        _log.error(msg);
+        requestContext.abortWith(Response.status(Status.UNAUTHORIZED).entity(msg).build());
+        return false;
+      }
+      // Success.
+      return true;
     }
     
     /* ---------------------------------------------------------------------- */

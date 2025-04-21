@@ -1,4 +1,6 @@
-package edu.utexas.tacc.tapis.sharedapi.security;
+// TODO
+//      This class appears to be unused. Remove it.
+//package edu.utexas.tacc.tapis.sharedapi.security;
 
 import java.security.PublicKey;
 import java.util.Objects;
@@ -8,7 +10,7 @@ import com.auth0.jwt.exceptions.SignatureVerificationException;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 
-public class TapisJWTValidator {
+//public class TapisJWTValidator {
 //
 //    private String encodedJWT;
 //
@@ -62,4 +64,4 @@ public class TapisJWTValidator {
 //
 //
 //
-}
+//}

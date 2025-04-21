@@ -1,11 +1,12 @@
 {
-"iss": "https://dev.api.tapis.io/tokens/v3",
-"exp": 2384481713842,
-"sub": "testuser2@dev",
-"tapis/token_type": "access",
-"tapis/account_type": "user",
-"tapis/tenant_id": "dev",
-"tapis/username": "testuser2",
-"tapis/delegation": false,
-"tapis/delegation_sub": null
+  "jti": "84b33dfb-b838-47c1-b57d-cc57b062042c",
+  "iss": "https://dev.develop.tapis.io/v3/tokens",
+  "sub": "testuser2@dev",
+  "tapis/tenant_id": "dev",
+  "tapis/token_type": "access",
+  "tapis/delegation": false,
+  "tapis/delegation_sub": null,
+  "tapis/username": "testuser2",
+  "tapis/account_type": "user",
+  "exp": 1740504575
 }

@@ -1,16 +1,16 @@
-package edu.utexas.tacc.tapis.sharedapi.security;
-
-
-import com.auth0.jwt.interfaces.Claim;
-import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
-import java.security.KeyPair;
-import java.util.Map;
-
-@Test
-public class TestJWTValidator {
+//package edu.utexas.tacc.tapis.sharedapi.security;
+//
+//
+//import com.auth0.jwt.interfaces.Claim;
+//import org.testng.Assert;
+//import org.testng.annotations.BeforeClass;
+//import org.testng.annotations.Test;
+//
+//import java.security.KeyPair;
+//import java.util.Map;
+//
+//@Test
+//public class TestJWTValidator {
 //
 //    private KeyPair keys;
 //
@@ -70,4 +70,4 @@ public class TestJWTValidator {
 //    }
 //
 //
-}
+//}

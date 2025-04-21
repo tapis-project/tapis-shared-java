@@ -1,34 +1,42 @@
-package edu.utexas.tacc.tapis.sharedapi.jwt;
+// TODO
+//      This class appears to be unused. Remove it.
+//package edu.utexas.tacc.tapis.sharedapi.jwt;
+//
+//import java.io.BufferedReader;
+//import java.io.FileReader;
+//import java.io.IOException;
+//import java.nio.file.Files;
+//import java.nio.file.Path;
+//import java.nio.file.Paths;
+//import java.security.KeyPair;
+//import java.security.PrivateKey;
+//import java.security.PublicKey;
+//import java.security.cert.Certificate;
+//
+//import org.testng.Assert;
+//import org.testng.annotations.AfterSuite;
+//import org.testng.annotations.BeforeSuite;
+//import org.testng.annotations.Test;
+//
+//import edu.utexas.tacc.tapis.sharedapi.keys.KeyManager;
+////import edu.utexas.tacc.tapis.sharedapi.utils.CreateJWT;
+////import edu.utexas.tacc.tapis.sharedapi.utils.CreateJWTParameters;
+////import io.jsonwebtoken.Claims;
+////import io.jsonwebtoken.Header;
+////import io.jsonwebtoken.Jwt;
+////import io.jsonwebtoken.Jwts;
+////import io.jsonwebtoken.SignatureAlgorithm;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.security.KeyPair;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.security.cert.Certificate;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterSuite;
-import org.testng.annotations.BeforeSuite;
-import org.testng.annotations.Test;
-
-import edu.utexas.tacc.tapis.sharedapi.keys.KeyManager;
-import edu.utexas.tacc.tapis.sharedapi.utils.CreateJWT;
-import edu.utexas.tacc.tapis.sharedapi.utils.CreateJWTParameters;
-
-
+// We are switching from io.jsonwebtoken to com.auth0.java-jwt.
+// This test appears to have been disabled for some time, so for now just comment it out.
 /**
  * This class tests the CreateJWT class
  * @author spadhy
  *
  */
-@Test(groups= {"unit"})
-public class CreateJWTTest 
-{
+//@Test(groups= {"unit"})
+//public class CreateJWTTest
+//{
 //	/* **************************************************************************** */
 //	/*                                   Constants                                  */
 //	/* **************************************************************************** */
@@ -148,6 +156,4 @@ public class CreateJWTTest
 //		}
 //
 //	}
-//
-//
-}
+//}

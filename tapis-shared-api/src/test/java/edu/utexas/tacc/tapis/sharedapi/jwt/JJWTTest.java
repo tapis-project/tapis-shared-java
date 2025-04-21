@@ -1,36 +1,38 @@
-package edu.utexas.tacc.tapis.sharedapi.jwt;
-
-import java.security.KeyPair;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.security.cert.Certificate;
-import java.util.Map.Entry;
-import java.util.Base64;
-import java.util.Set;
-import java.util.Base64.Encoder;
-
-import edu.utexas.tacc.tapis.sharedapi.keys.KeyManager;
-
-/** This class tests a custom version of jjwt. That version of jjwt is modified in the 
- * following ways:
- * 
- *  1. jjwt customized for tapis is called jjwt-aloe and is available at
- *     https://github.com/richcar58/jjwt-aloe.
- *  2. The main changes are to pom.xml and SignatureAlgorithm.java.
- *  3. The built artifacts (jar files) are available from our local nexus server at
- *     https://maven.tacc.utexas.edu/nexus/content/repositories/thirdparty/io/jsonwebtoken/jjwt-aloe/0.9.1/.
- *
- * This program runs two tests.  The first (useKeyGen) uses jjwt facilities to generate
- * a key pair that is then used to sign and verify a JWT.  The second (useKeystore)
- * uses keys that pre-exist in a local keystore to sign and verify a JWT.  This latter
- * test simulates how Tapis will verify JWTs in develop, staging and production environments.     
- * 
- * NOTE: The pre-existing keys should be generated using the KeyManagerTest program. 
- * 
- * @author rcardone
- */
-public class JJWTTest 
-{
+// TODO
+//      This class appears to be unused. Remove it.
+//package edu.utexas.tacc.tapis.sharedapi.jwt;
+//
+//import java.security.KeyPair;
+//import java.security.PrivateKey;
+//import java.security.PublicKey;
+//import java.security.cert.Certificate;
+//import java.util.Map.Entry;
+//import java.util.Base64;
+//import java.util.Set;
+//import java.util.Base64.Encoder;
+//
+//import edu.utexas.tacc.tapis.sharedapi.keys.KeyManager;
+//
+///** This class tests a custom version of jjwt. That version of jjwt is modified in the
+// * following ways:
+// *
+// *  1. jjwt customized for tapis is called jjwt-aloe and is available at
+// *     https://github.com/richcar58/jjwt-aloe.
+// *  2. The main changes are to pom.xml and SignatureAlgorithm.java.
+// *  3. The built artifacts (jar files) are available from our local nexus server at
+// *     https://maven.tacc.utexas.edu/nexus/content/repositories/thirdparty/io/jsonwebtoken/jjwt-aloe/0.9.1/.
+// *
+// * This program runs two tests.  The first (useKeyGen) uses jjwt facilities to generate
+// * a key pair that is then used to sign and verify a JWT.  The second (useKeystore)
+// * uses keys that pre-exist in a local keystore to sign and verify a JWT.  This latter
+// * test simulates how Tapis will verify JWTs in develop, staging and production environments.
+// *
+// * NOTE: The pre-existing keys should be generated using the KeyManagerTest program.
+// *
+// * @author rcardone
+// */
+//public class JJWTTest
+//{
 //    /* **************************************************************************** */
 //    /*                                   Constants                                  */
 //    /* **************************************************************************** */
@@ -256,5 +258,4 @@ public class JJWTTest
 //        msg += "    password      - the keystore and alias password [default password]\n\n";
 //        return msg;
 //    }
-}
-    
+//}
