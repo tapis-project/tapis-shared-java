@@ -23,6 +23,9 @@ import edu.utexas.tacc.tapis.shared.utils.TapisGsonUtils;
 import edu.utexas.tacc.tapis.sharedapi.keys.KeyManager;
 
 /*
+TODO: Update this class to use com.auth0.jwt and read signing key from SK
+      Will need to support some env variables for (at least): Tenant url, SK url, service password, etc.
+      See similar code in Systems service integration test classes.
  * This class takes an JSON input file of JWT claims and adds a minimal number of headers, base64url encodes the
  * header and claims and signs the encoded data using a key from a local keystore to make a JWT.
  * The JWT is written to an output file if one is specified or to standard out if no output file specified.
@@ -94,7 +97,7 @@ public class CreateJWT
         // Get the signing key.
         PrivateKey privateKey = getPrivateKey();
 
-        // TODO Create the encode JWT object.
+        // TODO Create the encoded JWT object.
         String encodedJwt = null; //Jwts.builder().setHeaderParam("typ", "JWT").setClaims(claims).
 //                              signWith(privateKey, signatureAlg).compact();
 

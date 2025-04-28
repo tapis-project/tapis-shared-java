@@ -252,7 +252,7 @@ public class JWTValidateRequestFilter
 
         // Decode and verify the JWT using the signature
         Map<String, Claim> claims = decodeAndVerifyJWT(encodedJWT, requestContext);
-        // The decode call above returns null if there was a problem and we are aborting.
+        // The decode call above returns null and sets up for abort if there was a problem.
         if (claims == null) return;
 
         // Get tenant from JWT. decodeAndVerifyJWT call has already validated the claim attribute.

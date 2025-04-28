@@ -324,41 +324,41 @@ public class TenantManager
     public RequestRoutingInfo getRequestRoutingInfo(String tenantId, String service)
       throws TapisException
     {
-    	// Determine the tenant and the site.
-    	var tenant = getTenant(tenantId);
-    	Site owningSite = getSite(tenant.getSiteId());
-    	Site targetSite;
-    	if (!owningSite.getServices().contains(service)) targetSite = getPrimarySite();
-    	  else targetSite = owningSite; 
-    	
-		// If the tenant's owning site is different from the target site, then the target
-    	// site must be the primary site because of the previous conditional (and the 
-    	// invariant that the primary site runs all services). In this case, we construct 
-    	// the base url from the target site's base url template.  Otherwise, the target 
-    	// site is the site that owns the tenant, so we can directly use the tenant 
-    	// assigned base url.
-    	String baseUrl;
-		if (targetSite != owningSite) 
-			baseUrl = targetSite.getTenantBaseUrlTemplate().replace(BASEURL_PLACEHOLDER, tenantId);
-		else 
-			baseUrl = tenant.getBaseUrl();
+      // Determine the tenant and the site.
+      var tenant = getTenant(tenantId);
+      Site owningSite = getSite(tenant.getSiteId());
+      Site targetSite;
+      if (!owningSite.getServices().contains(service)) targetSite = getPrimarySite();
+      else targetSite = owningSite;
 
-        // TODO: remove special handling for SK, Jobs and Meta
-        // TODO:
-        // TODO: For some services we need to add /v3
-        // TODO: Fixing this in each service will be a major effort
-        // TODO:   so for now add the /v3 as needed.
-        if (TapisConstants.SERVICE_NAME_SECURITY.equals(service) ||
+      // If the tenant's owning site is different from the target site, then the target
+      // site must be the primary site because of the previous conditional (and the
+      // invariant that the primary site runs all services). In this case, we construct
+      // the base url from the target site's base url template.  Otherwise, the target
+      // site is the site that owns the tenant, so we can directly use the tenant
+      // assigned base url.
+      String baseUrl;
+      if (targetSite != owningSite)
+        baseUrl = targetSite.getTenantBaseUrlTemplate().replace(BASEURL_PLACEHOLDER, tenantId);
+      else
+        baseUrl = tenant.getBaseUrl();
+
+      // TODO: remove special handling for SK, Jobs and Meta
+      // TODO:
+      // TODO: For some services we need to add /v3
+      // TODO: Fixing this in each service will be a major effort
+      // TODO:   so for now add the /v3 as needed.
+      if (TapisConstants.SERVICE_NAME_SECURITY.equals(service) ||
             TapisConstants.SERVICE_NAME_JOBS.equals(service) ||
             TapisConstants.SERVICE_NAME_META.equals(service))
-        {
-          baseUrl = baseUrl + "/v3";
-        }
+      {
+        baseUrl = baseUrl + "/v3";
+      }
 
-		// Package up the results.
-		return new RequestRoutingInfo(tenantId, service, baseUrl, targetSite.getSiteId());
+      // Package up the results.
+      return new RequestRoutingInfo(tenantId, service, baseUrl, targetSite.getSiteId());
     }
-    
+
     /* ---------------------------------------------------------------------------- */
     /* getSites:                                                                    */
     /* ---------------------------------------------------------------------------- */

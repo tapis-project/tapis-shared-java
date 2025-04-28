@@ -1,4 +1,4 @@
-The file testuser2EncodedJwt_Tampered.txt contains a base64 encoded JWT where
+The file testuser2EncodedJwt_Tamper.dat contains a base64 encoded JWT where
 the body has been modified but the signature has not.
 The encoded JWT should decode (without verification) to this:
 HEADER:
