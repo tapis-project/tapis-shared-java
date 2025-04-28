@@ -552,7 +552,7 @@ public class JWTValidateRequestFilter
             msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_EXPIRED", "Expired", claimsMsg);
         }
         // If it expired recently enough then also log a warning
-        if (jwtExpiry.isBefore(ignoreIfBeforeTimestamp)) _log.warn(msg);
+        if (jwtExpiry.isAfter(ignoreIfBeforeTimestamp)) _log.warn(msg);
         return msg;
     }
 
