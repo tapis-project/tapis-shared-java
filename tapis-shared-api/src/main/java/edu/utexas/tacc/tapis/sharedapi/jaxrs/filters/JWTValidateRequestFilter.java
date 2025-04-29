@@ -51,15 +51,15 @@ import edu.utexas.tacc.tapis.sharedapi.utils.TapisRestUtils;
 import edu.utexas.tacc.tapis.tenants.client.gen.model.Site;
 import edu.utexas.tacc.tapis.tenants.client.gen.model.Tenant;
 
-/** This jax-rs filter is the main authentication mechanism for Tapis services 
- * written in Java.  This class depends on the Tapis Tenants service to acquire
- * the public keys of all tenants.  The Tenants service is accessed through the
- * TenantManager class.  The public keys are used to validate JWT signatures.
+/**
+ * This jax-rs filter is the main authentication mechanism for Tapis services
+ * written in Java. This class depends on the Tapis Tenants service to acquire
+ * the public keys of all tenants. The Tenants service is accessed through the
+ * TenantManager class. The public keys are used to validate JWT signatures.
  * Additional tenant information is used to authorize tenants to act on behalf
  * of other tenants. 
- * 
+ * <p>
  * This filter performs the following:
- * 
  *      - Reads the tapis jwt assertion header from the http request.
  *      - Determines whether the header is required and takes further action.
  *      - Extracts the tenant id from the unverified claims.
@@ -68,16 +68,22 @@ import edu.utexas.tacc.tapis.tenants.client.gen.model.Tenant;
  *      - Extracts the username and other values from the JWT claims.
  *      - Assigns claim values to their thread-local fields.
  *      - Assigns security related header values to their thread-local fields.
- *  
+ * <p>
  * This class caches tenant public keys after it decodes them the first time.
  * It inspects the TenantManager's last update time to determine if the cache
  * might be stale and, if so, clears the caches. Tenant information rarely
  * changes, but the information cached in this class automatically stays in
  * sync with the TenantManager, no restarts or manual intervention required.
- *      
+ * <p>
  * The test parameter filter is run after this filter and may override the values
  * set by this filter.
- * 
+ * <p>
+ * NOTE: There are some integration tests for this class in the tapis-apps project, GitHub repo
+ *       <a href="https://github.com/tapis-project/tapis-apps">...</a>.
+ *       The tests are in class JwtFilterTest.java. They test some of the JWT verification code in the filter()
+ *       method of this class. The tapis-apps tests can be run locally, but they do depend on the Systems
+ *       service to be deployed to the TACC DEV environment with any tapis-shared-java code changes that
+ *       are to be tested.
  * @author rcardone
  */
 @Provider
@@ -548,8 +554,8 @@ public class JWTValidateRequestFilter
         LocalDateTime jwtExpiry = LocalDateTime.ofInstant(decodedJWT.getExpiresAt().toInstant(), ZoneOffset.UTC);
         if (jwtExpiry.isBefore(nowTimestamp))
         {
-            // Expired JWT, create a message
-            msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_EXPIRED", "Expired", claimsMsg);
+          // Expired JWT, create a message
+          msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_EXPIRED", jwtExpiry.toString(), claimsMsg);
         }
         // If it expired recently enough then also log a warning
         if (jwtExpiry.isAfter(ignoreIfBeforeTimestamp)) _log.warn(msg);
@@ -945,7 +951,7 @@ public class JWTValidateRequestFilter
     /* ---------------------------------------------------------------------- */
     /** Get the home site of the specified tenant.
      * 
-     * @param tenantId
+     * @param tenantId tenant
      * @return the site id or null if none could be found
      */
     private String getTenantOwningSiteId(String tenantId)
@@ -982,7 +988,7 @@ public class JWTValidateRequestFilter
      * initialized the statically cached result is reused.  Race conditions 
      * on first use are harmless.
      * 
-     * @return
+     * @return true if this is a local-only service
      */
     private boolean isLocalOnlyService()
     {
