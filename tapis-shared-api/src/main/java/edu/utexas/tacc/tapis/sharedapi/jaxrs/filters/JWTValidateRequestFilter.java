@@ -582,7 +582,6 @@ public class JWTValidateRequestFilter
       if (StringUtils.isBlank(alg) || alg.equalsIgnoreCase("none"))
       {
         String msg = MsgUtils.getMsg("TAPIS_SECURITY_JWT_INVALID_ALG", alg, claimsMsg);
-        _log.error(msg);
         throw new TapisSecurityException(msg);
       }
     }
