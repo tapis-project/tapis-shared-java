@@ -102,8 +102,7 @@ public class ServiceJWT
     /* constructor:                                                                 */
     /* ---------------------------------------------------------------------------- */
     /** To limit the attack surface, we don't save the service password that gets passed
-     * to the Tokens service.  Instead we use it here to get the initial tokens and
-     * then discard it. 
+     * to the Tokens service. Instead, we use it here to get the initial tokens and then discard it.
      * 
      * @param parms parameters used to create access and refresh tokens
      * @param servicePassword the service password passed to the Tokens service

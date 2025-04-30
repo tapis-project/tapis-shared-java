@@ -23,7 +23,7 @@ public class ServiceJWTTest
     private static final String TENANT  = "dev";
     private static final String SERVICE = "jobs";
     private static final String SERVICE_SYSTEMS = "systems";
-    private static final String SERVICE_PWD = "3qLT0gy3MQrQKIiljEIRa2ieMEBIYMUyPSdYeNjIgZs=";
+    private static final String SERVICE_PWD = "*************";
     private static final int    TTL_SECS = 30;
     private static final int    ITERATIONS = 3;
     
