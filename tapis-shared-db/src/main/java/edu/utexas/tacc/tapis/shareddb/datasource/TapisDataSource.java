@@ -54,15 +54,15 @@ public final class TapisDataSource
      * @param meterMinutes - the metering interval
      * 
      * @return the default data source.
-     * @throws AloeException 
+     * @throws TapisException
      */
     public static synchronized DataSource getDataSource(String appName,
-                                                        String poolName, 
-    		                                            String jdbcUrl, 
-                                                        String user, 
+                                                        String poolName,
+                                                        String jdbcUrl,
+                                                        String user,
                                                         String password, 
                                                         int    maxPoolSize,
-                                                        int    meterMinutes) 
+                                                        int    meterMinutes)
       throws TapisException
     {
     	// Create and configure the datasource if necessary.

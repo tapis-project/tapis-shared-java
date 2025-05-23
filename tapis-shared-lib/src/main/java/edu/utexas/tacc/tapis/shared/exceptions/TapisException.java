@@ -1,8 +1,11 @@
 package edu.utexas.tacc.tapis.shared.exceptions;
 
-public class TapisException 
+import java.io.Serial;
+
+public class TapisException
  extends Exception 
 {
+	@Serial
 	private static final long serialVersionUID = -2996383526058549742L;
 
 	// TapisUtils.tapisify() requires that all subclasses implement constructors
@@ -12,6 +15,7 @@ public class TapisException
 	// exceptions that still can be tapisified.
 	//
 	// *** See TapisUtils.tapisify() for reflective constructor calls *** 
+	public TapisException(Throwable cause) {super(cause);}
 	public TapisException(String message) {super(message);}
-	public TapisException(String message, Throwable cause) {super(message, cause);} 
+	public TapisException(String message, Throwable cause) {super(message, cause);}
 }
