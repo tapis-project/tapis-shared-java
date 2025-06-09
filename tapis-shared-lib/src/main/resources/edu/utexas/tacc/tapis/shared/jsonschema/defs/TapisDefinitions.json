@@ -46,7 +46,7 @@
             "properties" : {
                 "mechanism" : {
                     "type" : "string",
-                    "enum" : [ "WEBHOOK", "EMAIL", "QUEUE", "ACTOR" ]
+                    "enum" : [ "WEBHOOK", "EMAIL" ]
                 },
                 "webhookURL" :   {"type" : "string"},
                 "emailAddress" : {"type" : "string"}

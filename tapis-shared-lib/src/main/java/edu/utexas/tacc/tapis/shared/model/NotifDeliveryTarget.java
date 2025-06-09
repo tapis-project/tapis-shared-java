@@ -3,7 +3,7 @@ package edu.utexas.tacc.tapis.shared.model;
 public class NotifDeliveryTarget 
 {
     // Not all types may be implemented.
-    public enum DeliveryMethod {WEBHOOK, EMAIL, QUEUE, ACTOR}
+    public enum DeliveryMethod {WEBHOOK, EMAIL}
     
     // Delivery coordinates specifying where notifications are sent.
     private DeliveryMethod deliveryMethod;
