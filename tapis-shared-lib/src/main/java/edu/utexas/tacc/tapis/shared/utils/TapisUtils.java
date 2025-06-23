@@ -964,8 +964,7 @@ public class TapisUtils
 
       // build up permission to look like this:
       //       service:allow:service:<userTenant>:<providingService>
-      String permission= new StringBuilder().append("service").append(":").
-              append("allow").append(":").append("service").append(":").append(userTenant).
+      String permission= new StringBuilder().append("service:allow:service:").append(userTenant).
               append(":").append(serviceProvidingAccess).toString();
 
       // build up the role name to look like this:
@@ -985,10 +984,10 @@ public class TapisUtils
       }
 
       try {
-          return skClient.rolePermits(roleName, userTenant, RoleTypeEnum.RESTRICTED_SVC, permission, true);
+          return skClient.rolePermits(roleName, serviceTenant, RoleTypeEnum.RESTRICTED_SVC, permission, true);
       } catch (Exception e){
           String msg = MsgUtils.getMsg("SK_ROLE_PERMITS_ERROR", serviceProvidingAccess, serviceRequestingAccess,
-                  userTenant, roleName, permission);
+                  serviceTenant, roleName, permission);
           throw new TapisException(msg, e);
       }
   }
