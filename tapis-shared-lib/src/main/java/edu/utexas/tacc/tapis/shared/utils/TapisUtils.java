@@ -32,6 +32,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import edu.utexas.tacc.tapis.shared.security.TenantManager;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.MultilineRecursiveToStringStyle;
@@ -47,6 +48,8 @@ import edu.utexas.tacc.tapis.shared.exceptions.recoverable.TapisRecoverableExcep
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
 import edu.utexas.tacc.tapis.shared.security.ServiceClients;
 import edu.utexas.tacc.tapis.shared.threadlocal.TapisThreadLocal;
+
+import edu.utexas.tacc.tapis.security.client.gen.model.RoleTypeEnum;
 
 public class TapisUtils
 {
@@ -937,6 +940,57 @@ public class TapisUtils
       }
       
       return hasRole;
+  }
+
+  public static boolean isServicePermitted(String serviceProvidingAccess, String serviceRequestingAccess, String userTenant)
+          throws TapisException {
+
+      // Check parameters
+      if (StringUtils.isBlank(serviceProvidingAccess)) {
+          String msg = MsgUtils.getMsg("TAPIS_NULL_PARAMETER", "isServicePermitted", "serviceProvidingAccess");
+          _log.error(msg);
+          throw new TapisException(msg);
+      }
+      if (StringUtils.isBlank(serviceRequestingAccess)) {
+          String msg = MsgUtils.getMsg("TAPIS_NULL_PARAMETER", "isServicePermitted", "serviceRequestingAccess");
+          _log.error(msg);
+          throw new TapisException(msg);
+      }
+      if (StringUtils.isBlank(userTenant)) {
+          String msg = MsgUtils.getMsg("TAPIS_NULL_PARAMETER", "isServicePermitted", "userTenant");
+          _log.error(msg);
+          throw new TapisException(msg);
+      }
+
+      // build up permission to look like this:
+      //       service:allow:service:<userTenant>:<providingService>
+      String permission= new StringBuilder().append("service").append(":").
+              append("allow").append(":").append("service").append(":").append(userTenant).
+              append(":").append(serviceProvidingAccess).toString();
+
+      // build up the role name to look like this:
+      //       service_<requestingService>
+      String roleName = new StringBuilder().append("service_").append(serviceRequestingAccess).toString();
+
+      TenantManager tm = TenantManager.getInstance();
+      String serviceTenant = tm.getSiteAdminTenantId(tm.getPrimarySiteId());
+
+      SKClient skClient;
+      try {
+          skClient = ServiceClients.getInstance().getClient(serviceProvidingAccess, serviceTenant, SKClient.class);
+      }
+      catch (Exception e) {
+          String msg = MsgUtils.getMsg("TAPIS_CLIENT_NOT_FOUND", "SK", serviceTenant, serviceRequestingAccess);
+          throw new TapisException(msg, e);
+      }
+
+      try {
+          return skClient.rolePermits(roleName, userTenant, RoleTypeEnum.RESTRICTED_SVC, permission, true);
+      } catch (Exception e){
+          String msg = MsgUtils.getMsg("SK_ROLE_PERMITS_ERROR", serviceProvidingAccess, serviceRequestingAccess,
+                  userTenant, roleName, permission);
+          throw new TapisException(msg, e);
+      }
   }
   
   /* ---------------------------------------------------------------------------- */
