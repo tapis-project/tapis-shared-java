@@ -942,8 +942,13 @@ public class TapisUtils
       return hasRole;
   }
 
-  public static boolean isServicePermitted(String serviceProvidingAccess, String serviceRequestingAccess, String userTenant)
-          throws TapisException {
+  public static boolean isServicePermitted(String serviceProvidingAccess, String serviceRequestingAccess, String userTenant,
+                                           String  userName) throws TapisException {
+      return isServicePermitted(serviceProvidingAccess, serviceRequestingAccess, userTenant, userName, "all");
+  }
+
+  public static boolean isServicePermitted(String serviceProvidingAccess, String serviceRequestingAccess, String userTenant,
+          String  userName, String action) throws TapisException {
 
       // Check parameters
       if (StringUtils.isBlank(serviceProvidingAccess)) {
@@ -961,11 +966,23 @@ public class TapisUtils
           _log.error(msg);
           throw new TapisException(msg);
       }
+      if (StringUtils.isBlank(userName)) {
+          String msg = MsgUtils.getMsg("TAPIS_NULL_PARAMETER", "isServicePermitted", "userName");
+          _log.error(msg);
+          throw new TapisException(msg);
+      }
 
       // build up permission to look like this:
-      //       service:allow:service:<userTenant>:<providingService>
-      String permission= new StringBuilder().append("service:allow:service:").append(userTenant).
-              append(":").append(serviceProvidingAccess).toString();
+      //       service:<userTenant>:<providingService>:<user>:<action>
+      String permission = new StringBuilder("service:").
+              append(userTenant).
+              append(":").
+              append(serviceProvidingAccess).
+              append(":").
+              append(userName).
+              append(":").
+              append(action).
+              toString();
 
       // build up the role name to look like this:
       //       service_<requestingService>
