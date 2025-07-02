@@ -1,5 +1,6 @@
 package edu.utexas.tacc.tapis.sharedapi.utils;
 
+import edu.utexas.tacc.tapis.sharedapi.security.ResourceRequestUser;
 import org.apache.commons.lang3.StringUtils;
 
 import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
@@ -10,7 +11,10 @@ import edu.utexas.tacc.tapis.shared.utils.TapisUtils;
 import edu.utexas.tacc.tapis.sharedapi.responses.RespAbstract;
 import edu.utexas.tacc.tapis.sharedapi.responses.RespBasic;
 
+import javax.ws.rs.ForbiddenException;
+import javax.ws.rs.InternalServerErrorException;
 import javax.ws.rs.core.Response.Status;
+import java.util.Collection;
 import java.util.HashMap;
 
 /**
@@ -320,4 +324,26 @@ public class TapisRestUtils
 
     return map;
   }
+
+  public static void checkServiceRestrictions(String hostServiceName, Collection<String> trustedServices,
+                                              ResourceRequestUser rUser) {
+    if (rUser.isServiceRequest()) {
+        String restrictedServiceName = rUser.getJwtUserId();
+        if (trustedServices.contains(restrictedServiceName)) {
+            return;
+        }
+
+        try {
+            if (!TapisUtils.isServicePermitted(hostServiceName,
+                    restrictedServiceName, rUser.getOboTenantId(), rUser.getOboUserId())) {
+                throw new ForbiddenException("RestrictedService " + restrictedServiceName +
+                        " not allowed for user " + rUser.getOboUserId() + " in " +
+                        rUser.getOboTenantId() + " tenant.");
+            }
+        } catch (TapisException ex) {
+            throw new InternalServerErrorException(ex.getMessage(), ex);
+        }
+    }
+  }
+
 }

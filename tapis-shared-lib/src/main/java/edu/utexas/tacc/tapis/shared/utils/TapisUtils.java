@@ -48,7 +48,6 @@ import edu.utexas.tacc.tapis.shared.exceptions.recoverable.TapisRecoverableExcep
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
 import edu.utexas.tacc.tapis.shared.security.ServiceClients;
 import edu.utexas.tacc.tapis.shared.threadlocal.TapisThreadLocal;
-
 import edu.utexas.tacc.tapis.security.client.gen.model.RoleTypeEnum;
 
 public class TapisUtils
@@ -1002,7 +1001,7 @@ public class TapisUtils
 
       try {
           return skClient.rolePermits(roleName, serviceTenant, RoleTypeEnum.RESTRICTED_SVC, permission, true);
-      } catch (Exception e){
+      } catch (Exception e) {
           String msg = MsgUtils.getMsg("SK_ROLE_PERMITS_ERROR", serviceProvidingAccess, serviceRequestingAccess,
                   serviceTenant, roleName, permission);
           throw new TapisException(msg, e);
