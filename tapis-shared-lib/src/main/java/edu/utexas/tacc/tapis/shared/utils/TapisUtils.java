@@ -31,15 +31,13 @@ import java.util.Scanner;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import edu.utexas.tacc.tapis.shared.security.TenantManager;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.MultilineRecursiveToStringStyle;
 import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
+import edu.utexas.tacc.tapis.client.shared.exceptions.TapisClientException;
 import edu.utexas.tacc.tapis.security.client.SKClient;
 import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
 import edu.utexas.tacc.tapis.shared.exceptions.TapisImplException;
@@ -47,6 +45,7 @@ import edu.utexas.tacc.tapis.shared.exceptions.TapisNotFoundException;
 import edu.utexas.tacc.tapis.shared.exceptions.recoverable.TapisRecoverableException;
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
 import edu.utexas.tacc.tapis.shared.security.ServiceClients;
+import edu.utexas.tacc.tapis.shared.security.TenantManager;
 import edu.utexas.tacc.tapis.shared.threadlocal.TapisThreadLocal;
 import edu.utexas.tacc.tapis.security.client.gen.model.RoleTypeEnum;
 
@@ -1002,6 +1001,10 @@ public class TapisUtils
       try {
           return skClient.rolePermits(roleName, serviceTenant, RoleTypeEnum.RESTRICTED_SVC, permission, true);
       } catch (Exception e) {
+          // If role not found return false, else throw an exception
+          if (e instanceof TapisClientException tce) {
+            if (tce.getCode() == 404) return false;
+          }
           String msg = MsgUtils.getMsg("SK_ROLE_PERMITS_ERROR", serviceProvidingAccess, serviceRequestingAccess,
                   serviceTenant, roleName, permission);
           throw new TapisException(msg, e);
