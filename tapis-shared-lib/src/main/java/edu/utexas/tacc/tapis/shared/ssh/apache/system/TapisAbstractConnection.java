@@ -146,7 +146,7 @@ abstract class TapisAbstractConnection
     {
         // Check input.
         if (system == null) {
-            String msg = MsgUtils.getMsg("ALOE_NULL_PARAMETER", "createNewConnection", "system");
+            String msg = MsgUtils.getMsg("TAPIS_NULL_PARAMETER", "createNewConnection", "system");
             throw new TapisRuntimeException(msg);
         }
         
@@ -163,16 +163,18 @@ abstract class TapisAbstractConnection
         SSHConnection conn = null;
         // We support three types of Tapis credential authn methods: PASSWORD, PKI_KEYS, TMS_KEYS
         try {
+            // make sure we have an int for the port
+            int port = -1;
+            if (system.getPort() != null) port = system.getPort();
             if (system.getDefaultAuthnMethod() == AuthnEnum.PASSWORD) {
-                conn = new SSHConnection(system.getHost(), system.getPort(),
-                                         system.getEffectiveUserId(), cred.getPassword());
+                conn = new SSHConnection(system.getHost(), port, system.getEffectiveUserId(), cred.getPassword());
             }
             else if (system.getDefaultAuthnMethod() == AuthnEnum.PKI_KEYS) {
-                conn = new SSHConnection(system.getHost(), system.getPort(),
+                conn = new SSHConnection(system.getHost(), port,
                                          system.getEffectiveUserId(), cred.getPublicKey(), cred.getPrivateKey());
             }
             else if (system.getDefaultAuthnMethod() == AuthnEnum.TMS_KEYS) {
-                conn = new SSHConnection(system.getHost(), system.getPort(),
+                conn = new SSHConnection(system.getHost(), port,
                                          system.getEffectiveUserId(), cred.getTmsPublicKey(), cred.getTmsPrivateKey());
             }
             else {
