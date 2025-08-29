@@ -164,7 +164,7 @@ public final class ThrottleMap
         public void run()
         {
             // Announce our existence.
-            _log.info(MsgUtils.getMsg("JOBS_THROTTLEMAP_STARTING", _name, 
+            _log.info(MsgUtils.getMsg("TAPIS_THROTTLEMAP_STARTING", _name,
                                       _throttleSeconds, _throttleLimit, 
                                       _cleanerSleepMs));
             

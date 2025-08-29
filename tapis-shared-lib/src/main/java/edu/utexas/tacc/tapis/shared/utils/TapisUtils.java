@@ -913,7 +913,7 @@ public class TapisUtils
   {
       // Disallow cross tenant queries.
       if (!tenant.equals(oboTenant)) {
-          String msg = MsgUtils.getMsg("JOBS_MISMATCHED_TENANT", oboTenant, tenant);
+          String msg = MsgUtils.getMsg("TAPIS_MISMATCHED_TENANT", oboTenant, tenant, "isAdmin");
           throw new TapisException(msg);
       }
       

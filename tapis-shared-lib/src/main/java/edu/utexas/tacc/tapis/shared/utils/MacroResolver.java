@@ -26,22 +26,21 @@ public final class MacroResolver
     
     // The character sequence that indicates the beginning of a macro definition.
     public static final String MACRO_DELIMITER = "${";
-    
-    // Maximum number top level iterations allowed when resolving macros.
-    private static final int MAX_ITERATIONS = 16;
-    
+
     // Host eval pattern. Group 1 = variable name, group 2 = suffix.
-    static final Pattern _hostEvalPattern = Pattern.compile("HOST_EVAL\\((.*)\\)(.*)");
-    
-    // Environment variable name and default path format. The name can start with an 
+    public static final Pattern _hostEvalPattern = Pattern.compile("HOST_EVAL\\((.*)\\)(.*)");
+
+    // Environment variable name and default path format. The name can start with an
     // optional $, then a letter or underscore, and then any sequence of alphanumerics 
     // or underscores.  The optional path is separated from the name with a comma,
     // which can have whitespace on either side of it.  The path itself consists of
     // non-whitespace characters.  Trailing whitespace is ignored.
-    static final Pattern _envVarPattern = 
-        Pattern.compile("(\\$?[a-zA-Z_][a-zA-Z0-9_]*)\\s*(,\\s*(\\S+)\\s*)?");
-    
-    /* **************************************************************************** */
+    public static final Pattern _envVarPattern = Pattern.compile("(\\$?[a-zA-Z_][a-zA-Z0-9_]*)\\s*(,\\s*(\\S+)\\s*)?");
+
+    // Maximum number top level iterations allowed when resolving macros.
+    private static final int MAX_ITERATIONS = 16;
+
+  /* **************************************************************************** */
     /*                                    Fields                                    */
     /* **************************************************************************** */
     // Used to access host environment variables.
@@ -90,7 +89,7 @@ public final class MacroResolver
         // Tracing.
         if (_log.isDebugEnabled()) {
             var id = _targetSystem == null ? "null" : _targetSystem.getId();
-            _log.debug(MsgUtils.getMsg("TAPIS_JOBS_RESOLVING_MACRO_EXPR", text, id));
+            _log.debug(MsgUtils.getMsg("TAPIS_RESOLVING_MACRO_EXPR", text, id));
         }
         
         // Resolve the host function and then all macros.
@@ -183,7 +182,7 @@ public final class MacroResolver
         // Parse the text.
         var m = _hostEvalPattern.matcher(text);
         if (!m.matches()) {
-            String msg = MsgUtils.getMsg("JOBS_INVALID_HOST_EVAL", text);
+            String msg = MsgUtils.getMsg("TAPIS_INVALID_HOST_EVAL", text);
             throw new TapisException(msg);
         }
         
@@ -193,7 +192,7 @@ public final class MacroResolver
         
         // Make sure we have non-empty parms.
         if (StringUtils.isBlank(parms)) {
-            String msg = MsgUtils.getMsg("JOBS_NO_VARIABLE_IN_HOST_EVAL", text);
+            String msg = MsgUtils.getMsg("TAPIS_NO_VARIABLE_IN_HOST_EVAL", text);
             throw new TapisException(msg);
         }
         
@@ -201,7 +200,7 @@ public final class MacroResolver
         parms = parms.strip();
         m = _envVarPattern.matcher(parms);
         if (!m.matches()) {
-            String msg = MsgUtils.getMsg("JOBS_INVALID_ENV_VAR_CHAR", parms);
+            String msg = MsgUtils.getMsg("TAPIS_INVALID_ENV_VAR_CHAR", parms);
             throw new TapisException(msg);
         }
         
@@ -226,7 +225,7 @@ public final class MacroResolver
         if (StringUtils.isBlank(result)) 
             if (!StringUtils.isBlank(defaultPath)) result = defaultPath;
               else {
-                  String msg = MsgUtils.getMsg("JOBS_RESOLVE_HOST_EVAL_ERROR", text, varName);
+                  String msg = MsgUtils.getMsg("TAPIS_RESOLVE_HOST_EVAL_ERROR", text, varName);
                   throw new TapisException(msg);
               }
         result = result.strip(); // Always remove leading and trailing ws
@@ -275,7 +274,7 @@ public final class MacroResolver
         while (true) {
             // Cut things off to avoid infinite loop.
             if (iterations > MAX_ITERATIONS) {
-                String msg = MsgUtils.getMsg("JOBS_MACRO_TOO_COMPLEX", originalText, MAX_ITERATIONS);
+                String msg = MsgUtils.getMsg("TAPIS_MACRO_TOO_COMPLEX", originalText, MAX_ITERATIONS);
                 throw new TapisException(msg);
             }
             
@@ -320,13 +319,13 @@ public final class MacroResolver
         // Find the macro termination.
         int mend = text.indexOf("}", mstart);
         if (mend < 0) {
-            String msg = MsgUtils.getMsg("JOBS_MACRO_ILL_FORMED", text);
+            String msg = MsgUtils.getMsg("TAPIS_MACRO_ILL_FORMED", text);
             throw new TapisException(msg);
         }
             
         // Avoid empty macros or out-of-bounds indexing.  
         if (mstart+2 >= mend) {
-            String msg = MsgUtils.getMsg("JOBS_MACRO_EMPTY", text);
+            String msg = MsgUtils.getMsg("TAPIS_MACRO_EMPTY", text);
             throw new TapisException(msg);
         }
             
@@ -338,14 +337,14 @@ public final class MacroResolver
         // Detect cycles.
         if (macrosResolved.contains(macroName)) {
             String flatList = String.join(", ", macrosResolved);
-            String msg = MsgUtils.getMsg("JOBS_MACRO_CYCLE_DETECTED", text, macroName, flatList);
+            String msg = MsgUtils.getMsg("TAPIS_MACRO_CYCLE_DETECTED", text, macroName, flatList);
             throw new TapisException(msg);
         }
             
         // Look up the macro's value.
         String mvalue = _macros.get(macroName);
         if (StringUtils.isBlank(mvalue)) {
-            String msg = MsgUtils.getMsg("JOBS_MACRO_MISSING_VALUE", text, macroName);
+            String msg = MsgUtils.getMsg("TAPIS_MACRO_MISSING_VALUE", text, macroName);
             throw new TapisException(msg);
         }
             

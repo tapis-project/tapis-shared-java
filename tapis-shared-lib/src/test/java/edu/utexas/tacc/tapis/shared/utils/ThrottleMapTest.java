@@ -18,7 +18,7 @@ public class ThrottleMapTest
         // false
         // false
         // false
-        // 2022-02-16 14:20:10.854 INFO  [cleanerThread/] e.u.t.t.j.u.ThrottleMap$ThrottleMapCleaner:167 - JOBS_THROTTLEMAP_STARTING Cleaner thread in ThrottleMap "test1" starting with sleeptime=2,000 ms, throttleSeconds=2, throttleLimit=2.
+        // 2022-02-16 14:20:10.854 INFO  [cleanerThread/] e.u.t.t.j.u.ThrottleMap$ThrottleMapCleaner:167 - TAPIS_THROTTLEMAP_STARTING Cleaner thread in ThrottleMap "test1" starting with sleeptime=2,000 ms, throttleSeconds=2, throttleLimit=2.
         // 2
         // 0
         // 0
