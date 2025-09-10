@@ -158,21 +158,21 @@ public final class SshSessionPool {
     public PooledSshSession<SSHExecChannel> borrowExecChannel(String tenant, String host, Integer port, String effectiveUserId,
                                                               AuthnEnum authnMethod, Credential credential, Duration wait) throws TapisException {
         return reserveSessionOnConnection(tenant, host, port, effectiveUserId, authnMethod, credential,
-                SSHExecChannel.class, wait);
+                SSHExecChannel.class, wait, SshSessionPoolKey.ConnectionMethod.SSH);
     }
 
     public PooledSshSession<SSHSftpClient> borrowSftpClient(String tenant, String host, Integer port, String effectiveUserId,
                                                             AuthnEnum authnMethod, Credential credential, Duration wait) throws TapisException {
         return reserveSessionOnConnection(tenant, host, port, effectiveUserId, authnMethod, credential,
-                SSHSftpClient.class, wait);
+                SSHSftpClient.class, wait, SshSessionPoolKey.ConnectionMethod.SFTP);
     }
 
     private <T extends SSHSession> PooledSshSession<T> reserveSessionOnConnection(String tenant, String host, Integer port, String effectiveUserId,
                                                                                   AuthnEnum authnMethod, Credential credential,
-                                                                                  Class<T> clazz,
-                                                                                  Duration wait) throws TapisException {
+                                                                                  Class<T> clazz, Duration wait,
+                                                                                  SshSessionPoolKey.ConnectionMethod connectionMethod) throws TapisException {
         long startTime = System.currentTimeMillis();
-        SshSessionPoolKey key = new SshSessionPoolKey(tenant, host, port, effectiveUserId, authnMethod, credential);
+        SshSessionPoolKey key = new SshSessionPoolKey(tenant, host, port, effectiveUserId, authnMethod, credential, connectionMethod);
         SshConnectionGroup connectionGroup = null;
         SshSessionHolder<T> sessionHolder = null;
 

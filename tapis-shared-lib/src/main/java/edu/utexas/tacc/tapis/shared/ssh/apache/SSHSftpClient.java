@@ -96,6 +96,8 @@ public class SSHSftpClient
         // time.
         _sftpClient.close();
 
+        boolean closed = false;
+
         // wait 100 ms for close (max 10 times ... after that just give up).  I think this will be
         // way more than enough, but we could do some tuning if necessary in the future.  The main thing
         // is that we need to wait a bit, but we don't want o wait forever.
@@ -108,9 +110,14 @@ public class SSHSftpClient
                     throw new RuntimeException(e);
                 }
             } else {
-                // already clsoed, so break out of loop
+                // already closed, so break out of loop
+                closed = true;
                 break;
             }
+        }
+
+        if(!closed) {
+            log.error("SFTP Connection Does not appear to have closed");
         }
 
         // this is just some logging that could come in handy for debugging purposes
