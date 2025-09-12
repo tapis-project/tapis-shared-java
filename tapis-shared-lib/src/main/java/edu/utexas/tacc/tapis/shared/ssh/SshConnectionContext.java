@@ -110,16 +110,21 @@ final class SshConnectionContext {
     // not synchronized.  There's really no reason to synchronize this method, but if the caller is going
     // to make deciesions based on the result (such as reserveSessions) it probably should do this in a
     // synchronized block
-    private synchronized boolean hasAvailableSessions() {
+    private synchronized boolean hasAvailableSessions(SshSessionPoolKey.ConnectionMethod method) {
         if(isExpired()) {
             return false;
         }
 
-        return (activeSshSessionHolders.size() + activeSftpSessionHolders.size() + parkedSftpSessionHolders.size()) < maxSessions;
+        boolean hasSession = switch(method) {
+            case SSH -> activeSshSessionHolders.size() < maxSessions;
+            case SFTP -> activeSftpSessionHolders.size() < maxSessions;
+        };
+
+        return hasSession;
     }
 
     protected synchronized SshSessionHolder<SSHSftpClient> reserveSftpSession() throws TapisException {
-        if (hasAvailableSessions()) {
+        if (hasAvailableSessions(SshSessionPoolKey.ConnectionMethod.SFTP)) {
             SshSessionHolder<SSHSftpClient> sessionHolder = null;
             Iterator<SshSessionHolder<SSHSftpClient>> parkedSessionHolderIterator = parkedSftpSessionHolders.iterator();
 
@@ -158,7 +163,7 @@ final class SshConnectionContext {
     }
 
     protected synchronized SshSessionHolder<SSHExecChannel> reserveSshSession() throws TapisException {
-        if (hasAvailableSessions()) {
+        if (hasAvailableSessions(SshSessionPoolKey.ConnectionMethod.SSH)) {
             SshSessionHolder<SSHExecChannel> sessionHolder = null;
             if (sessionHolder == null) {
                 try {
