@@ -27,10 +27,8 @@ final class SshConnectionContext {
 
     private final SSHConnection sshConnection;
     private final int maxSessions;
-//    private final int maxSftpSessions;
     private final long creationTime;
     private boolean expired;
-//    private static final double MAX_SFTP_RATIO = .6;
 
     // This will be set to the currentTimeMillis() each time a release is done.   It's used by getIdleTime()
     // getIdleTime will return 0 if there are sessions, or it will return idleSince minus the current time
@@ -62,7 +60,6 @@ final class SshConnectionContext {
         // because there are a bunch of parked sftp sessions.  This will reserve a percentage of the sessions for sftp,
         // and leave the rest for SSH.  Perhaps we could be smarter and discard excess parked sessions on demand - I looked
         // at this, and it was harder than I first thought it would be, so I just went this route.
-//        this.maxSftpSessions = (int)(maxSessions * MAX_SFTP_RATIO);
         this.creationTime = System.currentTimeMillis();
         this.lifetimeMs = poolPolicy.getMaxConnectionDuration().toMillis();
         this.maxIdleTimeMs = poolPolicy.getMaxConnectionIdleTime().toMillis();
@@ -127,12 +124,6 @@ final class SshConnectionContext {
         if (hasAvailableSessions(SshSessionPoolKey.ConnectionMethod.SFTP)) {
             SshSessionHolder<SSHSftpClient> sessionHolder = null;
             Iterator<SshSessionHolder<SSHSftpClient>> parkedSessionHolderIterator = parkedSftpSessionHolders.iterator();
-
-//            // only allow reserving the session if it wont exceed the sftpsession max.  We need to leave some
-//            // session for ssh use
-//            if(activeSftpSessionHolders.size() >= maxSftpSessions) {
-//                return null;
-//            }
 
             while (parkedSessionHolderIterator.hasNext()) {
                 SshSessionHolder<SSHSftpClient> parkedSftpSessionHolder = parkedSessionHolderIterator.next();
@@ -199,9 +190,6 @@ final class SshConnectionContext {
                 if (result && client.isOpen()) {
                     // Park the session if the session is not expired.
                     if(sessionIsExpired(sessionHolder)) {
-//                    // only park the session if it wont exceed the sftpsession max.  We need to leave some
-//                    // session for ssh use
-//                    if((sessionIsExpired(sessionHolder) || (activeSftpSessionHolders.size() + parkedSftpSessionHolders.size() >= maxSftpSessions))) {
                         IOUtils.closeQuietly(sessionHolder);
                     } else {
                         if((parkedSftpSessionHolders.contains(sessionHolder)) || (activeSftpSessionHolders.contains(sessionHolder))) {
