@@ -238,7 +238,7 @@ public class JWTValidateRequestFilter
         // Extract the encoded jwt from the set of headers. We expect the key search to be case-insensitive.
         MultivaluedMap<String, String> headers = requestContext.getHeaders();
         String encodedJWT = headers.getFirst(TAPIS_JWT_HEADER);
-            
+
         // Make sure that a JWT was provided unless we are in test mode.
         if (StringUtils.isBlank(encodedJWT))
         {
@@ -935,7 +935,7 @@ public class JWTValidateRequestFilter
     /* ---------------------------------------------------------------------- */
     /** Get the home site of the specified tenant.
      * 
-     * @param tenantId tenant
+     * @param tenantId
      * @return the site id or null if none could be found
      */
     private String getTenantOwningSiteId(String tenantId)
