@@ -27,10 +27,8 @@ final class SshConnectionContext {
 
     private final SSHConnection sshConnection;
     private final int maxSessions;
-    private final int maxSftpSessions;
     private final long creationTime;
     private boolean expired;
-    private static final double MAX_SFTP_RATIO = .7;
 
     // This will be set to the currentTimeMillis() each time a release is done.   It's used by getIdleTime()
     // getIdleTime will return 0 if there are sessions, or it will return idleSince minus the current time
@@ -62,7 +60,6 @@ final class SshConnectionContext {
         // because there are a bunch of parked sftp sessions.  This will reserve a percentage of the sessions for sftp,
         // and leave the rest for SSH.  Perhaps we could be smarter and discard excess parked sessions on demand - I looked
         // at this, and it was harder than I first thought it would be, so I just went this route.
-        this.maxSftpSessions = (int)(maxSessions * MAX_SFTP_RATIO);
         this.creationTime = System.currentTimeMillis();
         this.lifetimeMs = poolPolicy.getMaxConnectionDuration().toMillis();
         this.maxIdleTimeMs = poolPolicy.getMaxConnectionIdleTime().toMillis();
@@ -110,24 +107,23 @@ final class SshConnectionContext {
     // not synchronized.  There's really no reason to synchronize this method, but if the caller is going
     // to make deciesions based on the result (such as reserveSessions) it probably should do this in a
     // synchronized block
-    private synchronized boolean hasAvailableSessions() {
+    private synchronized boolean hasAvailableSessions(SshSessionPoolKey.ConnectionMethod method) {
         if(isExpired()) {
             return false;
         }
 
-        return (activeSshSessionHolders.size() + activeSftpSessionHolders.size() + parkedSftpSessionHolders.size()) < maxSessions;
+        boolean hasSession = switch(method) {
+            case SSH -> activeSshSessionHolders.size() < maxSessions;
+            case SFTP -> activeSftpSessionHolders.size() < maxSessions;
+        };
+
+        return hasSession;
     }
 
     protected synchronized SshSessionHolder<SSHSftpClient> reserveSftpSession() throws TapisException {
-        if (hasAvailableSessions()) {
+        if (hasAvailableSessions(SshSessionPoolKey.ConnectionMethod.SFTP)) {
             SshSessionHolder<SSHSftpClient> sessionHolder = null;
             Iterator<SshSessionHolder<SSHSftpClient>> parkedSessionHolderIterator = parkedSftpSessionHolders.iterator();
-
-            // only allow reserving the session if it wont exceed the sftpsession max.  We need to leave some
-            // session for ssh use
-            if(activeSftpSessionHolders.size() >= maxSftpSessions) {
-                return null;
-            }
 
             while (parkedSessionHolderIterator.hasNext()) {
                 SshSessionHolder<SSHSftpClient> parkedSftpSessionHolder = parkedSessionHolderIterator.next();
@@ -158,7 +154,7 @@ final class SshConnectionContext {
     }
 
     protected synchronized SshSessionHolder<SSHExecChannel> reserveSshSession() throws TapisException {
-        if (hasAvailableSessions()) {
+        if (hasAvailableSessions(SshSessionPoolKey.ConnectionMethod.SSH)) {
             SshSessionHolder<SSHExecChannel> sessionHolder = null;
             if (sessionHolder == null) {
                 try {
@@ -192,9 +188,8 @@ final class SshConnectionContext {
                 log.trace("Releaseing SSHConnectionHolder: " + System.identityHashCode(sessionHolder));
                 result = activeSftpSessionHolders.remove(sessionHolder);
                 if (result && client.isOpen()) {
-                    // only park the session if it wont exceed the sftpsession max.  We need to leave some
-                    // session for ssh use
-                    if((sessionIsExpired(sessionHolder) || (activeSftpSessionHolders.size() + parkedSftpSessionHolders.size() >= maxSftpSessions))) {
+                    // Park the session if the session is not expired.
+                    if(sessionIsExpired(sessionHolder)) {
                         IOUtils.closeQuietly(sessionHolder);
                     } else {
                         if((parkedSftpSessionHolders.contains(sessionHolder)) || (activeSftpSessionHolders.contains(sessionHolder))) {

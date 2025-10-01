@@ -30,29 +30,36 @@ final class SshSessionPoolKey {
     private final String tenant;
     private final String host;
     private final Integer port;
+    private final ConnectionMethod connectionMethod;
     private final String effectiveUserId;
     private final AuthnEnum authnMethod;
     private final String credentialHash;
+
+    public enum ConnectionMethod {
+        SSH,
+        SFTP
+    }
 
     /**
      * This will only keep the hash of the credential - not the actual credential.
      */
     public SshSessionPoolKey(String tenant, String host, Integer port, String effectiveUserId,
-                             AuthnEnum authnMethod, Credential credential) throws TapisException {
+                             AuthnEnum authnMethod, Credential credential, ConnectionMethod connectionMethod) throws TapisException {
         // check connection details for non-empty values
         if((StringUtils.isBlank(host))
                 || (port == null)
                 || (StringUtils.isBlank(effectiveUserId))
-                || (authnMethod == null)) {
+                || (authnMethod == null)
+                || (connectionMethod == null)) {
             String msg = MsgUtils.getMsg("SSH_POOL_MISSING_CONNECTION_INFORMATION",
-                    tenant, host, port, effectiveUserId, authnMethod);
+                    tenant, host, port, effectiveUserId, authnMethod, connectionMethod.toString());
             throw new TapisException(msg);
         }
 
         // check credentials for non-empty values
         if(credential == null) {
             String msg = MsgUtils.getMsg("SSH_POOL_MISSING_CREDENTIALS",
-                    tenant, host, port, effectiveUserId, authnMethod);
+                    tenant, host, port, effectiveUserId, authnMethod, connectionMethod.toString());
             throw new TapisException(msg);
         }
 
@@ -88,6 +95,7 @@ final class SshSessionPoolKey {
 
         // Is this good enough, or should we comput a sha256 or something?
         this.credentialHash = HashUtils.computeSHA256(stringBuilder.toString().getBytes());
+        this.connectionMethod = connectionMethod;
     }
 
     @Override
@@ -97,12 +105,13 @@ final class SshSessionPoolKey {
         SshSessionPoolKey that = (SshSessionPoolKey) o;
         return Objects.equals(credentialHash, that.credentialHash) && Objects.equals(tenant, that.tenant)
                 && Objects.equals(host, that.host) && Objects.equals(port, that.port)
-                && Objects.equals(effectiveUserId, that.effectiveUserId) && authnMethod == that.authnMethod;
+                && Objects.equals(effectiveUserId, that.effectiveUserId) && authnMethod == that.authnMethod
+                && connectionMethod == that.connectionMethod;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(tenant, host, port, effectiveUserId, authnMethod, credentialHash);
+        return Objects.hash(tenant, host, port, effectiveUserId, authnMethod, credentialHash, connectionMethod);
     }
 
     @Override
@@ -119,6 +128,8 @@ final class SshSessionPoolKey {
         builder.append(",  ");
         builder.append("EffectiveUserId: ");
         builder.append(effectiveUserId);
+        builder.append("ConnectionMethod: ");
+        builder.append(connectionMethod);
         return builder.toString();
     }
 }

@@ -1,7 +1,9 @@
 package edu.utexas.tacc.tapis.shared.ssh.apache;
 
 import java.io.ByteArrayOutputStream;
+import java.io.FilterInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.EnumSet;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -96,7 +98,56 @@ public class SSHExecChannel implements SSHSession
     {
         return execute(cmd, outErrStream, outErrStream);
     }
-    
+
+    /* ---------------------------------------------------------------------- */
+    /* execute:                                                               */
+    /* ---------------------------------------------------------------------- */
+    /** Execute a remote command and return its standard out and standard err
+     * content in their respective streams.
+     *
+     * If an exception is thrown before the command can be issued, the
+     * sshConnection is closed.  After the command is issued, the exceptions
+     * pass through to the caller.
+     *
+     * @param cmd the command to execute on the remote host
+     * @param inStream the stream containing standard in of the remote command
+     * @param outStream the stream containing standard out of the remote command
+     * @param errStream the stream containing standard err of the remote command
+     * @return the remote command's exit code
+     * @throws IOException
+     * @throws TapisException
+     */
+    public int execute(String cmd, InputStream inStream, OutputStream outStream, OutputStream errStream) throws IOException, TapisException {
+        return execute(cmd, inStream, outStream, errStream, true);
+    }
+
+    /* ---------------------------------------------------------------------- */
+    /* execute:                                                               */
+    /* ---------------------------------------------------------------------- */
+    /** Execute a remote command and return its standard out and standard err
+     * content in their respective streams.
+     *
+     * If an exception is thrown before the command can be issued, the
+     * sshConnection is closed.  After the command is issued, the exceptions
+     * pass through to the caller.
+     *
+     * @param cmd the command to execute on the remote host
+     * @param outStream the stream containing standard out of the remote command
+     * @param errStream the stream containing standard err of the remote command
+     * @param closeConnectionOnException if set to true, and an exception is thrown by this method,
+     *                                   we will close the underlying SSHConnection also.  This should
+     *                                   probably always be set to false except to support existing code that
+     *                                   relies on this behavior.  In the future, the connections should be
+     *                                   managed separately from the sessions since it's possible to have
+     *                                   multiple sessions per connection.
+     * @return the remote command's exit code
+     * @throws IOException
+     * @throws TapisException
+     */
+    public int execute(String cmd, OutputStream outStream, OutputStream errStream, boolean closeConnectionOnException) throws IOException, TapisException {
+        return execute(cmd, (InputStream) null, outStream, errStream, closeConnectionOnException);
+    }
+
     /* ---------------------------------------------------------------------- */
     /* execute:                                                               */
     /* ---------------------------------------------------------------------- */
@@ -115,7 +166,7 @@ public class SSHExecChannel implements SSHSession
      * @throws TapisException
      */
     public int execute(String cmd, OutputStream outStream, OutputStream errStream) throws IOException, TapisException {
-        return execute(cmd, outStream, errStream, true);
+        return execute(cmd, (InputStream) null, outStream, errStream, true);
     }
 
     /** Execute a remote command and return its standard out and standard err
@@ -126,8 +177,8 @@ public class SSHExecChannel implements SSHSession
      * pass through to the caller.
      *
      * @param cmd the command to execute on the remote host
+     * @param inStream the stream containing standard in of the remote command
      * @param outStream the stream containing standard out of the remote command
-     * @param errStream the stream containing standard err of the remote command
      * @param errStream the stream containing standard err of the remote command
      * @param closeConnectionOnException if set to true, and an exception is thrown by this method,
      *                                   we will close the underlying SSHConnection also.  This should
@@ -139,9 +190,15 @@ public class SSHExecChannel implements SSHSession
      * @throws IOException
      * @throws TapisException
      */
-    public int execute(String cmd, OutputStream outStream, OutputStream errStream, boolean closeConnectionOnException)
-     throws IOException, TapisException
+    public int execute(String cmd, InputStream inStream, OutputStream outStream, OutputStream errStream, boolean closeConnectionOnException)
+            throws IOException, TapisException
     {
+        // Note - this method was altered to take 'inStream' to send to stdIn of the ssh connection
+        // for the files archiveTransfers feature.  For a good example of how to use it take a look
+        // at that code.  It's pretty straightForward though - just pass in an input stream, and the
+        // ssh session will connect it to stdIn of the ssh session.  The inputStream is closed when
+        // the session is complete.
+
         // Check call-specific input.
         if (outStream == null) {
             if(closeConnectionOnException) {
@@ -172,19 +229,45 @@ public class SSHExecChannel implements SSHSession
             String msg =  MsgUtils.getMsg("TAPIS_SSH_NO_SESSION");
             throw new TapisException(msg);
         }
-        
+
+        // This anonymous class allows us to pass in an input stream that can ssh can
+        // 'close' (the actual mina library does the closing, not us.)  - but it doesn't
+        // really close.  Then, after the ssh exec ends, we can really close it.  The
+        // problem that this solves is that ChannelExec (apache mina) wants to close the
+        // input stream before completing.  This is normally ok, but if the input stream
+        //  is an sftp input stream, it conflicts with the ssh session, and it hangs.  I
+        //  believe this should be safe for all cases though, since it just delays the
+        //  close until after a result is returned.
+        var delayedCloseInputStream = (inStream == null) ? null : new FilterInputStream(inStream) {
+            @Override
+            public void close() throws IOException {
+                // ignore this - it's closed later
+            }
+
+            public void ensureClosed() throws IOException {
+                super.close();
+                this.close();
+            }
+        };
+
         // Create the channel.
         ChannelExec channel = null;
         try {
             channel = session.createExecChannel(cmd);
             channel.setOut(outStream);
             channel.setErr(errStream);
+            if(delayedCloseInputStream != null) {
+                channel.setIn(delayedCloseInputStream);
+            }
         } catch (Exception e) {
             if(channel != null) {
                 close(channel, false);
             }
             if (closeConnectionOnException) {
                 _sshConnection.close();
+            }
+            if(delayedCloseInputStream != null) {
+                delayedCloseInputStream.ensureClosed();
             }
             String msg = MsgUtils.getMsg("TAPIS_SSH_CHANNEL_CREATE_ERROR",
                     _sshConnection.getHost(), _sshConnection.getUsername(), e.getMessage());
@@ -199,11 +282,17 @@ public class SSHExecChannel implements SSHSession
             // Wait for the channel to close.
             channel.waitFor(_closedSet, _sshConnection.getTimeouts().getExecutionMillis());
             Integer status = channel.getExitStatus();
+            if(delayedCloseInputStream != null) {
+                delayedCloseInputStream.ensureClosed();
+            }
             if (status != null) exitCode = status;
         } finally {
             try {
                 close(channel, false);
             } catch (Exception e) {
+            }
+            if(delayedCloseInputStream != null) {
+                delayedCloseInputStream.ensureClosed();
             }
         } // double down by closing immediately, ignoring any secondary exceptions.
             
