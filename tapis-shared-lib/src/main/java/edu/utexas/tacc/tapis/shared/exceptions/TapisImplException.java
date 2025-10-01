@@ -1,5 +1,7 @@
 package edu.utexas.tacc.tapis.shared.exceptions;
 
+import javax.ws.rs.core.Response.Status;
+
 public final class TapisImplException
  extends TapisException
 {
@@ -21,7 +23,19 @@ public final class TapisImplException
         BAD_REQUEST,
         UNAUTHORIZED,
         FORBIDDEN,
-        NOT_FOUND
+        NOT_FOUND;
+
+        public Status getHttpStatus() {
+            switch(this) {
+                case INTERNAL_SERVER_ERROR: return Status.INTERNAL_SERVER_ERROR;
+                case BAD_REQUEST: return Status.BAD_REQUEST;
+                case UNAUTHORIZED: return Status.UNAUTHORIZED;
+                case FORBIDDEN: return Status.FORBIDDEN;
+                case NOT_FOUND: return Status.NOT_FOUND;
+            }
+            // This should never happen.
+            return Status.INTERNAL_SERVER_ERROR;
+        }
     }
     
     // The condition code should always be set. 
