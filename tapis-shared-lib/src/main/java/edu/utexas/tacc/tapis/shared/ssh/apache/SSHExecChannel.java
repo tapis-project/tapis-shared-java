@@ -193,6 +193,11 @@ public class SSHExecChannel implements SSHSession
     public int execute(String cmd, InputStream inStream, OutputStream outStream, OutputStream errStream, boolean closeConnectionOnException)
             throws IOException, TapisException
     {
+        // Note - this method was altered to take 'inStream' to send to stdIn of the ssh connection
+        // for the files archiveTransfers feature.  For a good example of how to use it take a look
+        // at that code.  It's pretty straightForward though - just pass in an input stream, and the
+        // ssh session will connect it to stdIn of the ssh session.  The inputStream is closed when
+        // the session is complete.
 
         // Check call-specific input.
         if (outStream == null) {
@@ -226,12 +231,13 @@ public class SSHExecChannel implements SSHSession
         }
 
         // This anonymous class allows us to pass in an input stream that can ssh can
-        // 'close' - but it doesn't really close.  Then, after the ssh exec ends, we
-        // can really close it.  The problem that this solves is that ChennelExec wants
-        // to close the input stream before completing.  This is normally ok, but if
-        // the input strema is an sftp input stream, it conflicts with the ssh session,
-        // and it hangs.  I believe this should be safe for all cases though, since it
-        // just delays the close until after a result is returned.
+        // 'close' (the actual mina library does the closing, not us.)  - but it doesn't
+        // really close.  Then, after the ssh exec ends, we can really close it.  The
+        // problem that this solves is that ChannelExec (apache mina) wants to close the
+        // input stream before completing.  This is normally ok, but if the input stream
+        //  is an sftp input stream, it conflicts with the ssh session, and it hangs.  I
+        //  believe this should be safe for all cases though, since it just delays the
+        //  close until after a result is returned.
         var delayedCloseInputStream = (inStream == null) ? null : new FilterInputStream(inStream) {
             @Override
             public void close() throws IOException {
