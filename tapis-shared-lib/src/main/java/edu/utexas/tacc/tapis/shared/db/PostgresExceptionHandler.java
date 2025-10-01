@@ -16,7 +16,10 @@ public class PostgresExceptionHandler {
     public static void checkDBConstraintViolation(PSQLException ex) throws TapisDBConstraintViolationException{
         // According to  https://www.postgresql.org/docs/16/errcodes-appendix.html , all the constraint violation errors starts with "23".
         if (ex.getSQLState().startsWith("23")) {
-            String constraintName = ex.getServerErrorMessage().getConstraint();
+            String constraintName = null;
+            if (ex.getServerErrorMessage() != null) {
+                constraintName = ex.getServerErrorMessage().getConstraint();
+            }
             throw new TapisDBConstraintViolationException(constraintName, ex);
         }
     }
