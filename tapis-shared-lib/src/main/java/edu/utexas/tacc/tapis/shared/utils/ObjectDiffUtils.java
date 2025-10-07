@@ -22,7 +22,24 @@ import java.util.stream.Collectors;
  * SetDiff<Integer> setDiff = ObjectDiffUtils.computeSetDiff(oldSet, newSet);
  * 
  * Each diff object can be converted to a JSON string using the toJsonString() method.
- * 
+ *
+ * Sample output for ObjectDiff:
+ * {
+ *  "addedFields": {"newField": "newValue"},
+ *  "removedFields": {"oldField": "oldValue"},
+ *  "modifiedFields": {"modifiedField": {"leftValue": "oldValue", "rightValue": "newValue"}}
+ * }
+ * Sample output for ListDiff:
+ * {
+ *  "addedElements": {"newElement": 1},
+ *  "removedElements": {"oldElement": 1}
+ * }
+ * Sample output for SetDiff:
+ * {
+ *  "addedElements": {"newElement"},
+ *  "removedElements": {"oldElement"}
+ * }
+ *
  * @author wei.zhang@tacc.utexas.edu
  */
 public class ObjectDiffUtils {
