@@ -8,6 +8,7 @@ import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.List;
 import java.util.Set;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.stream.Collectors;
 
@@ -132,18 +133,22 @@ public class ObjectDiffUtils {
     
 
     public static ObjectDiff computeObjectDiff(Object oldObject, Object newObject) {
+        ObjectDiff objDiff = null;
+        if (oldObject == null && newObject == null) {
+            return null;
+        }
         Gson gson = new Gson();
         
         // Use TypeToken to handle generic map types
         Type mapType = new TypeToken<Map<String, Object>>() {}.getType();
 
         // Convert Java objects to maps
-        Map<String, Object> oldMap = gson.fromJson(gson.toJson(oldObject), mapType);
-        Map<String, Object> newMap = gson.fromJson(gson.toJson(newObject), mapType);
+        Map<String, Object> oldMap = oldObject == null ? Collections.emptyMap() : gson.fromJson(gson.toJson(oldObject), mapType);
+        Map<String, Object> newMap = newObject == null ? Collections.emptyMap() : gson.fromJson(gson.toJson(newObject), mapType);
 
         // Find the differences
         MapDifference<String, Object> difference = Maps.difference(oldMap, newMap);
-        ObjectDiff objDiff = new ObjectDiff();
+        objDiff = new ObjectDiff();
         objDiff.setAddedFields(difference.entriesOnlyOnRight());
         objDiff.setRemovedFields(difference.entriesOnlyOnLeft());
         objDiff.setModifiedFields(difference.entriesDiffering());
@@ -151,34 +156,45 @@ public class ObjectDiffUtils {
     }
 
     public static <T> SetDiff<T> computeSetDiff(Set<T> oldSet, Set<T> newSet) {
-        SetDiff<T> arrayDiff = new SetDiff<>();
+        SetDiff<T> arrayDiff = null; 
+        if (oldSet == null && newSet == null) {
+            return arrayDiff;
+        }
+        Set<T> oldSetCopy = (oldSet == null) ? Collections.emptySet() : oldSet;
+        Set<T> newSetCopy = (newSet == null) ? Collections.emptySet() : newSet;
         // Find removed elements (in old but not in new)
-        Set<T> removed = oldSet.stream()
-                .filter(element -> !newSet.contains(element))
+        Set<T> removed = oldSetCopy.stream()
+                .filter(element -> !newSetCopy.contains(element))
                 .collect(Collectors.toSet());
 
         // Find added elements (in new but not in old)
-        Set<T> added = newSet.stream()
-                .filter(element -> !oldSet.contains(element))
+        Set<T> added = newSetCopy.stream()
+                .filter(element -> !oldSetCopy.contains(element))
                 .collect(Collectors.toSet());
 
+        arrayDiff = new SetDiff<>();
         arrayDiff.setAddedElements(added);
         arrayDiff.setRemovedElements(removed);
         return arrayDiff;
     }
 
     public static <T> ListDiff<T> computeListDiff(List<T> oldList, List<T> newList) {
-        ListDiff<T> listDiff = new ListDiff<>();
-
+        ListDiff<T> listDiff = null;
+        if (oldList == null && newList == null) {
+            return listDiff;
+        }
         // Count frequencies in old and new lists
         Map<T, Integer> oldFreq = new HashMap<>();
         Map<T, Integer> newFreq = new HashMap<>();
 
-        for (T item : oldList) {
+        List<T> oldListCopy = (oldList == null) ? Collections.emptyList() : oldList;
+        List<T> newListCopy = (newList == null) ? Collections.emptyList() : newList;
+
+        for (T item : oldListCopy) {
             oldFreq.put(item, oldFreq.getOrDefault(item, 0) + 1);
         }
 
-        for (T item : newList) {
+        for (T item : newListCopy) {
             newFreq.put(item, newFreq.getOrDefault(item, 0) + 1);
         }
 
@@ -203,7 +219,7 @@ public class ObjectDiffUtils {
                 removed.put(element, oldCount - newCount);
             }
         }
-
+        listDiff = new ListDiff<>();
         listDiff.setAddedElements(added);
         listDiff.setRemovedElements(removed);
         return listDiff;
