@@ -44,6 +44,6 @@ CLIENT_VER=$(ls -1 -d $FILES | tail -n 1 | xargs -n 1 basename)
 
 # Update release.properties file
 echo "${SVC_NAME}=${SVC_VER}" > ${RELEASE_PROP_FILE}
-echo "-----------------------------------------------------------------" > ${RELEASE_PROP_FILE}
+echo "-----------------------------------------------------------------" >> ${RELEASE_PROP_FILE}
 echo "${BOM_NAME}=${BOM_VER}" >> ${RELEASE_PROP_FILE}
 echo "${CLIENT_NAME}=${CLIENT_VER}" >> ${RELEASE_PROP_FILE}
