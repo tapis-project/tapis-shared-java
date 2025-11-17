@@ -6,6 +6,15 @@ SVC_NAME=tapis-shared-java
 
 PrgName=$(basename "$0")
 
+USAGE="Usage: $PrgName <svc_version>"
+
+# Check number of arguments
+if [ $# -ne 1 ]; then
+  echo "$USAGE"
+  exit 1
+fi
+
+SVC_VER=$1
 # Determine absolute path to location from which we are running
 #  and change to that directory.
 export RUN_DIR=$(pwd)
@@ -28,10 +37,13 @@ BOM_VER=$(ls -1 -d $FILES | tail -n 1 | xargs -n 1 basename)
 FILES=$(echo "${CLIENT_DIR}/${VER_PREFIX}*")
 CLIENT_VER=$(ls -1 -d $FILES | tail -n 1 | xargs -n 1 basename)
 
+# NOTE When this script is run, the version in the pom has already been updated to the next SNAPSHOT.
+#      So instead we take it in as an argument
 # Determine service version
-SVC_VER=$(cd ..;mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+# SVC_VER=$(cd ..;mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
 
 # Update release.properties file
 echo "${SVC_NAME}=${SVC_VER}" > ${RELEASE_PROP_FILE}
+echo "-----------------------------------------------------------------" > ${RELEASE_PROP_FILE}
 echo "${BOM_NAME}=${BOM_VER}" >> ${RELEASE_PROP_FILE}
 echo "${CLIENT_NAME}=${CLIENT_VER}" >> ${RELEASE_PROP_FILE}
