@@ -8,7 +8,7 @@
     <parent>
         <groupId>edu.utexas.tacc.tapis</groupId>
         <artifactId>tapis-bom</artifactId>
-        <version>[2.0.51,3.0)</version>
+        <version>[2.0.54,3.0)</version>
         <!-- Set empty relative path to avoid maven warning and -->
         <!--   ensure parent is found in local repository if that -->
         <!--   is the only place it exists. -->
@@ -23,9 +23,9 @@
     <url>https://github.com/tapis-project/tapis-shared-java</url>
 
     <scm>
-        <connection>scm:git:git@github.com:tapis-project/tapis-shared-java.git</connection>
+        <developerConnection>scm:git:git@github.com:tapis-project/tapis-shared-java.git</developerConnection>
         <url>https://github.com/tapis-project/tapis-shared-java</url>
-        <tag>tapis-shared-java-2.0.241</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <properties>
@@ -41,16 +41,12 @@
 <!--        <tapis-client-java.version>1.11.0</tapis-client-java.version>-->
     </properties>
 
+    <!-- Dependencies shared by all modules -->
     <dependencies>
         <dependency>
             <!-- There are only test dependencies on testng -->
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -59,9 +55,9 @@
       <!-- Profile for building using TACC repositories -->
       <profile>
         <id>tacc</id>
-        <activation> 
+        <activation>
           <property>
-          <name>!skipTaccProfile</name>
+            <name>!skipTaccProfile</name>
           </property>
         </activation>
         <repositories>
@@ -94,6 +90,11 @@
     </modules>
     <build>
         <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-release-plugin</artifactId>
+            <version>${maven-release-plugin.version}</version>
+          </plugin>
             <!--  gitflow-maven-plugin supports various git workflow steps, such as gitflow:release-start-->
             <!--    gitflow:release-finish, gitflow:feature-start, gitflow:feature-finish-->
             <!-- For configuration see parent pom tapis-bom.xml -->
@@ -107,7 +108,7 @@
     <resources>
       <!-- Write the project version number to the specified file. -->
       <!-- Setting the targetPath puts the file into the jar at the -->
-      <!-- specified root-relative directory. The the modified -->
+      <!-- specified root-relative directory. The modified -->
       <!-- tapis.version file is always copied to the target/classes -->
       <!-- directory. Do the same for other data that we want to -->
       <!-- capture. A jar and war file will contain these files -->
