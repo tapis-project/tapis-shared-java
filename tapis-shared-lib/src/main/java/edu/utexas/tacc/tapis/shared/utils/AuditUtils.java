@@ -1,13 +1,13 @@
 package edu.utexas.tacc.tapis.shared.utils;
 
+import java.util.UUID;
 import com.google.gson.Gson;
-
 import edu.utexas.tacc.tapis.shared.TapisConstants;
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.UUID;
 
-/** This file contains utility methods that assist in writing and managing audit logs.
+/**
+ * This file contains utility methods that assist in writing and managing audit logs.
  * 
  * @author rcardone
  */
@@ -63,100 +63,105 @@ public final class AuditUtils
 	/* **************************************************************************** */
 	/*                                Public Methods                                */
 	/* **************************************************************************** */
-	/* ---------------------------------------------------------------------------- */
-	/* auditMsg:                                                                    */
-	/* ---------------------------------------------------------------------------- */
-	/** Wrapper for actual auditMsg method that services all possible parameters.  
-	 * This method assigns the jwt and obo fields null, which is useful in processes 
-	 * that don't expose a REST interface and, therefore, don't have JWTs. 
-	 */
-	public static String auditMsg(String component,
-								  String action,
-								  String targetSystemId,
-		                          String targetSystemType,
-		                          String targetHost,
-		                          String targetPath,
-		                          String sourceSystemId,
-		                          String sourceSystemType,
-		                          String sourceHost,
-		                          String sourcePath,
-		                          String trackingId,
-		                          String parentTrackingId,
-		                          String data)
-	{
-		return auditMsg(component, null, null, null, null, action,
-			          	targetSystemId, targetSystemType, targetHost, targetPath,
-			          	sourceSystemId, sourceSystemType, sourceHost, sourcePath,
-			          	trackingId, parentTrackingId, data);
-	}
 
-	/* ---------------------------------------------------------------------------- */
-	/* auditMsg:                                                                    */
-	/* ---------------------------------------------------------------------------- */
-	/** Collect all audit values into a single object. 
-	 * 
-	 * @param component - the component of the service issuing the call (ex: jobsapi, filesworker)
-	 * @param jwtTenant - the REST request's jwt tenant
-	 * @param jwtUser - the REST request's jwt user
-	 * @param oboTenant - the REST request's obo tenant 
-	 * @param oboUser - the REST request's obo user
-	 * @param action - the action being executed
-	 * @param targetSystemId - target system id
-	 * @param targetSystemType - target system type
-	 * @param targetHost - target host
-	 * @param targetPath - target path
-	 * @param sourceSystemId - source system id
-	 * @param sourceSystemType - source system type
-	 * @param sourceHost - source host
-	 * @param sourcePath - source path
-	 * @param trackingId - current tracking id
-	 * @param parentTrackingId - previous tracking id
-	 * @param data - arbitrary json data
-	 * @return a json string representation of all inputs
-	 */
-	public static String auditMsg(String component,
-		   			              String jwtTenant,
-		   			              String jwtUser,
-		   			              String oboTenant,
-		   			              String oboUser,
-		  						  String action,
-		                          String targetSystemId,
-		                          String targetSystemType,
-		                          String targetHost,
-		                          String targetPath,
-		                          String sourceSystemId,
-		                          String sourceSystemType,
-		                          String sourceHost,
-		                          String sourcePath,
-		                          String trackingId,
-		                          String parentTrackingId,
-		                          String data)
-	{
-		// Package the inputs.
-		var a = new AuditData();
-		a.component = component;
-		a.jwtTenant = jwtTenant;
-		a.jwtUser = jwtUser;
-		a.oboTenant = oboTenant;
-		a.oboUser = oboUser;
-		a.action = action;
-		a.targetSystemId = targetSystemId;
-		a.targetSystemType = targetSystemType;
-		a.targetHost = targetHost;
-		a.targetPath = targetPath;
-		a.sourceSystemId = sourceSystemId;
-		a.sourceSystemType = sourceSystemType;
-		a.sourceHost = sourceHost;
-		a.sourcePath = sourcePath;
-		a.trackingId = trackingId;
-		a.parentTrackingId = parentTrackingId;
-		// Generate GUID on-demand. Used by Audit Trails project to prevent duplicate records.
-		a.guid = UUID.randomUUID().toString();
-		a.data = data;
+  // NOTE: Not currently used.
+  //       If used please review handling of GUID. Make sure to never re-use GUID when creating new message to log.
+//	/* ---------------------------------------------------------------------------- */
+//	/* auditMsg:                                                                    */
+//	/* ---------------------------------------------------------------------------- */
+//	/** Wrapper for actual auditMsg method that services all possible parameters.
+//	 * This method assigns the jwt and obo fields null, which is useful in processes
+//	 * that don't expose a REST interface and, therefore, don't have JWTs.
+//	 */
+//	public static String auditMsg(String component,
+//					  String action,
+//					  String targetSystemId,
+//		                          String targetSystemType,
+//		                          String targetHost,
+//		                          String targetPath,
+//		                          String sourceSystemId,
+//		                          String sourceSystemType,
+//		                          String sourceHost,
+//		                          String sourcePath,
+//		                          String trackingId,
+//		                          String parentTrackingId,
+//		                          String data)
+//	{
+//		return auditMsg(component, null, null, null, null, action,
+//			          	targetSystemId, targetSystemType, targetHost, targetPath,
+//			          	sourceSystemId, sourceSystemType, sourceHost, sourcePath,
+//			          	trackingId, parentTrackingId, data);
+//	}
 
-		// Return a json string.
-		return auditMsg(a);
-	}
+  // NOTE: Not currently used.
+  //       If used please review handling of GUID. Make sure to never re-use GUID when creating new message to log.
+//	/* ---------------------------------------------------------------------------- */
+//	/* auditMsg:                                                                    */
+//	/* ---------------------------------------------------------------------------- */
+//	/** Collect all audit values into a single object.
+//	 *
+//	 * @param component - the component of the service issuing the call (ex: jobsapi, filesworker)
+//	 * @param jwtTenant - the REST request's jwt tenant
+//	 * @param jwtUser - the REST request's jwt user
+//	 * @param oboTenant - the REST request's obo tenant
+//	 * @param oboUser - the REST request's obo user
+//	 * @param action - the action being executed
+//	 * @param targetSystemId - target system id
+//	 * @param targetSystemType - target system type
+//	 * @param targetHost - target host
+//	 * @param targetPath - target path
+//	 * @param sourceSystemId - source system id
+//	 * @param sourceSystemType - source system type
+//	 * @param sourceHost - source host
+//	 * @param sourcePath - source path
+//	 * @param trackingId - current tracking id
+//	 * @param parentTrackingId - previous tracking id
+//	 * @param data - arbitrary json data
+//	 * @return a json string representation of all inputs
+//	 */
+//	public static String auditMsg(String component,
+//		   			              String jwtTenant,
+//		   			              String jwtUser,
+//		   			              String oboTenant,
+//		   			              String oboUser,
+//		  						  String action,
+//		                          String targetSystemId,
+//		                          String targetSystemType,
+//		                          String targetHost,
+//		                          String targetPath,
+//		                          String sourceSystemId,
+//		                          String sourceSystemType,
+//		                          String sourceHost,
+//		                          String sourcePath,
+//		                          String trackingId,
+//		                          String parentTrackingId,
+//		                          String data)
+//	{
+//		// Package the inputs.
+//		var a = new AuditData();
+//		a.component = component;
+//		a.jwtTenant = jwtTenant;
+//		a.jwtUser = jwtUser;
+//		a.oboTenant = oboTenant;
+//		a.oboUser = oboUser;
+//		a.action = action;
+//		a.targetSystemId = targetSystemId;
+//		a.targetSystemType = targetSystemType;
+//		a.targetHost = targetHost;
+//		a.targetPath = targetPath;
+//		a.sourceSystemId = sourceSystemId;
+//		a.sourceSystemType = sourceSystemType;
+//		a.sourceHost = sourceHost;
+//		a.sourcePath = sourcePath;
+//		a.trackingId = trackingId;
+//		a.parentTrackingId = parentTrackingId;
+//		// Generate GUID on-demand. Used by Audit Trails project to prevent duplicate records.
+//		a.guid = UUID.randomUUID().toString();
+//		a.data = data;
+//
+//		// Return a json string.
+//		return auditMsg(a);
+//	}
 
 	/* ---------------------------------------------------------------------------- */
 	/* auditMsg:                                                                    */
@@ -185,10 +190,9 @@ public final class AuditUtils
 		if (a.sourcePath == null) a.sourcePath = AUDIT_EMPTY;
 		if (a.trackingId == null) a.trackingId = AUDIT_EMPTY;
 		if (a.parentTrackingId == null) a.parentTrackingId = AUDIT_EMPTY;
-		// Generate GUID on-demand. Used by Audit Trails project to prevent duplicate records.
-		if (StringUtils.isBlank(a.guid)) a.guid = UUID.randomUUID().toString();
 		if (a.data == null) a.data = TapisConstants.EMPTY_JSON;
-
+		// Always generate a new GUID. Used by Audit Trails project to prevent duplicate records.
+		a.guid = UUID.randomUUID().toString();
 		// Return a json string.
 		return _gson.toJson(a);
 	}
