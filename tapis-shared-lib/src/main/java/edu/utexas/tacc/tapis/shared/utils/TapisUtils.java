@@ -943,6 +943,30 @@ public class TapisUtils
       return hasRole;
   }
 
+  public static String getRestrictedServicePermissionSpec(String userTenant, String serviceProvidingAccess,
+                                                      String userName, String action) throws TapisException {
+      // build up permission to look like this:
+      //       service:<userTenant>:<providingService>:<user>:<action>
+      return new StringBuilder("service:").
+              append(userTenant).
+              append(":").
+              append(serviceProvidingAccess).
+              append(":").
+              append(userName).
+              append(":").
+              append(action).
+              toString();
+  }
+
+  public static String getRestrictedServiceRoleName(String serviceRequestingAccess) throws TapisException {
+      if (StringUtils.isBlank(serviceRequestingAccess)) {
+          String msg = MsgUtils.getMsg("TAPIS_NULL_PARAMETER", "isServicePermitted", "serviceRequestingAccess");
+          _log.error(msg);
+          throw new TapisException(msg);
+      }
+      return new StringBuilder().append("service_").append(serviceRequestingAccess).toString();
+  }
+
   public static boolean isServicePermitted(String serviceProvidingAccess, String serviceRequestingAccess, String userTenant,
                                            String  userName) throws TapisException {
       return isServicePermitted(serviceProvidingAccess, serviceRequestingAccess, userTenant, userName, "all");
@@ -973,21 +997,8 @@ public class TapisUtils
           throw new TapisException(msg);
       }
 
-      // build up permission to look like this:
-      //       service:<userTenant>:<providingService>:<user>:<action>
-      String permission = new StringBuilder("service:").
-              append(userTenant).
-              append(":").
-              append(serviceProvidingAccess).
-              append(":").
-              append(userName).
-              append(":").
-              append(action).
-              toString();
-
-      // build up the role name to look like this:
-      //       service_<requestingService>
-      String roleName = new StringBuilder().append("service_").append(serviceRequestingAccess).toString();
+      String permission = getRestrictedServicePermissionSpec(userTenant, serviceProvidingAccess, userName, action);
+      String roleName = getRestrictedServiceRoleName(serviceRequestingAccess);
 
       TenantManager tm = TenantManager.getInstance();
       String serviceTenant = tm.getSiteAdminTenantId(tm.getPrimarySiteId());
