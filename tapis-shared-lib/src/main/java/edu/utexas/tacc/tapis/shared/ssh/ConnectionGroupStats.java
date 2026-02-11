@@ -2,6 +2,7 @@ package edu.utexas.tacc.tapis.shared.ssh;
 
 public final class ConnectionGroupStats {
     private final int connectionCount;
+    private final SshConnectionGroup.Status groupStatus;
     private final int expiredConnectionCount;
     private final int activeConnectionCount;
     private final int sessionCount;
@@ -10,7 +11,8 @@ public final class ConnectionGroupStats {
     private final int sessionsOnParkedSftpConnections;
 
     protected ConnectionGroupStats(int connectionCount, int expiredConnectionCount, int activeConnectionCount, int sessionCount,
-                                   int sessionsOnExpiredConnections, int sessionsOnActiveConnections, int sessionsOnParkedSftpConnections) {
+                                   int sessionsOnExpiredConnections, int sessionsOnActiveConnections, int sessionsOnParkedSftpConnections,
+                                   SshConnectionGroup.Status groupStatus) {
         this.connectionCount = connectionCount;
         this.activeConnectionCount = activeConnectionCount;
         this.expiredConnectionCount = expiredConnectionCount;
@@ -18,6 +20,7 @@ public final class ConnectionGroupStats {
         this.sessionsOnActiveConnections = sessionsOnActiveConnections;
         this.sessionsOnExpiredConnections = sessionsOnExpiredConnections;
         this.sessionsOnParkedSftpConnections = sessionsOnParkedSftpConnections;
+        this.groupStatus = groupStatus;
     }
 
     public int getActiveConnectionCount() {
@@ -46,5 +49,9 @@ public final class ConnectionGroupStats {
 
     public int getSessionsOnParkedSftpConnections() {
         return sessionsOnParkedSftpConnections;
+    }
+
+    public String getGroupStatus() {
+        return groupStatus == null ? "null" : groupStatus.toString();
     }
 }
