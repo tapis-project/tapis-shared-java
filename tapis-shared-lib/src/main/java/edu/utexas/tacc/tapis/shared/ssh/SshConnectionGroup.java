@@ -2,6 +2,7 @@ package edu.utexas.tacc.tapis.shared.ssh;
 
 import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
 import edu.utexas.tacc.tapis.shared.exceptions.recoverable.TapisRecoverableException;
+import edu.utexas.tacc.tapis.shared.exceptions.recoverable.TapisSSHConnectionException;
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
 import edu.utexas.tacc.tapis.shared.ssh.apache.SSHConnection;
 import edu.utexas.tacc.tapis.shared.ssh.apache.SSHExecChannel;
@@ -14,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,6 +23,11 @@ import java.util.List;
  * This class represents all connections and sessions for a given key in the pool.
  */
 final class SshConnectionGroup {
+    enum Status {
+        OK,
+        RECENT_CONNECTION_FAILURE
+    }
+
     private static final Logger log = LoggerFactory.getLogger(SshConnectionGroup.class);
 
     // report this group as "not ready for cleanup" for 30 mins after the last time
@@ -31,6 +38,10 @@ final class SshConnectionGroup {
     private List<SshConnectionContext> connectionContextList;
     private SshSessionPoolPolicy poolPolicy;
     private long lastTouched;
+    private Status groupStatus = Status.OK;
+    private Instant statusInstant = Instant.now();
+    private static final long CONNECTION_FAILURE_RETRY_TIMEOUT_MILLIS = 10000;
+
     protected SshConnectionGroup(SshSessionPoolPolicy poolPolicy) {
         connectionContextList = new ArrayList<>();
         this.poolPolicy = poolPolicy;
@@ -69,7 +80,8 @@ final class SshConnectionGroup {
         }
 
        return new ConnectionGroupStats(connectionCount, expiredConnectionCount, activeConnectionCount,
-                sessionCount, sessionsOnExpiredConnections, sessionsOnActiveConnections, sessionsOnParkedSftpConnections);
+                sessionCount, sessionsOnExpiredConnections, sessionsOnActiveConnections,
+               sessionsOnParkedSftpConnections, groupStatus);
     }
 
     protected void cleanup() {
@@ -227,6 +239,16 @@ final class SshConnectionGroup {
                                                 AuthnEnum authnMethod, Credential credential)
             throws TapisException
     {
+        if(groupStatus == Status.RECENT_CONNECTION_FAILURE) {
+            if(statusInstant.isBefore(Instant.now().minusMillis(CONNECTION_FAILURE_RETRY_TIMEOUT_MILLIS))) {
+                setStatus(Status.OK);
+            } else {
+                String msg = MsgUtils.getMsg("SSH_POOL_CONNECTION_FAILURE_GROUPS_STATUS",
+                        tenant, host, port, effectiveUserId, authnMethod, groupStatus);
+                log.info(msg);
+                throw new TapisSSHConnectionException(msg, null, null);
+            }
+        }
         // check connection details for non-empty values
         if((StringUtils.isBlank(host))
                 || (port == null)
@@ -275,10 +297,19 @@ final class SshConnectionGroup {
             e.state.put("port", port.toString());
             e.state.put("effectiveUserId", effectiveUserId);
             throw e;
+        } finally {
+            if(conn == null) {
+                setStatus(Status.RECENT_CONNECTION_FAILURE);
+            }
         }
 
         // Non-null if we get here.
         return conn;
+    }
+
+    private synchronized void setStatus(Status status){
+        statusInstant = Instant.now();
+        groupStatus = status;
     }
 
     @Override
@@ -290,6 +321,9 @@ final class SshConnectionGroup {
         StringBuilder builder = new StringBuilder();
 
         synchronized (connectionContextList) {
+            builder.append("Group Status: ");
+            builder.append(this.groupStatus);
+            builder.append(System.lineSeparator());
             for (SshConnectionContext connectionContext : connectionContextList) {
                 builder.append(connectionContext.getDetails(includeAll));
                 builder.append(System.lineSeparator());
