@@ -8,10 +8,10 @@ public final class ConnectionGroupStats {
     private final int sessionCount;
     private final int sessionsOnActiveConnections;
     private final int sessionsOnExpiredConnections;
-    private final int sessionsOnParkedSftpConnections;
+    private final int parkedSftpSessions;
 
     protected ConnectionGroupStats(int connectionCount, int expiredConnectionCount, int activeConnectionCount, int sessionCount,
-                                   int sessionsOnExpiredConnections, int sessionsOnActiveConnections, int sessionsOnParkedSftpConnections,
+                                   int sessionsOnExpiredConnections, int sessionsOnActiveConnections, int parkedSftpSessions,
                                    SshConnectionGroup.Status groupStatus) {
         this.connectionCount = connectionCount;
         this.activeConnectionCount = activeConnectionCount;
@@ -19,7 +19,7 @@ public final class ConnectionGroupStats {
         this.sessionCount = sessionCount;
         this.sessionsOnActiveConnections = sessionsOnActiveConnections;
         this.sessionsOnExpiredConnections = sessionsOnExpiredConnections;
-        this.sessionsOnParkedSftpConnections = sessionsOnParkedSftpConnections;
+        this.parkedSftpSessions = parkedSftpSessions;
         this.groupStatus = groupStatus;
     }
 
@@ -47,8 +47,8 @@ public final class ConnectionGroupStats {
         return sessionsOnActiveConnections;
     }
 
-    public int getSessionsOnParkedSftpConnections() {
-        return sessionsOnParkedSftpConnections;
+    public int getParkedSftpSessions() {
+        return parkedSftpSessions;
     }
 
     public String getGroupStatus() {

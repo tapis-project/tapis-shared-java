@@ -62,7 +62,7 @@ final class SshConnectionGroup {
         int sessionCount = 0;
         int sessionsOnExpiredConnections = 0;
         int sessionsOnActiveConnections = 0;
-        int sessionsOnParkedSftpConnections = 0;
+        int parkedSftpSessions = 0;
 
         synchronized (connectionContextList) {
             for (SshConnectionContext context : connectionContextList) {
@@ -72,7 +72,7 @@ final class SshConnectionGroup {
                 } else {
                     activeConnectionCount++;
                     sessionsOnActiveConnections += context.getSessionCount();
-                    sessionsOnParkedSftpConnections += context.getParkedSftpSessionCount();
+                    parkedSftpSessions += context.getParkedSftpSessionCount();
                 }
                 connectionCount++;
                 sessionCount += context.getSessionCount();
@@ -80,8 +80,8 @@ final class SshConnectionGroup {
         }
 
        return new ConnectionGroupStats(connectionCount, expiredConnectionCount, activeConnectionCount,
-                sessionCount, sessionsOnExpiredConnections, sessionsOnActiveConnections,
-               sessionsOnParkedSftpConnections, groupStatus);
+               sessionCount, sessionsOnExpiredConnections, sessionsOnActiveConnections,
+               parkedSftpSessions, groupStatus);
     }
 
     protected void cleanup() {

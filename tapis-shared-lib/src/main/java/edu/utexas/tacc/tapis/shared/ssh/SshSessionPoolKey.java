@@ -128,6 +128,7 @@ final class SshSessionPoolKey {
         builder.append(",  ");
         builder.append("EffectiveUserId: ");
         builder.append(effectiveUserId);
+        builder.append(",  ");
         builder.append("ConnectionMethod: ");
         builder.append(connectionMethod);
         return builder.toString();
