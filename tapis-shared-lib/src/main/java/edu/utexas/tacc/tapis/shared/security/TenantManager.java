@@ -150,11 +150,14 @@ public class TenantManager
                 // Avoid race condition.
                 if (_tenants == null) {
                     try {
+                        _log.trace("TenantManger.getTenants initializing list. BaseUrl: " + _tenantServiceBaseUrl);
                         // Get the tenant and site lists from the tenant service.
                         var tenantsClient = new TenantsClient(_tenantServiceBaseUrl);
                         var tenantList = tenantsClient.getTenants();
+                        _log.trace("TenantManger.getTenants Got tenants list. Size: " + tenantList.size());
                         var siteList   = tenantsClient.getSites();
-                        
+                        _log.trace("TenantManger.getTenants Got sites list. Size: " + siteList.size());
+
                         // Create the tenants hashmap.
                         _tenants = new LinkedHashMap<String,Tenant>(1+tenantList.size()*2);
                         for (Tenant t : tenantList) _tenants.put(t.getTenantId(), t); 
@@ -187,7 +190,7 @@ public class TenantManager
                 }
             }
         }
-        
+        _log.trace("TenantManger.getTenants returning list. Size: " + _tenants.size());
         return _tenants;
     }
     
