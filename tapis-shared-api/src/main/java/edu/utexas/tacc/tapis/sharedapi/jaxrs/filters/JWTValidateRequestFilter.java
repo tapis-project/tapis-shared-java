@@ -774,8 +774,8 @@ public class JWTValidateRequestFilter
                                 String jwtTenantId, String newTenantId)
     {
         // Consult the jwt tenant definition for allowable tenants. 
-        boolean allowedTenant;
-        try {allowedTenant = TapisRestUtils.isAllowedTenant(jwtTenantId, newTenantId);}
+        boolean allowTenant;
+        try {allowTenant = TapisRestUtils.isAllowedTenant(jwtTenantId, newTenantId);}
         catch (Exception e) {
             String msg = MsgUtils.getMsg("TAPIS_SECURITY_ALLOWABLE_TENANT_ERROR", 
                                          jwtUser, jwtTenantId, newTenantId);
@@ -785,7 +785,7 @@ public class JWTValidateRequestFilter
         }
         
         // Can the new tenant id be used by the jwt tenant?
-        if (!allowedTenant) {
+        if (!allowTenant) {
             String msg = MsgUtils.getMsg("TAPIS_SECURITY_TENANT_NOT_ALLOWED", 
                                          jwtUser, jwtTenantId, newTenantId);
             _log.error(msg);

@@ -230,8 +230,7 @@ public class TapisRunCommand
     /* ---------------------------------------------------------------------------- */
     public void logNonZeroExitCode()
     {
-        // Don't log when last command succeeded, doesn't exist
-        // or we're not logging warnings.
+        // Don't log when last command succeeded, doesn't exist or we're not logging warnings.
         if (_exitCode == 0) return;
         if (_command == null) return;
         if (!_log.isWarnEnabled()) return;
@@ -242,7 +241,7 @@ public class TapisRunCommand
                       getConnection().getHost(), 
                       getConnection().getUsername(), 
                       _exitCode));
-        } catch (Exception e) {}
+        } catch (Exception ignored) {}
     }
     
     /* **************************************************************************** */
