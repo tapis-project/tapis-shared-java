@@ -16,11 +16,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ch.qos.logback.classic.Level;
 
+import edu.utexas.tacc.tapis.shared.exceptions.recoverable.*;
 import edu.utexas.tacc.tapis.shared.exceptions.TapisException;
-import edu.utexas.tacc.tapis.shared.exceptions.recoverable.TapisRecoverableException;
-import edu.utexas.tacc.tapis.shared.exceptions.recoverable.TapisSSHAuthException;
-import edu.utexas.tacc.tapis.shared.exceptions.recoverable.TapisSSHConnectionException;
-import edu.utexas.tacc.tapis.shared.exceptions.recoverable.TapisSSHTimeoutException;
 import edu.utexas.tacc.tapis.shared.i18n.MsgUtils;
 import edu.utexas.tacc.tapis.shared.utils.ThrottleMap;
 
@@ -447,13 +444,17 @@ public class SSHConnection
         }
         
         // We try to detect other recoverable conditions by examining the error message.
+        // The string Unresolved is likely the result of a DNS error, which might later resolve.
         var msg = e.getMessage();
-        if (msg != null) {
-            if (msg.contains("timeout")) return new TapisSSHTimeoutException(e.getMessage(), e, null);
+        if (msg != null)
+        {
+          if (msg.contains("timeout")) return new TapisSSHTimeoutException(e.getMessage(), e, null);
+          if (msg.contains("Unresolved")) return new TapisSSHUnresolvedException(e.getMessage(), e, null);
         }
         
-        // Didn't identify any recoverable condition.
-        return null;
+        // Although we did not identify a specific recoverable condition, probably best to treat any exception
+        //   as potentially recoverable. Many network related problems are intermittent.
+        return new TapisSSHConnectionException(e.getMessage(), e, null);
     }
     
     /* ---------------------------------------------------------------------- */
